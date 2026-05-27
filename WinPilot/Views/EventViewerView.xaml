@@ -21,12 +21,12 @@
 
         <!-- 헤더 -->
         <DockPanel Grid.Row="0" Margin="24,20,24,16">
-            <TextBlock Text="이벤트 뷰어" FontSize="22" FontWeight="SemiBold"
-                       Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"/>
             <Button DockPanel.Dock="Right" Content="↺ 새로고침"
                     Command="{Binding RefreshCommand}"
                     Style="{StaticResource SecondaryButtonStyle}"
                     VerticalAlignment="Center"/>
+            <TextBlock Text="이벤트 뷰어" FontSize="22" FontWeight="SemiBold"
+                       Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"/>
         </DockPanel>
 
         <!-- 필터 -->

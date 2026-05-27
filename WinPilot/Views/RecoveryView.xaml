@@ -43,12 +43,13 @@
         <Border Grid.Row="2" Style="{StaticResource CardStyle}" Margin="24,0,24,16">
             <StackPanel>
                 <DockPanel Margin="0,0,0,16">
-                    <TextBlock Text="시스템 복구 단계" Style="{StaticResource CardTitleStyle}"/>
                     <Button DockPanel.Dock="Right" Content="▶ 전체 실행"
                             Command="{Binding RunAllStepsCommand}"
                             IsEnabled="{Binding IsRunning, Converter={StaticResource InverseBool}}"
                             Style="{StaticResource PrimaryButtonStyle}"
-                            Padding="12,6" FontSize="12"/>
+                            Padding="12,6" FontSize="12"
+                            VerticalAlignment="Center"/>
+                    <TextBlock Text="시스템 복구 단계" Style="{StaticResource CardTitleStyle}" VerticalAlignment="Center"/>
                 </DockPanel>
                 <ItemsControl ItemsSource="{Binding Steps}">
                     <ItemsControl.ItemTemplate>

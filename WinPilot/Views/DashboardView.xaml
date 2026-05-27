@@ -9,11 +9,12 @@
 
             <!-- 헤더 -->
             <DockPanel Margin="0,0,0,20">
-                <TextBlock Text="시스템 개요" FontSize="22" FontWeight="SemiBold"
-                           Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"/>
                 <Button DockPanel.Dock="Right" Content="↺ 새로고침"
                         Command="{Binding RefreshCommand}"
-                        Style="{StaticResource SecondaryButtonStyle}"/>
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        VerticalAlignment="Center"/>
+                <TextBlock Text="시스템 개요" FontSize="22" FontWeight="SemiBold"
+                           Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"/>
             </DockPanel>
 
             <!-- 상단 메트릭 카드 4개 -->
