@@ -1,0 +1,29 @@
+<UserControl x:Class="WinPilot.Views.AboutView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d">
+    <Grid Background="#1E1E2E">
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Width="400">
+            <Border Style="{StaticResource CardStyle}">
+                <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="WinPilot" FontSize="36" FontWeight="Bold"
+                               Foreground="#3B82F6" HorizontalAlignment="Center"/>
+                    <TextBlock Text="{Binding Version}" FontSize="14" Foreground="#64748B"
+                               HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                    <TextBlock Text="{Binding Description}" FontSize="13" Foreground="#94A3B8"
+                               HorizontalAlignment="Center" Margin="0,8,0,24"/>
+                    <Separator Background="#374151" Margin="0,0,0,20"/>
+                    <TextBlock Text="원격 PC 상태 확인을 위한 WPF 기반 모니터링 도구"
+                               Foreground="#CBD5E1" FontSize="12" TextWrapping="Wrap"
+                               HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,16"/>
+                    <Button Content="GitHub 열기" Command="{Binding OpenGitHubCommand}"
+                            Style="{StaticResource PrimaryButtonStyle}" HorizontalAlignment="Center"/>
+                    <TextBlock Text="{Binding GitHubUrl}" Foreground="#3B82F6" FontSize="11"
+                               HorizontalAlignment="Center" Margin="0,8,0,0"/>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </Grid>
+</UserControl>

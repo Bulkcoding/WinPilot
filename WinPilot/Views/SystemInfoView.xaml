@@ -1,0 +1,205 @@
+<UserControl x:Class="WinPilot.Views.SystemInfoView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d">
+    <Grid Background="#1E1E2E">
+        <Border Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibility}}"
+                Background="#CC1E1E2E" Panel.ZIndex="10">
+            <TextBlock Text="시스템 정보 로딩 중..." Foreground="#94A3B8"
+                       HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14"/>
+        </Border>
+
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="24,20,24,24">
+                <DockPanel Margin="0,0,0,20">
+                    <TextBlock Text="시스템 정보" FontSize="22" FontWeight="SemiBold" Foreground="#E2E8F0"/>
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                        <TextBlock Text="{Binding CopyStatusText}" Foreground="#22C55E" FontSize="12"
+                                   VerticalAlignment="Center" Margin="0,0,12,0"/>
+                        <Button Content="📋 클립보드 복사" Command="{Binding CopyToClipboardCommand}"
+                                Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,8,0"/>
+                        <Button Content="↺ 새로고침" Command="{Binding LoadCommand}"
+                                Style="{StaticResource SecondaryButtonStyle}"/>
+                    </StackPanel>
+                </DockPanel>
+
+                <!-- CPU + OS 카드 -->
+                <Grid Margin="0,0,0,16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0" Style="{StaticResource CardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="CPU" Style="{StaticResource CardTitleStyle}"/>
+                            <Grid Margin="0,12,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="100"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="모델명" Style="{StaticResource InfoLabelStyle}"/>
+                                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Snapshot.CpuName}" Style="{StaticResource InfoValueStyle}" TextWrapping="Wrap"/>
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="클럭" Style="{StaticResource InfoLabelStyle}"/>
+                                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Snapshot.CpuSpeedGhz, StringFormat={}{0:F2} GHz}" Style="{StaticResource InfoValueStyle}"/>
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="코어" Style="{StaticResource InfoLabelStyle}"/>
+                                <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal">
+                                    <TextBlock Text="{Binding Snapshot.CpuCores}" Style="{StaticResource InfoValueStyle}"/>
+                                    <TextBlock Text=" 코어 / " Foreground="#64748B" FontSize="12" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding Snapshot.CpuThreads}" Style="{StaticResource InfoValueStyle}"/>
+                                    <TextBlock Text=" 스레드" Foreground="#64748B" FontSize="12" VerticalAlignment="Center"/>
+                                </StackPanel>
+                                <TextBlock Grid.Row="3" Grid.Column="0" Text="아키텍처" Style="{StaticResource InfoLabelStyle}"/>
+                                <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding Snapshot.SystemType}" Style="{StaticResource InfoValueStyle}"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="2" Style="{StaticResource CardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="운영체제 / 시스템" Style="{StaticResource CardTitleStyle}"/>
+                            <Grid Margin="0,12,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="100"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="OS" Style="{StaticResource InfoLabelStyle}"/>
+                                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Snapshot.OsVersion}" Style="{StaticResource InfoValueStyle}" TextWrapping="Wrap"/>
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="빌드" Style="{StaticResource InfoLabelStyle}"/>
+                                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Snapshot.OsBuild}" Style="{StaticResource InfoValueStyle}"/>
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="컴퓨터" Style="{StaticResource InfoLabelStyle}"/>
+                                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Snapshot.ComputerName}" Style="{StaticResource InfoValueStyle}"/>
+                                <TextBlock Grid.Row="3" Grid.Column="0" Text="사용자" Style="{StaticResource InfoLabelStyle}"/>
+                                <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding Snapshot.UserName}" Style="{StaticResource InfoValueStyle}"/>
+                                <TextBlock Grid.Row="4" Grid.Column="0" Text="메모리" Style="{StaticResource InfoLabelStyle}"/>
+                                <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding Snapshot.RamText}" Style="{StaticResource InfoValueStyle}"/>
+                                <TextBlock Grid.Row="5" Grid.Column="0" Text="가동 시간" Style="{StaticResource InfoLabelStyle}"/>
+                                <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding Snapshot.UptimeText}" Style="{StaticResource InfoValueStyle}"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <!-- 디스크 -->
+                <Border Style="{StaticResource CardStyle}" Margin="0,0,0,16">
+                    <StackPanel>
+                        <TextBlock Text="디스크" Style="{StaticResource CardTitleStyle}"/>
+                        <ItemsControl ItemsSource="{Binding Disks}" Margin="0,12,0,0">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="#1A1A2A" CornerRadius="6" Padding="16,12" Margin="0,0,0,8">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="180"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="80"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding DisplayName}" Foreground="#E2E8F0" FontSize="13" FontWeight="SemiBold"/>
+                                                <TextBlock Text="{Binding FreeText, StringFormat={}여유: {0}}" Foreground="#64748B" FontSize="11"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                <ProgressBar Value="{Binding UsagePercent, Mode=OneWay}" Maximum="100" Height="6"
+                                                             Style="{StaticResource DiskProgressStyle}" Margin="0,0,16,0"/>
+                                                <TextBlock Margin="0,4,16,0" Foreground="#94A3B8" FontSize="11">
+                                                    <Run Text="{Binding UsedText}"/> <Run Text="/" Foreground="#475569"/> <Run Text="{Binding TotalText}"/>
+                                                </TextBlock>
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="2" Text="{Binding UsagePercent, StringFormat={}{0:F1}%}"
+                                                       Foreground="#E2E8F0" FontSize="16" FontWeight="Bold"
+                                                       HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
+                <!-- 네트워크 -->
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <TextBlock Text="네트워크" Style="{StaticResource CardTitleStyle}"/>
+                        <ItemsControl ItemsSource="{Binding Networks}" Margin="0,12,0,0">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="#1A1A2A" CornerRadius="6" Padding="16,12" Margin="0,0,0,8">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="160"/>
+                                                <ColumnDefinition Width="130"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="70"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding AdapterName}" Foreground="#E2E8F0" FontSize="13" FontWeight="SemiBold"/>
+                                                <TextBlock Text="{Binding Description}" Foreground="#64748B" FontSize="10" TextTrimming="CharacterEllipsis"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding IpAddress}" Foreground="#94A3B8" FontSize="13"/>
+                                                <TextBlock Text="{Binding MacAddress}" Foreground="#475569" FontSize="10"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                                <TextBlock Foreground="#64748B" FontSize="11">
+                                                    <Run Text="GW: "/><Run Text="{Binding Gateway}"/>
+                                                </TextBlock>
+                                                <TextBlock Foreground="#475569" FontSize="10">
+                                                    <Run Text="마스크: "/><Run Text="{Binding SubnetMask}"/>
+                                                </TextBlock>
+                                            </StackPanel>
+                                            <Border Grid.Column="3" CornerRadius="4" Padding="6,3" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsConnected}" Value="True">
+                                                                <Setter Property="Background" Value="#0F3A2A"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding IsConnected}" Value="False">
+                                                                <Setter Property="Background" Value="#3A1A1A"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <TextBlock Text="{Binding StatusText}" FontSize="11" FontWeight="SemiBold">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsConnected}" Value="True">
+                                                                    <Setter Property="Foreground" Value="#22C55E"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding IsConnected}" Value="False">
+                                                                    <Setter Property="Foreground" Value="#EF4444"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>
