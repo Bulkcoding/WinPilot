@@ -5,6 +5,9 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:conv="clr-namespace:WinPilot.Converters"
              mc:Ignorable="d">
+    <UserControl.InputBindings>
+        <KeyBinding Key="F5" Command="{Binding RefreshCommand}"/>
+    </UserControl.InputBindings>
     <UserControl.Resources>
         <conv:LogLevelToBrushConverter x:Key="LevelToBrush"/>
     </UserControl.Resources>
@@ -18,25 +21,26 @@
 
         <!-- 헤더 -->
         <DockPanel Grid.Row="0" Margin="24,20,24,16">
-            <TextBlock Text="이벤트 뷰어" FontSize="22" FontWeight="SemiBold" Foreground="#E2E8F0"/>
+            <TextBlock Text="이벤트 뷰어" FontSize="22" FontWeight="SemiBold"
+                       Foreground="#E2E8F0" VerticalAlignment="Center"/>
             <Button DockPanel.Dock="Right" Content="↺ 새로고침"
-                    Command="{Binding RefreshCommand}" Style="{StaticResource SecondaryButtonStyle}"/>
+                    Command="{Binding RefreshCommand}"
+                    Style="{StaticResource SecondaryButtonStyle}"
+                    Height="28" Padding="10,0" VerticalAlignment="Center"/>
         </DockPanel>
 
         <!-- 필터 -->
-        <Border Grid.Row="1" Background="#2A2A3E" Margin="24,0,24,12" CornerRadius="8" Padding="16,12">
+        <Border Grid.Row="1" Background="#2A2A3E" Margin="24,0,24,12" CornerRadius="8" Padding="14,10">
             <WrapPanel>
-                <ComboBox ItemsSource="{Binding LogFilters}"
-                          SelectedItem="{Binding SelectedLogFilter}"
-                          Style="{StaticResource FilterComboStyle}" Width="120" Margin="0,0,10,0"/>
-                <ComboBox ItemsSource="{Binding LevelFilters}"
-                          SelectedItem="{Binding SelectedLevelFilter}"
-                          Style="{StaticResource FilterComboStyle}" Width="120" Margin="0,0,10,0"/>
+                <ComboBox ItemsSource="{Binding LogFilters}" SelectedItem="{Binding SelectedLogFilter}"
+                          Style="{StaticResource FilterComboStyle}" Width="120" Height="30" Margin="0,0,10,0"/>
+                <ComboBox ItemsSource="{Binding LevelFilters}" SelectedItem="{Binding SelectedLevelFilter}"
+                          Style="{StaticResource FilterComboStyle}" Width="120" Height="30" Margin="0,0,10,0"/>
                 <DatePicker SelectedDate="{Binding FromDate}"
-                            Style="{StaticResource FilterDatePickerStyle}" Width="150" Margin="0,0,6,0"/>
+                            Style="{StaticResource FilterDatePickerStyle}" Width="138" Height="30" Margin="0,0,6,0"/>
                 <TextBlock Text="~" Foreground="#94A3B8" VerticalAlignment="Center" Margin="0,0,6,0"/>
                 <DatePicker SelectedDate="{Binding ToDate}"
-                            Style="{StaticResource FilterDatePickerStyle}" Width="150"/>
+                            Style="{StaticResource FilterDatePickerStyle}" Width="138" Height="30"/>
                 <TextBlock Text="{Binding TotalCount, StringFormat={}총 {0}건}"
                            Foreground="#64748B" FontSize="12" VerticalAlignment="Center" Margin="16,0,0,0"/>
             </WrapPanel>
@@ -44,9 +48,13 @@
 
         <!-- 테이블 -->
         <Border Grid.Row="2" Margin="24,0,24,0">
-            <DataGrid ItemsSource="{Binding Entries}"
+            <DataGrid x:Name="EventGrid"
+                      ItemsSource="{Binding Entries}"
+                      SelectedItem="{Binding SelectedEntry}"
+                      MouseDoubleClick="EventGrid_MouseDoubleClick"
                       AutoGenerateColumns="False"
                       IsReadOnly="True"
+                      RowHeight="40"
                       Background="#2A2A3E"
                       RowBackground="#2A2A3E"
                       AlternatingRowBackground="#252535"
@@ -63,7 +71,7 @@
                     <DataGridTemplateColumn Header="수준" Width="60" CanUserResize="False">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <Ellipse Width="10" Height="10" HorizontalAlignment="Center"
+                                <Ellipse Width="10" Height="10" HorizontalAlignment="Center" VerticalAlignment="Center"
                                          Fill="{Binding Level, Converter={StaticResource LevelToBrush}}"/>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
@@ -95,5 +103,94 @@
                 </StackPanel>
             </DockPanel>
         </Border>
+
+        <!-- 상세 팝업 오버레이 -->
+        <Grid Grid.RowSpan="4" Panel.ZIndex="20"
+              Visibility="{Binding IsDetailVisible, Converter={StaticResource BoolToVisibility}}">
+            <Border Background="#CC1E1E2E"/>
+            <Border Style="{StaticResource CardStyle}"
+                    MaxWidth="700" MaxHeight="580" MinWidth="480"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <DockPanel Grid.Row="0" Margin="0,0,0,16">
+                        <Button DockPanel.Dock="Right" Content="✕"
+                                Command="{Binding CloseDetailCommand}"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Width="30" Height="30" Padding="0" FontSize="14"/>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="이벤트 상세 정보" FontSize="15" FontWeight="SemiBold" Foreground="#E2E8F0"/>
+                            <TextBlock Text="{Binding SelectedEntry.DateTimeText}"
+                                       Foreground="#64748B" FontSize="11" Margin="0,2,0,0"/>
+                        </StackPanel>
+                    </DockPanel>
+
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <StackPanel>
+                            <Border Background="#1A1A2A" CornerRadius="6" Padding="14,10" Margin="0,0,0,6">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="90"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="수준" Foreground="#64748B" FontSize="12" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="1"
+                                               Text="{Binding SelectedEntry.LevelText}"
+                                               Foreground="{Binding SelectedEntry.Level, Converter={StaticResource LevelToBrush}}"
+                                               FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center"/>
+                                </Grid>
+                            </Border>
+                            <Border Background="#1A1A2A" CornerRadius="6" Padding="14,10" Margin="0,0,0,6">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="90"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="로그" Foreground="#64748B" FontSize="12" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding SelectedEntry.LogName}"
+                                               Foreground="#CBD5E1" FontSize="12" VerticalAlignment="Center"/>
+                                </Grid>
+                            </Border>
+                            <Border Background="#1A1A2A" CornerRadius="6" Padding="14,10" Margin="0,0,0,6">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="90"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="이벤트 ID" Foreground="#64748B" FontSize="12" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding SelectedEntry.EventId}"
+                                               Foreground="#CBD5E1" FontSize="12" VerticalAlignment="Center"/>
+                                </Grid>
+                            </Border>
+                            <Border Background="#1A1A2A" CornerRadius="6" Padding="14,10" Margin="0,0,0,6">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="90"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="원본" Foreground="#64748B" FontSize="12" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding SelectedEntry.Source}"
+                                               Foreground="#CBD5E1" FontSize="12" TextWrapping="Wrap"/>
+                                </Grid>
+                            </Border>
+                            <Border Background="#1A1A2A" CornerRadius="6" Padding="14,12">
+                                <StackPanel>
+                                    <TextBlock Text="설명" Foreground="#64748B" FontSize="12" Margin="0,0,0,8"/>
+                                    <TextBox Text="{Binding SelectedEntry.Description, Mode=OneWay}"
+                                             Background="Transparent" Foreground="#CBD5E1"
+                                             FontSize="12" IsReadOnly="True" TextWrapping="Wrap"
+                                             BorderThickness="0" Padding="0"
+                                             FontFamily="Consolas"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+        </Grid>
     </Grid>
 </UserControl>

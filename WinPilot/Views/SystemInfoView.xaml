@@ -119,7 +119,7 @@
                                                 <ProgressBar Value="{Binding UsagePercent, Mode=OneWay}" Maximum="100" Height="6"
                                                              Style="{StaticResource DiskProgressStyle}" Margin="0,0,16,0"/>
                                                 <TextBlock Margin="0,4,16,0" Foreground="#94A3B8" FontSize="11">
-                                                    <Run Text="{Binding UsedText}"/> <Run Text="/" Foreground="#475569"/> <Run Text="{Binding TotalText}"/>
+                                                    <Run Text="{Binding UsedText, Mode=OneWay}"/> <Run Text="/" Foreground="#475569"/> <Run Text="{Binding TotalText, Mode=OneWay}"/>
                                                 </TextBlock>
                                             </StackPanel>
                                             <TextBlock Grid.Column="2" Text="{Binding UsagePercent, StringFormat={}{0:F1}%}"

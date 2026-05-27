@@ -20,6 +20,8 @@ public partial class EventViewerViewModel : ObservableObject
     [ObservableProperty] private int _currentPage = 1;
     [ObservableProperty] private int _totalPages = 1;
     [ObservableProperty] private int _totalCount;
+    [ObservableProperty] private LogEntry? _selectedEntry;
+    [ObservableProperty] private bool _isDetailVisible;
 
     private const int PageSize = 12;
 
@@ -46,6 +48,9 @@ public partial class EventViewerViewModel : ObservableObject
     {
         if (CurrentPage < TotalPages) { CurrentPage++; UpdatePage(); }
     }
+
+    [RelayCommand]
+    private void CloseDetail() => IsDetailVisible = false;
 
     partial void OnSelectedLogFilterChanged(string value) { _ = RefreshAsync(); }
     partial void OnSelectedLevelFilterChanged(string value) { _ = RefreshAsync(); }

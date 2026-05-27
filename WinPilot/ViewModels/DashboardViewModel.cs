@@ -13,6 +13,7 @@ public partial class DashboardViewModel : ObservableObject
     private readonly SystemInfoService _sysInfo;
     private readonly EventLogService _eventLog = new();
     private readonly DispatcherTimer _timer;
+    private readonly DispatcherTimer _cpuTimer;
     private readonly Queue<double> _ramHistory = new();
     private const int MaxHistory = 60;
 
@@ -42,6 +43,9 @@ public partial class DashboardViewModel : ObservableObject
             if (e.PropertyName == nameof(SettingsViewModel.RefreshIntervalSeconds))
                 _timer.Interval = TimeSpan.FromSeconds(SettingsViewModel.Current.RefreshIntervalSeconds);
         };
+
+        _cpuTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+        _cpuTimer.Tick += async (_, _) => CpuUsage = await _sysInfo.GetCpuUsageAsync();
     }
 
     public async void StartAutoRefresh()
@@ -49,6 +53,7 @@ public partial class DashboardViewModel : ObservableObject
         await Task.Delay(800);
         await RefreshAsync();
         _timer.Start();
+        _cpuTimer.Start();
     }
 
     [RelayCommand]

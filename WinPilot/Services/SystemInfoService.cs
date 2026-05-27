@@ -25,6 +25,8 @@ public class SystemInfoService : IDisposable
         }
     }
 
+    public async Task<float> GetCpuUsageAsync() => await Task.Run(GetCpuUsage);
+
     private float GetCpuUsage()
     {
         if (_cpuCounter != null)
