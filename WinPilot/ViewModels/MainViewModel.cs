@@ -37,9 +37,5 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void ToggleSidebar()
-    {
-        IsSidebarExpanded = !IsSidebarExpanded;
-        SettingsViewModel.Current.IsSidebarExpanded = IsSidebarExpanded;
-    }
+    private void ToggleSidebar() => IsSidebarExpanded = !IsSidebarExpanded;
 }

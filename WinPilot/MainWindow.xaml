@@ -8,7 +8,7 @@
         mc:Ignorable="d"
         Title="WinPilot" Height="720" Width="1100"
         MinHeight="600" MinWidth="900"
-        Background="#1E1E2E"
+        Background="{DynamicResource BgBrush}"
         FontFamily="Segoe UI">
     <Window.DataContext>
         <vm:MainViewModel/>
@@ -49,7 +49,7 @@
         </Grid.ColumnDefinitions>
 
         <!-- 사이드바 -->
-        <Border Grid.Column="0" Background="#16162A">
+        <Border Grid.Column="0" Background="{DynamicResource SidebarBrush}">
             <Border.Style>
                 <Style TargetType="Border">
                     <Style.Triggers>

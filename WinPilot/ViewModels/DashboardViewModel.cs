@@ -33,16 +33,8 @@ public partial class DashboardViewModel : ObservableObject
     public DashboardViewModel(SystemInfoService sysInfo)
     {
         _sysInfo = sysInfo;
-        _timer = new DispatcherTimer
-        {
-            Interval = TimeSpan.FromSeconds(SettingsViewModel.Current.RefreshIntervalSeconds)
-        };
+        _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(30) };
         _timer.Tick += async (_, _) => await RefreshAsync();
-        SettingsViewModel.Current.PropertyChanged += (_, e) =>
-        {
-            if (e.PropertyName == nameof(SettingsViewModel.RefreshIntervalSeconds))
-                _timer.Interval = TimeSpan.FromSeconds(SettingsViewModel.Current.RefreshIntervalSeconds);
-        };
 
         _cpuTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _cpuTimer.Tick += async (_, _) => CpuUsage = await _sysInfo.GetCpuUsageAsync();

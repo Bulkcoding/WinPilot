@@ -4,49 +4,25 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              mc:Ignorable="d">
-    <ScrollViewer Background="#1E1E2E" VerticalScrollBarVisibility="Auto">
+    <ScrollViewer Background="{DynamicResource BgBrush}" VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="24,20,24,24">
             <TextBlock Text="설정" FontSize="22" FontWeight="SemiBold" Foreground="#E2E8F0" Margin="0,0,0,20"/>
 
-            <Border Style="{StaticResource CardStyle}" Margin="0,0,0,16">
-                <StackPanel>
-                    <TextBlock Text="자동 새로고침" Style="{StaticResource CardTitleStyle}" Margin="0,0,0,16"/>
-
-                    <DockPanel>
-                        <TextBlock Text="새로고침 주기" Foreground="#94A3B8" FontSize="13" VerticalAlignment="Center"/>
-                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                            <ComboBox ItemsSource="{Binding RefreshIntervals}"
-                                      SelectedItem="{Binding RefreshIntervalSeconds}"
-                                      Style="{StaticResource FilterComboStyle}" Width="100">
-                                <ComboBox.ItemTemplate>
-                                    <DataTemplate>
-                                        <TextBlock>
-                                            <Run Text="{Binding}"/><Run Text="초"/>
-                                        </TextBlock>
-                                    </DataTemplate>
-                                </ComboBox.ItemTemplate>
-                            </ComboBox>
-                        </StackPanel>
-                    </DockPanel>
-                    <TextBlock Text="대시보드 데이터가 선택한 주기마다 자동으로 갱신됩니다."
-                               Foreground="#64748B" FontSize="11" Margin="0,8,0,0"/>
-                </StackPanel>
-            </Border>
-
             <Border Style="{StaticResource CardStyle}">
                 <StackPanel>
-                    <TextBlock Text="UI" Style="{StaticResource CardTitleStyle}" Margin="0,0,0,16"/>
-                    <DockPanel>
-                        <TextBlock Text="사이드바 스타일" Foreground="#94A3B8" FontSize="13" VerticalAlignment="Center"/>
-                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                            <RadioButton Content="텍스트 표시"
-                                         IsChecked="{Binding IsSidebarExpanded}"
-                                         Foreground="#E2E8F0" Margin="0,0,16,0" VerticalAlignment="Center"/>
-                            <RadioButton Content="아이콘만"
-                                         IsChecked="{Binding IsSidebarExpanded, Converter={StaticResource InverseBoolConverter}}"
-                                         Foreground="#E2E8F0" VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </DockPanel>
+                    <TextBlock Text="테마" Style="{StaticResource CardTitleStyle}" Margin="0,0,0,16"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                        <RadioButton Content="다크 모드"
+                                     IsChecked="{Binding IsDarkTheme}"
+                                     Foreground="#E2E8F0" FontSize="13"
+                                     Margin="0,0,24,0" VerticalAlignment="Center"/>
+                        <RadioButton Content="라이트 모드"
+                                     IsChecked="{Binding IsDarkTheme, Converter={StaticResource InverseBoolConverter}}"
+                                     Foreground="#E2E8F0" FontSize="13"
+                                     VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <TextBlock Text="앱 재시작 없이 즉시 적용됩니다."
+                               Foreground="#64748B" FontSize="11" Margin="0,8,0,0"/>
                 </StackPanel>
             </Border>
         </StackPanel>

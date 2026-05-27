@@ -11,7 +11,7 @@
     <UserControl.Resources>
         <conv:LogLevelToBrushConverter x:Key="LevelToBrush"/>
     </UserControl.Resources>
-    <Grid Background="#1E1E2E">
+    <Grid Background="{DynamicResource BgBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -26,7 +26,7 @@
             <Button DockPanel.Dock="Right" Content="↺ 새로고침"
                     Command="{Binding RefreshCommand}"
                     Style="{StaticResource SecondaryButtonStyle}"
-                    Height="28" Padding="10,0" VerticalAlignment="Center"/>
+                    VerticalAlignment="Center"/>
         </DockPanel>
 
         <!-- 필터 -->
@@ -184,7 +184,9 @@
                                              Background="Transparent" Foreground="#CBD5E1"
                                              FontSize="12" IsReadOnly="True" TextWrapping="Wrap"
                                              BorderThickness="0" Padding="0"
-                                             FontFamily="Consolas"/>
+                                             FontFamily="Consolas"
+                                             MaxHeight="220"
+                                             VerticalScrollBarVisibility="Auto"/>
                                 </StackPanel>
                             </Border>
                         </StackPanel>

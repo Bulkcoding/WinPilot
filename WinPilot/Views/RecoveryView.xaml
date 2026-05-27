@@ -9,7 +9,7 @@
         <conv:StepStatusToBrushConverter x:Key="StatusToBrush"/>
         <conv:InverseBoolConverter x:Key="InverseBool"/>
     </UserControl.Resources>
-    <Grid Background="#1E1E2E">
+    <Grid Background="{DynamicResource BgBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -47,7 +47,8 @@
                     <Button DockPanel.Dock="Right" Content="▶ 전체 실행"
                             Command="{Binding RunAllStepsCommand}"
                             IsEnabled="{Binding IsRunning, Converter={StaticResource InverseBool}}"
-                            Style="{StaticResource PrimaryButtonStyle}"/>
+                            Style="{StaticResource PrimaryButtonStyle}"
+                            Padding="12,6" FontSize="12"/>
                 </DockPanel>
                 <ItemsControl ItemsSource="{Binding Steps}">
                     <ItemsControl.ItemTemplate>
