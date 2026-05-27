@@ -2,7 +2,7 @@
 using System.Data;
 using System.Windows;
 
-namespace OpsPilot;
+namespace WinPilot;
 
 /// <summary>
 /// Interaction logic for App.xaml

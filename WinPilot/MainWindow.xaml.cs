@@ -1,6 +1,6 @@
 ﻿using System.Windows;
 
-namespace OpsPilot;
+namespace WinPilot;
 
 public partial class MainWindow : Window
 {

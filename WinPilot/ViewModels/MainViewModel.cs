@@ -1,9 +1,9 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace OpsPilot.ViewModels;
+namespace WinPilot.ViewModels;
 
 public partial class MainViewModel : ObservableObject
 {
     [ObservableProperty]
-    private string _title = "OpsPilot";
+    private string _title = "WinPilot";
 }
