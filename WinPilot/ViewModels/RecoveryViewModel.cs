@@ -103,15 +103,21 @@ public partial class RecoveryViewModel : ObservableObject
 
         var tcs = new TaskCompletionSource<int>();
         var stepOutput = new StringBuilder();
+        var outputLock = new object();   // stdout + stderr 핸들러가 별도 스레드에서 동시에 호출되므로 lock 필요
 
         var process = _service.StartCommand(
             step.FileName, step.Arguments,
             (_, e) =>
             {
                 if (e.Data == null) return;
-                stepOutput.AppendLine(e.Data);
-                Application.Current.Dispatcher.InvokeAsync(() =>
-                    CurrentOutput = outputAll + stepOutput.ToString());
+                string snapshot;
+                lock (outputLock)
+                {
+                    stepOutput.AppendLine(e.Data);
+                    snapshot = stepOutput.ToString();
+                }
+                Application.Current?.Dispatcher.InvokeAsync(() =>
+                    CurrentOutput = outputAll + snapshot);
             },
             (sender, _) =>
             {
@@ -129,7 +135,9 @@ public partial class RecoveryViewModel : ObservableObject
 
         int exitCode = await tcs.Task;
         step.Status = exitCode == 0 ? StepStatus.Completed : StepStatus.Failed;
-        outputAll.Append(stepOutput);
+        string finalOutput;
+        lock (outputLock) { finalOutput = stepOutput.ToString(); }
+        outputAll.Append(finalOutput);
         outputAll.AppendLine($"\n→ 종료 코드: {exitCode}  ({step.StatusText})\n");
         CurrentOutput = outputAll.ToString();
     }
