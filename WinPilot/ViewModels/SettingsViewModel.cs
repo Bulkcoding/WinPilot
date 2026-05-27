@@ -25,6 +25,11 @@ public partial class SettingsViewModel : ObservableObject
             res["TextSecondaryBrush"] = new SolidColorBrush(Color.FromRgb(0x94, 0xA3, 0xB8));
             res["ItemRowBrush"]       = new SolidColorBrush(Color.FromRgb(0x1A, 0x1A, 0x2A));
             res["AltRowBrush"]        = new SolidColorBrush(Color.FromRgb(0x25, 0x25, 0x35));
+            res["ControlBrush"]       = new SolidColorBrush(Color.FromRgb(0x37, 0x41, 0x51));
+            res["BorderBrush"]        = new SolidColorBrush(Color.FromRgb(0x37, 0x41, 0x51));
+            res["WarningBgBrush"]     = new SolidColorBrush(Color.FromRgb(0x3A, 0x20, 0x10));
+            res["ConsoleBgBrush"]     = new SolidColorBrush(Color.FromRgb(0x0D, 0x0D, 0x1A));
+            res["ConsoleTextBrush"]   = new SolidColorBrush(Color.FromRgb(0x94, 0xA3, 0xB8));
         }
         else
         {
@@ -36,6 +41,11 @@ public partial class SettingsViewModel : ObservableObject
             res["TextSecondaryBrush"] = new SolidColorBrush(Color.FromRgb(0x64, 0x74, 0x8B));
             res["ItemRowBrush"]       = new SolidColorBrush(Color.FromRgb(0xEE, 0xF2, 0xF7));
             res["AltRowBrush"]        = new SolidColorBrush(Color.FromRgb(0xE8, 0xED, 0xF5));
+            res["ControlBrush"]       = new SolidColorBrush(Color.FromRgb(0xE2, 0xE8, 0xF0));
+            res["BorderBrush"]        = new SolidColorBrush(Color.FromRgb(0xCB, 0xD5, 0xE1));
+            res["WarningBgBrush"]     = new SolidColorBrush(Color.FromRgb(0xFE, 0xF3, 0xC7));
+            res["ConsoleBgBrush"]     = new SolidColorBrush(Color.FromRgb(0xF8, 0xFA, 0xFC));
+            res["ConsoleTextBrush"]   = new SolidColorBrush(Color.FromRgb(0x47, 0x55, 0x69));
         }
     }
 }

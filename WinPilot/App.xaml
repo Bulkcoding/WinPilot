@@ -31,6 +31,10 @@
             <SolidColorBrush x:Key="NavHoverBrush"    Color="#252545"/>
             <SolidColorBrush x:Key="ItemRowBrush"     Color="#1A1A2A"/>
             <SolidColorBrush x:Key="AltRowBrush"      Color="#252535"/>
+            <SolidColorBrush x:Key="ControlBrush"     Color="#374151"/>
+            <SolidColorBrush x:Key="WarningBgBrush"   Color="#3A2010"/>
+            <SolidColorBrush x:Key="ConsoleBgBrush"   Color="#0D0D1A"/>
+            <SolidColorBrush x:Key="ConsoleTextBrush" Color="#94A3B8"/>
 
             <!-- Card Style -->
             <Style x:Key="CardStyle" TargetType="Border">
@@ -152,8 +156,8 @@
             </Style>
 
             <Style x:Key="PageButtonStyle" TargetType="Button">
-                <Setter Property="Background" Value="#374151"/>
-                <Setter Property="Foreground" Value="#CBD5E1"/>
+                <Setter Property="Background" Value="{DynamicResource ControlBrush}"/>
+                <Setter Property="Foreground" Value="{DynamicResource TextValueBrush}"/>
                 <Setter Property="Width" Value="32"/>
                 <Setter Property="Height" Value="32"/>
                 <Setter Property="BorderThickness" Value="0"/>
@@ -170,8 +174,8 @@
                                     <Setter Property="Background" Value="#4B5563"/>
                                 </Trigger>
                                 <Trigger Property="IsEnabled" Value="False">
-                                    <Setter Property="Background" Value="#252535"/>
-                                    <Setter Property="Foreground" Value="#374151"/>
+                                    <Setter Property="Background" Value="{DynamicResource AltRowBrush}"/>
+                                    <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
@@ -204,10 +208,10 @@
                 </Setter>
             </Style>
 
-            <!-- ComboBox Item Style (for dark dropdown) -->
+            <!-- ComboBox Item Style (for dropdown) -->
             <Style x:Key="FilterComboItemStyle" TargetType="ComboBoxItem">
-                <Setter Property="Background" Value="#252535"/>
-                <Setter Property="Foreground" Value="#E2E8F0"/>
+                <Setter Property="Background" Value="{DynamicResource AltRowBrush}"/>
+                <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
                 <Setter Property="Padding" Value="8,5"/>
                 <Setter Property="FontSize" Value="12"/>
                 <Setter Property="Template">
@@ -221,7 +225,7 @@
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsHighlighted" Value="True">
-                                    <Setter TargetName="Bd" Property="Background" Value="#374151"/>
+                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource ControlBrush}"/>
                                 </Trigger>
                                 <Trigger Property="IsSelected" Value="True">
                                     <Setter TargetName="Bd" Property="Background" Value="#1E3A5F"/>
@@ -235,9 +239,9 @@
 
             <!-- ComboBox Style -->
             <Style x:Key="FilterComboStyle" TargetType="ComboBox">
-                <Setter Property="Background" Value="#252535"/>
-                <Setter Property="Foreground" Value="#E2E8F0"/>
-                <Setter Property="BorderBrush" Value="#374151"/>
+                <Setter Property="Background" Value="{DynamicResource AltRowBrush}"/>
+                <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
                 <Setter Property="BorderThickness" Value="1"/>
                 <Setter Property="Padding" Value="8,4"/>
                 <Setter Property="FontSize" Value="12"/>
@@ -262,7 +266,7 @@
                                                       VerticalAlignment="Center"
                                                       IsHitTestVisible="False"/>
                                     <Path Grid.Column="1" Data="M0,0 L4,4 L8,0"
-                                          Stroke="#94A3B8" StrokeThickness="1.5"
+                                          Stroke="{DynamicResource TextSecondaryBrush}" StrokeThickness="1.5"
                                           VerticalAlignment="Center" HorizontalAlignment="Center"/>
                                     <Popup x:Name="PART_Popup"
                                            IsOpen="{TemplateBinding IsDropDownOpen}"
@@ -270,8 +274,8 @@
                                            AllowsTransparency="True"
                                            Focusable="False"
                                            MinWidth="{Binding Path=ActualWidth, RelativeSource={RelativeSource TemplatedParent}}">
-                                        <Border Background="#252535"
-                                                BorderBrush="#374151"
+                                        <Border Background="{DynamicResource AltRowBrush}"
+                                                BorderBrush="{DynamicResource BorderBrush}"
                                                 BorderThickness="1"
                                                 CornerRadius="0,0,4,4"
                                                 Margin="0,1,0,0">
@@ -301,8 +305,8 @@
                 <Style.Resources>
                     <Style TargetType="DatePickerTextBox">
                         <Setter Property="Background" Value="Transparent"/>
-                        <Setter Property="Foreground" Value="#E2E8F0"/>
-                        <Setter Property="CaretBrush" Value="#E2E8F0"/>
+                        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                        <Setter Property="CaretBrush" Value="{DynamicResource TextPrimaryBrush}"/>
                         <Setter Property="SelectionBrush" Value="#3B82F6"/>
                         <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
                         <Setter Property="BorderThickness" Value="0"/>
@@ -318,9 +322,9 @@
                         </Setter>
                     </Style>
                 </Style.Resources>
-                <Setter Property="Background" Value="#252535"/>
-                <Setter Property="Foreground" Value="#E2E8F0"/>
-                <Setter Property="BorderBrush" Value="#374151"/>
+                <Setter Property="Background" Value="{DynamicResource AltRowBrush}"/>
+                <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
                 <Setter Property="BorderThickness" Value="1"/>
                 <Setter Property="FontSize" Value="12"/>
                 <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
@@ -359,7 +363,7 @@
                                             </ControlTemplate>
                                         </Button.Template>
                                         <Path Data="M2,0 L2,1 M5,0 L5,1 M0,2 L7,2 M0,4 L7,4 M0,6 L7,6 M0,3 L7,3 M0,5 L7,5"
-                                              Stroke="#94A3B8" StrokeThickness="1.2" Width="8" Height="8"/>
+                                              Stroke="{DynamicResource TextSecondaryBrush}" StrokeThickness="1.2" Width="8" Height="8"/>
                                     </Button>
                                     <Popup x:Name="PART_Popup"
                                            AllowsTransparency="True"

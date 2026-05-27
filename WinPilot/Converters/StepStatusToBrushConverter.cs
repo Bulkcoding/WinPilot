@@ -11,12 +11,15 @@ public class StepStatusToBrushConverter : IValueConverter
     {
         if (value is StepStatus status)
         {
+            bool isDark = SettingsViewModel.Current.IsDarkTheme;
             return status switch
             {
-                StepStatus.Running => new SolidColorBrush(Color.FromRgb(0x3B, 0x82, 0xF6)),
+                StepStatus.Running   => new SolidColorBrush(Color.FromRgb(0x3B, 0x82, 0xF6)),
                 StepStatus.Completed => new SolidColorBrush(Color.FromRgb(0x22, 0xC5, 0x5E)),
-                StepStatus.Failed => new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44)),
-                _ => new SolidColorBrush(Color.FromRgb(0x4B, 0x55, 0x63))
+                StepStatus.Failed    => new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44)),
+                _ => isDark
+                    ? new SolidColorBrush(Color.FromRgb(0x4B, 0x55, 0x63))
+                    : new SolidColorBrush(Color.FromRgb(0x3B, 0x82, 0xF6))
             };
         }
         return Brushes.Gray;

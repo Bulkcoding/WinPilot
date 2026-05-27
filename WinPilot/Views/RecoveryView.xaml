@@ -25,7 +25,7 @@
         <!-- 관리자 권한 경고 -->
         <Border Grid.Row="1"
                 Visibility="{Binding IsNotAdmin, Converter={StaticResource BoolToVisibility}}"
-                Background="#3A2010" BorderBrush="#F59E0B" BorderThickness="1"
+                Background="{DynamicResource WarningBgBrush}" BorderBrush="#F59E0B" BorderThickness="1"
                 CornerRadius="8" Margin="24,0,24,16" Padding="16,12">
             <DockPanel>
                 <Button DockPanel.Dock="Right" Content="관리자로 재시작"
@@ -99,7 +99,7 @@
                 </DockPanel>
                 <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" MinHeight="200">
                     <TextBox Text="{Binding CurrentOutput, Mode=OneWay}"
-                             Background="#0D0D1A" Foreground="#94A3B8"
+                             Background="{DynamicResource ConsoleBgBrush}" Foreground="{DynamicResource ConsoleTextBrush}"
                              FontFamily="Consolas" FontSize="11"
                              IsReadOnly="True" TextWrapping="Wrap"
                              BorderThickness="0" Padding="8"/>
