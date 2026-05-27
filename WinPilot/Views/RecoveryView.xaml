@@ -19,7 +19,7 @@
 
         <!-- 헤더 -->
         <DockPanel Grid.Row="0" Margin="24,20,24,16">
-            <TextBlock Text="복구 도구" FontSize="22" FontWeight="SemiBold" Foreground="#E2E8F0"/>
+            <TextBlock Text="복구 도구" FontSize="22" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
         </DockPanel>
 
         <!-- 관리자 권한 경고 -->
@@ -34,7 +34,7 @@
                 <StackPanel>
                     <TextBlock Text="⚠ 관리자 권한 필요" Foreground="#F59E0B" FontSize="13" FontWeight="SemiBold"/>
                     <TextBlock Text="DISM 및 SFC 명령은 관리자 권한으로 실행해야 합니다."
-                               Foreground="#CBD5E1" FontSize="12" Margin="0,4,0,0"/>
+                               Foreground="{DynamicResource TextValueBrush}" FontSize="12" Margin="0,4,0,0"/>
                 </StackPanel>
             </DockPanel>
         </Border>
@@ -53,7 +53,7 @@
                 <ItemsControl ItemsSource="{Binding Steps}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border Background="#1A1A2A" CornerRadius="6" Padding="16,12" Margin="0,0,0,8">
+                            <Border Background="{DynamicResource ItemRowBrush}" CornerRadius="6" Padding="16,12" Margin="0,0,0,8">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="32"/>
@@ -67,7 +67,7 @@
                                                    FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                     </Border>
                                     <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding Title}" Foreground="#E2E8F0" FontSize="13" FontWeight="SemiBold"/>
+                                        <TextBlock Text="{Binding Title}" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="13" FontWeight="SemiBold"/>
                                         <TextBlock Text="{Binding CommandDisplay}" Foreground="#64748B" FontSize="11"
                                                    FontFamily="Consolas" Margin="0,2,0,0"/>
                                     </StackPanel>

@@ -16,7 +16,7 @@
                                HorizontalAlignment="Center" Margin="0,8,0,24"/>
                     <Separator Background="#374151" Margin="0,0,0,20"/>
                     <TextBlock Text="원격 PC 상태 확인을 위한 WPF 기반 모니터링 도구"
-                               Foreground="#CBD5E1" FontSize="12" TextWrapping="Wrap"
+                               Foreground="{DynamicResource TextValueBrush}" FontSize="12" TextWrapping="Wrap"
                                HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,16"/>
                     <Button Content="GitHub 열기" Command="{Binding OpenGitHubCommand}"
                             Style="{StaticResource PrimaryButtonStyle}" HorizontalAlignment="Center"/>

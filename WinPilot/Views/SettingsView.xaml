@@ -6,7 +6,7 @@
              mc:Ignorable="d">
     <ScrollViewer Background="{DynamicResource BgBrush}" VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="24,20,24,24">
-            <TextBlock Text="설정" FontSize="22" FontWeight="SemiBold" Foreground="#E2E8F0" Margin="0,0,0,20"/>
+            <TextBlock Text="설정" FontSize="22" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,20"/>
 
             <Border Style="{StaticResource CardStyle}">
                 <StackPanel>
@@ -14,11 +14,11 @@
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
                         <RadioButton Content="다크 모드"
                                      IsChecked="{Binding IsDarkTheme}"
-                                     Foreground="#E2E8F0" FontSize="13"
+                                     Foreground="{DynamicResource TextPrimaryBrush}" FontSize="13"
                                      Margin="0,0,24,0" VerticalAlignment="Center"/>
                         <RadioButton Content="라이트 모드"
                                      IsChecked="{Binding IsDarkTheme, Converter={StaticResource InverseBoolConverter}}"
-                                     Foreground="#E2E8F0" FontSize="13"
+                                     Foreground="{DynamicResource TextPrimaryBrush}" FontSize="13"
                                      VerticalAlignment="Center"/>
                     </StackPanel>
                     <TextBlock Text="앱 재시작 없이 즉시 적용됩니다."

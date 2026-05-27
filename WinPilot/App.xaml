@@ -24,10 +24,13 @@
             <SolidColorBrush x:Key="WarningBrush"     Color="#F59E0B"/>
             <SolidColorBrush x:Key="ErrorBrush"       Color="#EF4444"/>
             <SolidColorBrush x:Key="TextPrimaryBrush" Color="#E2E8F0"/>
+            <SolidColorBrush x:Key="TextValueBrush"   Color="#CBD5E1"/>
             <SolidColorBrush x:Key="TextSecondaryBrush" Color="#94A3B8"/>
             <SolidColorBrush x:Key="BorderBrush"      Color="#374151"/>
             <SolidColorBrush x:Key="NavActiveBrush"   Color="#1E3A5F"/>
             <SolidColorBrush x:Key="NavHoverBrush"    Color="#252545"/>
+            <SolidColorBrush x:Key="ItemRowBrush"     Color="#1A1A2A"/>
+            <SolidColorBrush x:Key="AltRowBrush"      Color="#252535"/>
 
             <!-- Card Style -->
             <Style x:Key="CardStyle" TargetType="Border">
@@ -40,7 +43,7 @@
             <Style x:Key="CardTitleStyle" TargetType="TextBlock">
                 <Setter Property="FontSize" Value="14"/>
                 <Setter Property="FontWeight" Value="SemiBold"/>
-                <Setter Property="Foreground" Value="#E2E8F0"/>
+                <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
             </Style>
             <Style x:Key="CardLabelStyle" TargetType="TextBlock">
                 <Setter Property="FontSize" Value="12"/>
@@ -55,7 +58,7 @@
             </Style>
             <Style x:Key="InfoValueStyle" TargetType="TextBlock">
                 <Setter Property="FontSize" Value="12"/>
-                <Setter Property="Foreground" Value="#CBD5E1"/>
+                <Setter Property="Foreground" Value="{DynamicResource TextValueBrush}"/>
                 <Setter Property="Margin" Value="0,0,0,10"/>
                 <Setter Property="VerticalAlignment" Value="Top"/>
             </Style>
@@ -376,8 +379,8 @@
 
             <!-- DataGrid Styles -->
             <Style x:Key="DataGridHeaderStyle" TargetType="DataGridColumnHeader">
-                <Setter Property="Background" Value="#252535"/>
-                <Setter Property="Foreground" Value="#94A3B8"/>
+                <Setter Property="Background" Value="{DynamicResource AltRowBrush}"/>
+                <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
                 <Setter Property="Padding" Value="12,8"/>
                 <Setter Property="FontSize" Value="12"/>
                 <Setter Property="FontWeight" Value="SemiBold"/>
@@ -385,7 +388,7 @@
                 <Setter Property="BorderBrush" Value="#374151"/>
             </Style>
             <Style x:Key="DataGridRowStyle" TargetType="DataGridRow">
-                <Setter Property="Foreground" Value="#CBD5E1"/>
+                <Setter Property="Foreground" Value="{DynamicResource TextValueBrush}"/>
                 <Setter Property="FontSize" Value="12"/>
                 <Setter Property="BorderThickness" Value="0"/>
             </Style>
@@ -393,7 +396,7 @@
                 <Setter Property="Padding" Value="12,0"/>
                 <Setter Property="BorderThickness" Value="0"/>
                 <Setter Property="Background" Value="Transparent"/>
-                <Setter Property="Foreground" Value="#CBD5E1"/>
+                <Setter Property="Foreground" Value="{DynamicResource TextValueBrush}"/>
                 <Setter Property="FontSize" Value="12"/>
                 <Setter Property="VerticalContentAlignment" Value="Center"/>
                 <Style.Triggers>

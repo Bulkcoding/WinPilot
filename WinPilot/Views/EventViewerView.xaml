@@ -22,7 +22,7 @@
         <!-- 헤더 -->
         <DockPanel Grid.Row="0" Margin="24,20,24,16">
             <TextBlock Text="이벤트 뷰어" FontSize="22" FontWeight="SemiBold"
-                       Foreground="#E2E8F0" VerticalAlignment="Center"/>
+                       Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"/>
             <Button DockPanel.Dock="Right" Content="↺ 새로고침"
                     Command="{Binding RefreshCommand}"
                     Style="{StaticResource SecondaryButtonStyle}"
@@ -30,7 +30,7 @@
         </DockPanel>
 
         <!-- 필터 -->
-        <Border Grid.Row="1" Background="#2A2A3E" Margin="24,0,24,12" CornerRadius="8" Padding="14,10">
+        <Border Grid.Row="1" Background="{DynamicResource SurfaceBrush}" Margin="24,0,24,12" CornerRadius="8" Padding="14,10">
             <WrapPanel>
                 <ComboBox ItemsSource="{Binding LogFilters}" SelectedItem="{Binding SelectedLogFilter}"
                           Style="{StaticResource FilterComboStyle}" Width="120" Height="30" Margin="0,0,10,0"/>
@@ -55,9 +55,9 @@
                       AutoGenerateColumns="False"
                       IsReadOnly="True"
                       RowHeight="40"
-                      Background="#2A2A3E"
-                      RowBackground="#2A2A3E"
-                      AlternatingRowBackground="#252535"
+                      Background="{DynamicResource SurfaceBrush}"
+                      RowBackground="{DynamicResource SurfaceBrush}"
+                      AlternatingRowBackground="{DynamicResource AltRowBrush}"
                       BorderThickness="0"
                       GridLinesVisibility="Horizontal"
                       HorizontalGridLinesBrush="#374151"
@@ -93,7 +93,7 @@
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
                     <Button Content="＜" Command="{Binding PreviousPageCommand}"
                             Style="{StaticResource PageButtonStyle}"/>
-                    <TextBlock Margin="12,0" VerticalAlignment="Center" Foreground="#E2E8F0" FontSize="13">
+                    <TextBlock Margin="12,0" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="13">
                         <Run Text="{Binding CurrentPage}"/>
                         <Run Text=" / " Foreground="#64748B"/>
                         <Run Text="{Binding TotalPages}"/>
@@ -123,7 +123,7 @@
                                 Style="{StaticResource SecondaryButtonStyle}"
                                 Width="30" Height="30" Padding="0" FontSize="14"/>
                         <StackPanel VerticalAlignment="Center">
-                            <TextBlock Text="이벤트 상세 정보" FontSize="15" FontWeight="SemiBold" Foreground="#E2E8F0"/>
+                            <TextBlock Text="이벤트 상세 정보" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
                             <TextBlock Text="{Binding SelectedEntry.DateTimeText}"
                                        Foreground="#64748B" FontSize="11" Margin="0,2,0,0"/>
                         </StackPanel>
@@ -131,7 +131,7 @@
 
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                         <StackPanel>
-                            <Border Background="#1A1A2A" CornerRadius="6" Padding="14,10" Margin="0,0,0,6">
+                            <Border Background="{DynamicResource ItemRowBrush}" CornerRadius="6" Padding="14,10" Margin="0,0,0,6">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="90"/>
@@ -144,7 +144,7 @@
                                                FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center"/>
                                 </Grid>
                             </Border>
-                            <Border Background="#1A1A2A" CornerRadius="6" Padding="14,10" Margin="0,0,0,6">
+                            <Border Background="{DynamicResource ItemRowBrush}" CornerRadius="6" Padding="14,10" Margin="0,0,0,6">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="90"/>
@@ -152,10 +152,10 @@
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Text="로그" Foreground="#64748B" FontSize="12" VerticalAlignment="Center"/>
                                     <TextBlock Grid.Column="1" Text="{Binding SelectedEntry.LogName}"
-                                               Foreground="#CBD5E1" FontSize="12" VerticalAlignment="Center"/>
+                                               Foreground="{DynamicResource TextValueBrush}" FontSize="12" VerticalAlignment="Center"/>
                                 </Grid>
                             </Border>
-                            <Border Background="#1A1A2A" CornerRadius="6" Padding="14,10" Margin="0,0,0,6">
+                            <Border Background="{DynamicResource ItemRowBrush}" CornerRadius="6" Padding="14,10" Margin="0,0,0,6">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="90"/>
@@ -163,10 +163,10 @@
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Text="이벤트 ID" Foreground="#64748B" FontSize="12" VerticalAlignment="Center"/>
                                     <TextBlock Grid.Column="1" Text="{Binding SelectedEntry.EventId}"
-                                               Foreground="#CBD5E1" FontSize="12" VerticalAlignment="Center"/>
+                                               Foreground="{DynamicResource TextValueBrush}" FontSize="12" VerticalAlignment="Center"/>
                                 </Grid>
                             </Border>
-                            <Border Background="#1A1A2A" CornerRadius="6" Padding="14,10" Margin="0,0,0,6">
+                            <Border Background="{DynamicResource ItemRowBrush}" CornerRadius="6" Padding="14,10" Margin="0,0,0,6">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="90"/>
@@ -174,14 +174,14 @@
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Text="원본" Foreground="#64748B" FontSize="12" VerticalAlignment="Center"/>
                                     <TextBlock Grid.Column="1" Text="{Binding SelectedEntry.Source}"
-                                               Foreground="#CBD5E1" FontSize="12" TextWrapping="Wrap"/>
+                                               Foreground="{DynamicResource TextValueBrush}" FontSize="12" TextWrapping="Wrap"/>
                                 </Grid>
                             </Border>
-                            <Border Background="#1A1A2A" CornerRadius="6" Padding="14,12">
+                            <Border Background="{DynamicResource ItemRowBrush}" CornerRadius="6" Padding="14,12">
                                 <StackPanel>
                                     <TextBlock Text="설명" Foreground="#64748B" FontSize="12" Margin="0,0,0,8"/>
                                     <TextBox Text="{Binding SelectedEntry.Description, Mode=OneWay}"
-                                             Background="Transparent" Foreground="#CBD5E1"
+                                             Background="Transparent" Foreground="{DynamicResource TextValueBrush}"
                                              FontSize="12" IsReadOnly="True" TextWrapping="Wrap"
                                              BorderThickness="0" Padding="0"
                                              FontFamily="Consolas"

@@ -11,7 +11,7 @@
         </Grid.RowDefinitions>
 
         <DockPanel Grid.Row="0" Margin="24,20,24,16">
-            <TextBlock Text="레지스트리 바로가기" FontSize="22" FontWeight="SemiBold" Foreground="#E2E8F0"/>
+            <TextBlock Text="레지스트리 바로가기" FontSize="22" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
         </DockPanel>
 
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
@@ -23,14 +23,14 @@
                         <ItemsControl ItemsSource="{Binding Shortcuts}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Border Background="#1A1A2A" CornerRadius="6" Padding="16,14" Margin="0,0,0,8">
+                                    <Border Background="{DynamicResource ItemRowBrush}" CornerRadius="6" Padding="16,14" Margin="0,0,0,8">
                                         <Grid>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
                                             <StackPanel Grid.Column="0" Margin="0,0,16,0">
-                                                <TextBlock Text="{Binding Name}" Foreground="#E2E8F0"
+                                                <TextBlock Text="{Binding Name}" Foreground="{DynamicResource TextPrimaryBrush}"
                                                            FontSize="13" FontWeight="SemiBold"/>
                                                 <TextBlock Text="{Binding Description}" Foreground="#94A3B8"
                                                            FontSize="11" Margin="0,3,0,0"/>

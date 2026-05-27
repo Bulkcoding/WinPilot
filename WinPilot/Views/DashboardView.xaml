@@ -10,7 +10,7 @@
             <!-- 헤더 -->
             <DockPanel Margin="0,0,0,20">
                 <TextBlock Text="시스템 개요" FontSize="22" FontWeight="SemiBold"
-                           Foreground="#E2E8F0" VerticalAlignment="Center"/>
+                           Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"/>
                 <Button DockPanel.Dock="Right" Content="↺ 새로고침"
                         Command="{Binding RefreshCommand}"
                         Style="{StaticResource SecondaryButtonStyle}"/>
@@ -24,7 +24,7 @@
                     <StackPanel>
                         <TextBlock Text="CPU" Style="{StaticResource CardLabelStyle}"/>
                         <TextBlock Text="{Binding CpuUsage, StringFormat={}{0:F0}%}"
-                                   FontSize="36" FontWeight="Bold" Foreground="#E2E8F0" Margin="0,4,0,4"/>
+                                   FontSize="36" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,4,0,4"/>
                         <ProgressBar Value="{Binding CpuUsage}" Maximum="100"
                                      Style="{StaticResource MetricProgressStyle}"/>
                     </StackPanel>
@@ -35,7 +35,7 @@
                     <StackPanel>
                         <TextBlock Text="메모리(RAM)" Style="{StaticResource CardLabelStyle}"/>
                         <TextBlock Text="{Binding RamUsagePercent, StringFormat={}{0:F0}%}"
-                                   FontSize="36" FontWeight="Bold" Foreground="#E2E8F0" Margin="0,4,0,4"/>
+                                   FontSize="36" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,4,0,4"/>
                         <ProgressBar Value="{Binding RamUsagePercent, Mode=OneWay}" Maximum="100"
                                      Style="{StaticResource MetricProgressStyle}"/>
                         <TextBlock Text="{Binding RamText}" FontSize="11" Foreground="#94A3B8" Margin="0,4,0,0"/>
@@ -47,7 +47,7 @@
                     <StackPanel>
                         <TextBlock Text="운영 시간" Style="{StaticResource CardLabelStyle}"/>
                         <TextBlock Text="{Binding UptimeText}" FontSize="18" FontWeight="SemiBold"
-                                   Foreground="#E2E8F0" Margin="0,8,0,0" TextWrapping="Wrap"/>
+                                   Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,8,0,0" TextWrapping="Wrap"/>
                     </StackPanel>
                 </Border>
 
@@ -56,7 +56,7 @@
                     <StackPanel>
                         <TextBlock Text="Windows" Style="{StaticResource CardLabelStyle}"/>
                         <TextBlock Text="{Binding OsVersion}" FontSize="13" FontWeight="SemiBold"
-                                   Foreground="#E2E8F0" Margin="0,8,0,0" TextWrapping="Wrap"/>
+                                   Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,8,0,0" TextWrapping="Wrap"/>
                     </StackPanel>
                 </Border>
             </UniformGrid>
@@ -121,7 +121,7 @@
                                 <TextBlock DockPanel.Dock="Right" Text="{Binding RamText}"
                                            Foreground="#3B82F6" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"/>
                             </DockPanel>
-                            <Border Margin="0,12,0,0" Background="#1A1A2A" CornerRadius="4" Height="68" ClipToBounds="True">
+                            <Border Margin="0,12,0,0" Background="{DynamicResource ItemRowBrush}" CornerRadius="4" Height="68" ClipToBounds="True">
                                 <Canvas Width="300" Height="60" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                                     <Canvas.LayoutTransform>
                                         <ScaleTransform/>
@@ -157,15 +157,15 @@
                                 </Grid.RowDefinitions>
 
                                 <Ellipse Grid.Row="0" Grid.Column="0" Width="10" Height="10" Fill="#EF4444" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                                <TextBlock Grid.Row="0" Grid.Column="1" Text="오류" Foreground="#CBD5E1" FontSize="13" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Row="0" Grid.Column="1" Text="오류" Foreground="{DynamicResource TextValueBrush}" FontSize="13" VerticalAlignment="Center"/>
                                 <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding ErrorCount}" Foreground="#EF4444" FontSize="16" FontWeight="Bold" VerticalAlignment="Center"/>
 
                                 <Ellipse Grid.Row="1" Grid.Column="0" Width="10" Height="10" Fill="#F59E0B" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                                <TextBlock Grid.Row="1" Grid.Column="1" Text="경고" Foreground="#CBD5E1" FontSize="13" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Row="1" Grid.Column="1" Text="경고" Foreground="{DynamicResource TextValueBrush}" FontSize="13" VerticalAlignment="Center"/>
                                 <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding WarningCount}" Foreground="#F59E0B" FontSize="16" FontWeight="Bold" VerticalAlignment="Center"/>
 
                                 <Ellipse Grid.Row="2" Grid.Column="0" Width="10" Height="10" Fill="#3B82F6" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                                <TextBlock Grid.Row="2" Grid.Column="1" Text="정보" Foreground="#CBD5E1" FontSize="13" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Row="2" Grid.Column="1" Text="정보" Foreground="{DynamicResource TextValueBrush}" FontSize="13" VerticalAlignment="Center"/>
                                 <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding InfoCount}" Foreground="#3B82F6" FontSize="16" FontWeight="Bold" VerticalAlignment="Center"/>
                             </Grid>
                             <TextBlock Text="자세히 보기 →" FontSize="12" Foreground="#3B82F6"

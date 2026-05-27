@@ -14,7 +14,7 @@
         <ScrollViewer VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="24,20,24,24">
                 <DockPanel Margin="0,0,0,20">
-                    <TextBlock Text="시스템 정보" FontSize="22" FontWeight="SemiBold" Foreground="#E2E8F0"/>
+                    <TextBlock Text="시스템 정보" FontSize="22" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
                         <TextBlock Text="{Binding CopyStatusText}" Foreground="#22C55E" FontSize="12"
                                    VerticalAlignment="Center" Margin="0,0,12,0"/>
@@ -104,7 +104,7 @@
                         <ItemsControl ItemsSource="{Binding Disks}" Margin="0,12,0,0">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Border Background="#1A1A2A" CornerRadius="6" Padding="16,12" Margin="0,0,0,8">
+                                    <Border Background="{DynamicResource ItemRowBrush}" CornerRadius="6" Padding="16,12" Margin="0,0,0,8">
                                         <Grid>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="180"/>
@@ -112,7 +112,7 @@
                                                 <ColumnDefinition Width="80"/>
                                             </Grid.ColumnDefinitions>
                                             <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                                <TextBlock Text="{Binding DisplayName}" Foreground="#E2E8F0" FontSize="13" FontWeight="SemiBold"/>
+                                                <TextBlock Text="{Binding DisplayName}" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="13" FontWeight="SemiBold"/>
                                                 <TextBlock Text="{Binding FreeText, StringFormat={}여유: {0}}" Foreground="#64748B" FontSize="11"/>
                                             </StackPanel>
                                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
@@ -123,7 +123,7 @@
                                                 </TextBlock>
                                             </StackPanel>
                                             <TextBlock Grid.Column="2" Text="{Binding UsagePercent, StringFormat={}{0:F1}%}"
-                                                       Foreground="#E2E8F0" FontSize="16" FontWeight="Bold"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" FontSize="16" FontWeight="Bold"
                                                        HorizontalAlignment="Right" VerticalAlignment="Center"/>
                                         </Grid>
                                     </Border>
@@ -140,7 +140,7 @@
                         <ItemsControl ItemsSource="{Binding Networks}" Margin="0,12,0,0">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Border Background="#1A1A2A" CornerRadius="6" Padding="16,12" Margin="0,0,0,8">
+                                    <Border Background="{DynamicResource ItemRowBrush}" CornerRadius="6" Padding="16,12" Margin="0,0,0,8">
                                         <Grid>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="160"/>
@@ -149,7 +149,7 @@
                                                 <ColumnDefinition Width="70"/>
                                             </Grid.ColumnDefinitions>
                                             <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                                <TextBlock Text="{Binding AdapterName}" Foreground="#E2E8F0" FontSize="13" FontWeight="SemiBold"/>
+                                                <TextBlock Text="{Binding AdapterName}" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="13" FontWeight="SemiBold"/>
                                                 <TextBlock Text="{Binding Description}" Foreground="#64748B" FontSize="10" TextTrimming="CharacterEllipsis"/>
                                             </StackPanel>
                                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
