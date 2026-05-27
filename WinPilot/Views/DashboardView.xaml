@@ -181,6 +181,7 @@
                             <TextBlock Text="시스템 파일 검사(SFC)를 실행하여 손상된 시스템 파일을 검사하고 복구합니다."
                                        Foreground="#94A3B8" FontSize="12" TextWrapping="Wrap" Margin="0,8,0,16"/>
                             <Button Content="▶ SFC /scannow 시작"
+                                    Command="{Binding RunSfcCommand}"
                                     Style="{StaticResource PrimaryButtonStyle}"/>
                         </StackPanel>
                     </Border>

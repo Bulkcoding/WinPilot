@@ -25,6 +25,8 @@ public class RecoveryService
     public Process? StartCommand(string fileName, string arguments,
         DataReceivedEventHandler? outputHandler, EventHandler? exitedHandler)
     {
+        var oemEncoding = System.Text.Encoding.GetEncoding(
+            System.Globalization.CultureInfo.CurrentCulture.TextInfo.OEMCodePage);
         var info = new ProcessStartInfo
         {
             FileName = fileName,
@@ -33,7 +35,8 @@ public class RecoveryService
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             CreateNoWindow = true,
-            StandardOutputEncoding = System.Text.Encoding.UTF8
+            StandardOutputEncoding = oemEncoding,
+            StandardErrorEncoding  = oemEncoding
         };
 
         var process = new Process { StartInfo = info, EnableRaisingEvents = true };

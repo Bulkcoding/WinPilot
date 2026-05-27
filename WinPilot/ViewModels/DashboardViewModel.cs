@@ -1,4 +1,6 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -68,6 +70,30 @@ public partial class DashboardViewModel : ObservableObject
         WarningCount = summary.Warnings;
         InfoCount = summary.Infos;
         IsLoading = false;
+    }
+
+    [RelayCommand]
+    private void RunSfc()
+    {
+        if (!RecoveryService.IsRunningAsAdmin())
+        {
+            MessageBox.Show("SFC 실행에는 관리자 권한이 필요합니다.\n복구 도구 탭에서 '관리자로 재시작'을 클릭하세요.",
+                "WinPilot", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "cmd.exe",
+                Arguments = "/k sfc /scannow",
+                UseShellExecute = true
+            });
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"SFC 실행 실패: {ex.Message}", "WinPilot", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 
     private void UpdateSparkline(double ramPercent)
