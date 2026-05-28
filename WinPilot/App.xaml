@@ -57,13 +57,13 @@
             <Style x:Key="InfoLabelStyle" TargetType="TextBlock">
                 <Setter Property="FontSize" Value="12"/>
                 <Setter Property="Foreground" Value="#64748B"/>
-                <Setter Property="Margin" Value="0,0,0,10"/>
+                <Setter Property="Margin" Value="0,4,0,14"/>
                 <Setter Property="VerticalAlignment" Value="Top"/>
             </Style>
             <Style x:Key="InfoValueStyle" TargetType="TextBlock">
                 <Setter Property="FontSize" Value="12"/>
                 <Setter Property="Foreground" Value="{DynamicResource TextValueBrush}"/>
-                <Setter Property="Margin" Value="0,0,0,10"/>
+                <Setter Property="Margin" Value="0,4,0,14"/>
                 <Setter Property="VerticalAlignment" Value="Top"/>
             </Style>
 

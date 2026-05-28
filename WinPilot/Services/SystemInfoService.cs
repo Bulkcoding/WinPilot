@@ -10,6 +10,7 @@ namespace WinPilot.Services;
 public class SystemInfoService : IDisposable
 {
     private PerformanceCounter? _cpuCounter;
+    private PerformanceCounter? _ramCounter;
     private bool _disposed;
 
     public SystemInfoService()
@@ -19,13 +20,23 @@ public class SystemInfoService : IDisposable
             _cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
             _cpuCounter.NextValue();
         }
-        catch
+        catch { _cpuCounter = null; }
+
+        try
         {
-            _cpuCounter = null;
+            _ramCounter = new PerformanceCounter("Memory", "% Committed Bytes In Use");
+            _ramCounter.NextValue();
         }
+        catch { _ramCounter = null; }
     }
 
     public async Task<float> GetCpuUsageAsync() => await Task.Run(GetCpuUsage);
+
+    public async Task<float> GetRamUsagePercentAsync() => await Task.Run(() =>
+    {
+        try { return _ramCounter?.NextValue() ?? 0f; }
+        catch { return 0f; }
+    });
 
     private float GetCpuUsage()
     {
@@ -149,6 +160,7 @@ public class SystemInfoService : IDisposable
     {
         if (_disposed) return;
         _cpuCounter?.Dispose();
+        _ramCounter?.Dispose();
         _disposed = true;
     }
 }

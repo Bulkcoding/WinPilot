@@ -96,16 +96,16 @@
                                 <ItemsControl Grid.Row="2" Grid.Column="1" ItemsSource="{Binding Disks}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <StackPanel Margin="0,0,0,4">
+                                            <StackPanel Margin="0,4,0,10">
                                                 <DockPanel>
-                                                    <TextBlock Text="{Binding DisplayName}" Style="{StaticResource InfoValueStyle}" DockPanel.Dock="Left"/>
+                                                    <TextBlock Text="{Binding DisplayName}" Style="{StaticResource InfoValueStyle}" DockPanel.Dock="Left" Margin="0"/>
                                                     <TextBlock Text="{Binding UsagePercent, StringFormat={}{0:F0}%}"
-                                                               Style="{StaticResource InfoValueStyle}" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
+                                                               Style="{StaticResource InfoValueStyle}" DockPanel.Dock="Right" HorizontalAlignment="Right" Margin="0"/>
                                                 </DockPanel>
                                                 <ProgressBar Value="{Binding UsagePercent, Mode=OneWay}" Maximum="100" Height="4"
                                                              Style="{StaticResource DiskProgressStyle}" Margin="0,2,0,0"/>
                                                 <TextBlock Text="{Binding UsedText, StringFormat={}사용: {0}}" FontSize="10"
-                                                           Foreground="#64748B" Margin="0,2,0,0"/>
+                                                           Foreground="#64748B" Margin="0,3,0,0"/>
                                             </StackPanel>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
@@ -130,19 +130,21 @@
                                     <Polyline Points="{Binding SparklinePoints}"
                                               Stroke="#3B82F6" StrokeThickness="2"
                                               StrokeLineJoin="Round"/>
-                                    <Rectangle Canvas.Left="0" Canvas.Top="0" Width="300" Height="60"
-                                               Fill="#1A2535" Opacity="0.3"/>
                                 </Canvas>
                             </Border>
-                            <TextBlock Text="← 최근 60초" FontSize="10" Foreground="#475569" Margin="0,4,0,0"/>
+                            <TextBlock Text="← 최근 60초 (1초 간격)" FontSize="10" Foreground="#475569" Margin="0,4,0,0"/>
                         </StackPanel>
                     </Border>
                 </StackPanel>
 
                 <!-- 오른쪽: 이벤트 요약 + 복구 바로가기 -->
-                <StackPanel Grid.Column="2">
+                <Grid Grid.Column="2">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
                     <!-- 이벤트 뷰어 요약 -->
-                    <Border Style="{StaticResource CardStyle}" Margin="0,0,0,16">
+                    <Border Grid.Row="0" Style="{StaticResource CardStyle}" Margin="0,0,0,16">
                         <StackPanel>
                             <TextBlock Text="이벤트 뷰어 (경고 ~ 오류)" Style="{StaticResource CardTitleStyle}"/>
                             <Grid Margin="0,12,0,0">
@@ -175,7 +177,7 @@
                     </Border>
 
                     <!-- 시스템 복구 바로가기 -->
-                    <Border Style="{StaticResource CardStyle}">
+                    <Border Grid.Row="1" Style="{StaticResource CardStyle}" VerticalAlignment="Stretch">
                         <StackPanel>
                             <TextBlock Text="시스템 복구" Style="{StaticResource CardTitleStyle}"/>
                             <TextBlock Text="시스템 파일 검사(SFC)를 실행하여 손상된 시스템 파일을 검사하고 복구합니다."
@@ -185,7 +187,7 @@
                                     Style="{StaticResource PrimaryButtonStyle}"/>
                         </StackPanel>
                     </Border>
-                </StackPanel>
+                </Grid>
             </Grid>
         </StackPanel>
     </ScrollViewer>

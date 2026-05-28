@@ -39,7 +39,12 @@ public partial class DashboardViewModel : ObservableObject
         _timer.Tick += async (_, _) => await RefreshAsync();
 
         _cpuTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
-        _cpuTimer.Tick += async (_, _) => CpuUsage = await _sysInfo.GetCpuUsageAsync();
+        _cpuTimer.Tick += async (_, _) =>
+        {
+            CpuUsage = await _sysInfo.GetCpuUsageAsync();
+            var ram = await _sysInfo.GetRamUsagePercentAsync();
+            if (ram > 0) UpdateSparkline(ram);
+        };
     }
 
     public async void StartAutoRefresh()
