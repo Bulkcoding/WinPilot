@@ -185,8 +185,7 @@
                                              FontSize="12" IsReadOnly="True" TextWrapping="Wrap"
                                              BorderThickness="0" Padding="0"
                                              FontFamily="Consolas"
-                                             MaxHeight="220"
-                                             VerticalScrollBarVisibility="Auto"/>
+                                             VerticalScrollBarVisibility="Disabled"/>
                                 </StackPanel>
                             </Border>
                         </StackPanel>
