@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -33,6 +34,9 @@ public partial class RecoveryStep : ObservableObject
 public partial class RecoveryViewModel : ObservableObject
 {
     private readonly RecoveryService _service = new();
+    // DISM 진행률 줄 패턴: "[====55.5%====]" 형태
+    private static readonly Regex ProgressLineRx =
+        new(@"^\[=+\s*\d+\.?\d*\s*%", RegexOptions.Compiled);
 
     [ObservableProperty] private bool _isAdmin;
     [ObservableProperty] private bool _isRunning;
@@ -102,8 +106,8 @@ public partial class RecoveryViewModel : ObservableObject
         CurrentOutput = outputAll.ToString();
 
         var tcs = new TaskCompletionSource<int>();
-        var stepOutput = new StringBuilder();
-        var outputLock = new object();   // stdout + stderr 핸들러가 별도 스레드에서 동시에 호출되므로 lock 필요
+        var stepLines = new List<string>();
+        var outputLock = new object(); // stdout + stderr 핸들러가 별도 스레드에서 동시에 호출
 
         var process = _service.StartCommand(
             step.FileName, step.Arguments,
@@ -113,8 +117,13 @@ public partial class RecoveryViewModel : ObservableObject
                 string snapshot;
                 lock (outputLock)
                 {
-                    stepOutput.AppendLine(e.Data);
-                    snapshot = stepOutput.ToString();
+                    bool isProgress = ProgressLineRx.IsMatch(e.Data.TrimStart());
+                    // 진행률 줄([====55%====])이면 이전 진행률 줄을 덮어씀 (새 줄 추가 안 함)
+                    if (isProgress && stepLines.Count > 0 && ProgressLineRx.IsMatch(stepLines[^1].TrimStart()))
+                        stepLines[^1] = e.Data;
+                    else
+                        stepLines.Add(e.Data);
+                    snapshot = string.Join(Environment.NewLine, stepLines);
                 }
                 Application.Current?.Dispatcher.InvokeAsync(() =>
                     CurrentOutput = outputAll + snapshot);
@@ -136,8 +145,9 @@ public partial class RecoveryViewModel : ObservableObject
         int exitCode = await tcs.Task;
         step.Status = exitCode == 0 ? StepStatus.Completed : StepStatus.Failed;
         string finalOutput;
-        lock (outputLock) { finalOutput = stepOutput.ToString(); }
-        outputAll.Append(finalOutput);
+        lock (outputLock) { finalOutput = string.Join(Environment.NewLine, stepLines); }
+        if (finalOutput.Length > 0)
+            outputAll.AppendLine(finalOutput);
         outputAll.AppendLine($"\n→ 종료 코드: {exitCode}  ({step.StatusText})\n");
         CurrentOutput = outputAll.ToString();
     }
