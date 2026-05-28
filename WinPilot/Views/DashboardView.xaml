@@ -73,7 +73,7 @@
                 <!-- 왼쪽: 시스템 정보 + 메모리 차트 -->
                 <StackPanel Grid.Column="0">
                     <!-- 시스템 상세 정보 -->
-                    <Border Style="{StaticResource CardStyle}" Margin="0,0,0,16">
+                    <Border Style="{StaticResource CardStyle}" Margin="0,0,0,16" Height="244">
                         <StackPanel>
                             <TextBlock Text="시스템 정보" Style="{StaticResource CardTitleStyle}"/>
                             <Grid Margin="0,12,0,0">
@@ -115,7 +115,7 @@
                     </Border>
 
                     <!-- 메모리 사용량 차트 -->
-                    <Border Style="{StaticResource CardStyle}">
+                    <Border Style="{StaticResource CardStyle}" Height="156">
                         <StackPanel>
                             <DockPanel>
                                 <TextBlock Text="메모리 사용량" Style="{StaticResource CardTitleStyle}"/>
