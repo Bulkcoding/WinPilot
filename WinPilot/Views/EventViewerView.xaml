@@ -185,7 +185,9 @@
                                              FontSize="12" IsReadOnly="True" TextWrapping="Wrap"
                                              BorderThickness="0" Padding="0"
                                              FontFamily="Consolas"
-                                             VerticalScrollBarVisibility="Disabled"/>
+                                             Height="200"
+                                             VerticalScrollBarVisibility="Auto"
+                                             PreviewMouseWheel="DescriptionTextBox_PreviewMouseWheel"/>
                                 </StackPanel>
                             </Border>
                         </StackPanel>
