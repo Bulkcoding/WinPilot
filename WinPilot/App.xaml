@@ -267,7 +267,19 @@
                                                       IsHitTestVisible="False"/>
                                     <Path Grid.Column="1" Data="M0,0 L4,4 L8,0"
                                           Stroke="{DynamicResource TextSecondaryBrush}" StrokeThickness="1.5"
-                                          VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                          VerticalAlignment="Center" HorizontalAlignment="Center"
+                                          IsHitTestVisible="False"/>
+                                    <!-- 드롭다운 토글 클릭 처리 (투명 오버레이) -->
+                                    <ToggleButton Grid.ColumnSpan="2"
+                                                  IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                                  Focusable="False" ClickMode="Press"
+                                                  Background="Transparent" BorderThickness="0">
+                                        <ToggleButton.Template>
+                                            <ControlTemplate TargetType="ToggleButton">
+                                                <Border Background="Transparent"/>
+                                            </ControlTemplate>
+                                        </ToggleButton.Template>
+                                    </ToggleButton>
                                     <Popup x:Name="PART_Popup"
                                            IsOpen="{TemplateBinding IsDropDownOpen}"
                                            Placement="Bottom"
