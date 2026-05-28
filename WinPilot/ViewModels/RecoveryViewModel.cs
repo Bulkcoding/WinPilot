@@ -107,6 +107,7 @@ public partial class RecoveryViewModel : ObservableObject
 
         var tcs = new TaskCompletionSource<int>();
         var stepLines = new List<string>();
+        int lastProgressIdx = -1;
         var outputLock = new object(); // stdout + stderr 핸들러가 별도 스레드에서 동시에 호출
 
         var process = _service.StartCommand(
@@ -118,11 +119,13 @@ public partial class RecoveryViewModel : ObservableObject
                 lock (outputLock)
                 {
                     bool isProgress = ProgressLineRx.IsMatch(e.Data.TrimStart());
-                    // 진행률 줄([====55%====])이면 이전 진행률 줄을 덮어씀 (새 줄 추가 안 함)
-                    if (isProgress && stepLines.Count > 0 && ProgressLineRx.IsMatch(stepLines[^1].TrimStart()))
-                        stepLines[^1] = e.Data;
+                    if (isProgress && lastProgressIdx >= 0)
+                        stepLines[lastProgressIdx] = e.Data;
                     else
+                    {
                         stepLines.Add(e.Data);
+                        if (isProgress) lastProgressIdx = stepLines.Count - 1;
+                    }
                     snapshot = string.Join(Environment.NewLine, stepLines);
                 }
                 Application.Current?.Dispatcher.InvokeAsync(() =>
