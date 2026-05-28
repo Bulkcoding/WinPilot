@@ -41,6 +41,7 @@ public partial class RecoveryViewModel : ObservableObject
     [ObservableProperty] private bool _isAdmin;
     [ObservableProperty] private bool _isRunning;
     public bool IsNotAdmin => !IsAdmin;
+    [ObservableProperty] private bool _isProgressUpdate;
     [ObservableProperty] private string _currentOutput = "실행 버튼을 눌러 복구를 시작합니다.";
     [ObservableProperty] private ObservableCollection<RecoveryStep> _steps;
 
@@ -116,10 +117,12 @@ public partial class RecoveryViewModel : ObservableObject
             {
                 if (e.Data == null) return;
                 string snapshot;
+                bool wasProgressUpdate;
                 lock (outputLock)
                 {
                     bool isProgress = ProgressLineRx.IsMatch(e.Data.TrimStart());
-                    if (isProgress && lastProgressIdx >= 0)
+                    wasProgressUpdate = isProgress && lastProgressIdx >= 0;
+                    if (wasProgressUpdate)
                         stepLines[lastProgressIdx] = e.Data;
                     else
                     {
@@ -129,7 +132,10 @@ public partial class RecoveryViewModel : ObservableObject
                     snapshot = string.Join(Environment.NewLine, stepLines);
                 }
                 Application.Current?.Dispatcher.InvokeAsync(() =>
-                    CurrentOutput = outputAll + snapshot);
+                {
+                    IsProgressUpdate = wasProgressUpdate;
+                    CurrentOutput = outputAll + snapshot;
+                });
             },
             (sender, _) =>
             {
