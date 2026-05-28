@@ -52,10 +52,10 @@
                                 <TextBlock Grid.Row="1" Grid.Column="0" Text="클럭" Style="{StaticResource InfoLabelStyle}"/>
                                 <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Snapshot.CpuSpeedGhz, StringFormat={}{0:F2} GHz}" Style="{StaticResource InfoValueStyle}"/>
                                 <TextBlock Grid.Row="2" Grid.Column="0" Text="코어" Style="{StaticResource InfoLabelStyle}"/>
-                                <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal">
-                                    <TextBlock Text="{Binding Snapshot.CpuCores}" Style="{StaticResource InfoValueStyle}"/>
+                                <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Snapshot.CpuCores}" Style="{StaticResource InfoValueStyle}" VerticalAlignment="Center"/>
                                     <TextBlock Text=" 코어 / " Foreground="#64748B" FontSize="12" VerticalAlignment="Center"/>
-                                    <TextBlock Text="{Binding Snapshot.CpuThreads}" Style="{StaticResource InfoValueStyle}"/>
+                                    <TextBlock Text="{Binding Snapshot.CpuThreads}" Style="{StaticResource InfoValueStyle}" VerticalAlignment="Center"/>
                                     <TextBlock Text=" 스레드" Foreground="#64748B" FontSize="12" VerticalAlignment="Center"/>
                                 </StackPanel>
                                 <TextBlock Grid.Row="3" Grid.Column="0" Text="아키텍처" Style="{StaticResource InfoLabelStyle}"/>
