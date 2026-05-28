@@ -180,7 +180,7 @@
                             <Border Background="{DynamicResource ItemRowBrush}" CornerRadius="6" Padding="14,12">
                                 <StackPanel>
                                     <TextBlock Text="설명" Foreground="#64748B" FontSize="12" Margin="0,0,0,8"/>
-                                    <TextBox Text="{Binding SelectedEntry.Description, Mode=OneWay}"
+                                    <TextBox Text="{Binding SelectedEntry.FullDescription, Mode=OneWay}"
                                              Background="Transparent" Foreground="{DynamicResource TextValueBrush}"
                                              FontSize="12" IsReadOnly="True" TextWrapping="Wrap"
                                              BorderThickness="0" Padding="0"

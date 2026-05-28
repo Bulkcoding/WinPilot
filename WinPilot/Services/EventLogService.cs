@@ -42,10 +42,10 @@ public class EventLogService
                             _ => LogLevel.Information
                         };
 
-                        string desc = "";
-                        try { desc = record.FormatDescription() ?? ""; }
-                        catch { desc = $"이벤트 ID: {record.Id}"; }
-                        if (desc.Length > 300) desc = desc[..300] + "...";
+                        string fullDesc = "";
+                        try { fullDesc = record.FormatDescription() ?? ""; }
+                        catch { fullDesc = $"이벤트 ID: {record.Id}"; }
+                        string shortDesc = fullDesc.Length > 300 ? fullDesc[..300] + "..." : fullDesc;
 
                         result.Add(new LogEntry
                         {
@@ -54,7 +54,8 @@ public class EventLogService
                             LogName = logName,
                             EventId = record.Id,
                             Source = record.ProviderName ?? "",
-                            Description = desc
+                            Description = shortDesc,
+                            FullDescription = fullDesc
                         });
                         count++;
                     }

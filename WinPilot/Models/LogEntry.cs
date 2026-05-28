@@ -9,7 +9,8 @@ public class LogEntry
     public string LogName { get; set; } = "";
     public int EventId { get; set; }
     public string Source { get; set; } = "";
-    public string Description { get; set; } = "";
+    public string Description { get; set; } = "";      // 목록용 요약 (300자)
+    public string FullDescription { get; set; } = ""; // 팝업용 전체 텍스트
 
     public string LevelText => Level switch
     {
