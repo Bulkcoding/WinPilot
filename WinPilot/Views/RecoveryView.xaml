@@ -105,13 +105,15 @@
                                  Visibility="{Binding IsRunning, Converter={StaticResource BoolToVisibility}}"
                                  Foreground="#3B82F6"/>
                 </DockPanel>
-                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" MinHeight="200">
-                    <TextBox Text="{Binding CurrentOutput, Mode=OneWay}"
-                             Background="{DynamicResource ConsoleBgBrush}" Foreground="{DynamicResource ConsoleTextBrush}"
-                             FontFamily="Consolas" FontSize="11"
-                             IsReadOnly="True" TextWrapping="Wrap"
-                             BorderThickness="0" Padding="8"/>
-                </ScrollViewer>
+                <TextBox Grid.Row="1"
+                         Text="{Binding CurrentOutput, Mode=OneWay}"
+                         Background="{DynamicResource ConsoleBgBrush}" Foreground="{DynamicResource ConsoleTextBrush}"
+                         FontFamily="Consolas" FontSize="11"
+                         IsReadOnly="True" TextWrapping="Wrap"
+                         BorderThickness="0" Padding="8"
+                         MinHeight="200"
+                         VerticalScrollBarVisibility="Auto"
+                         TextChanged="OutputTextBox_TextChanged"/>
             </Grid>
         </Border>
     </Grid>
