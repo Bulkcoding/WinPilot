@@ -139,13 +139,9 @@
                 </StackPanel>
 
                 <!-- 오른쪽: 이벤트 요약 + 복구 바로가기 -->
-                <Grid Grid.Column="2">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
+                <StackPanel Grid.Column="2">
                     <!-- 이벤트 뷰어 요약 -->
-                    <Border Grid.Row="0" Style="{StaticResource CardStyle}" Margin="0,0,0,16">
+                    <Border Style="{StaticResource CardStyle}" Margin="0,0,0,16" Height="244">
                         <StackPanel>
                             <TextBlock Text="이벤트 뷰어 (경고 ~ 오류)" Style="{StaticResource CardTitleStyle}"/>
                             <Grid Margin="0,12,0,0">
@@ -178,7 +174,7 @@
                     </Border>
 
                     <!-- 시스템 복구 바로가기 -->
-                    <Border Grid.Row="1" Style="{StaticResource CardStyle}" VerticalAlignment="Stretch">
+                    <Border Style="{StaticResource CardStyle}" Height="156">
                         <StackPanel>
                             <TextBlock Text="시스템 복구" Style="{StaticResource CardTitleStyle}"/>
                             <TextBlock Text="시스템 파일 검사(SFC)를 실행하여 손상된 시스템 파일을 검사하고 복구합니다."
@@ -188,7 +184,7 @@
                                     Style="{StaticResource PrimaryButtonStyle}"/>
                         </StackPanel>
                     </Border>
-                </Grid>
+                </StackPanel>
             </Grid>
         </StackPanel>
     </ScrollViewer>
