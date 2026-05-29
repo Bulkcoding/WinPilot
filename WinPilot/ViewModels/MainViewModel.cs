@@ -9,13 +9,15 @@ public partial class MainViewModel : ObservableObject
 {
     private readonly SystemInfoService _sysInfo = new();
 
-    public DashboardViewModel Dashboard { get; }
-    public SystemInfoViewModel SystemInfo { get; }
-    public EventViewerViewModel EventViewer { get; } = new();
-    public RecoveryViewModel Recovery { get; } = new();
-    public RegistryViewModel Registry { get; } = new();
-    public SettingsViewModel Settings { get; } = SettingsViewModel.Current;
-    public AboutViewModel About { get; } = new();
+    public DashboardViewModel    Dashboard       { get; }
+    public SystemInfoViewModel   SystemInfo      { get; }
+    public EventViewerViewModel  EventViewer     { get; } = new();
+    public RecoveryViewModel     Recovery        { get; } = new();
+    public PingViewModel         Ping            { get; } = new();
+    public RegistryViewModel     Registry        { get; } = new();
+    public WindowsSettingsViewModel WindowsSettings { get; } = new();
+    public SettingsViewModel     Settings        { get; } = SettingsViewModel.Current;
+    public AboutViewModel        About           { get; } = new();
 
     [ObservableProperty] private object _currentPage = null!;
     [ObservableProperty] private bool _isSidebarExpanded = true;
@@ -24,7 +26,7 @@ public partial class MainViewModel : ObservableObject
 
     public MainViewModel()
     {
-        Dashboard = new DashboardViewModel(_sysInfo);
+        Dashboard  = new DashboardViewModel(_sysInfo);
         SystemInfo = new SystemInfoViewModel(_sysInfo);
         CurrentPage = Dashboard;
         Dashboard.StartAutoRefresh();
@@ -35,7 +37,7 @@ public partial class MainViewModel : ObservableObject
     {
         if (vm == null) return;
         CurrentPage = vm;
-        if (vm is SystemInfoViewModel si) _ = si.LoadAsync();
+        if (vm is SystemInfoViewModel si)  _ = si.LoadAsync();
         if (vm is EventViewerViewModel ev && ev.Entries.Count == 0) _ = ev.RefreshAsync();
     }
 
@@ -45,7 +47,6 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void OpenMiniMode()
     {
-        // 이미 열려있으면 앞으로 가져오기
         if (_miniWindow != null)
         {
             _miniWindow.Activate();

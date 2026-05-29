@@ -5,23 +5,48 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              mc:Ignorable="d">
     <Grid Background="{DynamicResource BgBrush}">
-        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Width="400">
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Width="380">
             <Border Style="{StaticResource CardStyle}">
                 <StackPanel HorizontalAlignment="Center">
-                    <TextBlock Text="WinPilot" FontSize="36" FontWeight="Bold"
+
+                    <!-- 로고 -->
+                    <TextBlock Text="WinPilot" FontSize="40" FontWeight="Bold"
                                Foreground="#3B82F6" HorizontalAlignment="Center"/>
                     <TextBlock Text="{Binding Version}" FontSize="14" Foreground="#64748B"
                                HorizontalAlignment="Center" Margin="0,4,0,0"/>
-                    <TextBlock Text="{Binding Description}" FontSize="13" Foreground="#94A3B8"
-                               HorizontalAlignment="Center" Margin="0,8,0,24"/>
-                    <Separator Background="#374151" Margin="0,0,0,20"/>
-                    <TextBlock Text="원격 PC 상태 확인을 위한 WPF 기반 모니터링 도구"
-                               Foreground="{DynamicResource TextValueBrush}" FontSize="12" TextWrapping="Wrap"
-                               HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,16"/>
-                    <Button Content="GitHub 열기" Command="{Binding OpenGitHubCommand}"
-                            Style="{StaticResource PrimaryButtonStyle}" HorizontalAlignment="Center"/>
-                    <TextBlock Text="{Binding GitHubUrl}" Foreground="#3B82F6" FontSize="11"
-                               HorizontalAlignment="Center" Margin="0,8,0,0"/>
+
+                    <Rectangle Height="1" Fill="{DynamicResource BorderBrush}" Margin="0,20,0,20"/>
+
+                    <!-- 정보 그리드 -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="16"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="8"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="8"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="8"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="설명"      Style="{StaticResource InfoLabelStyle}"/>
+                        <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding Description}" Style="{StaticResource InfoValueStyle}" TextWrapping="Wrap"/>
+
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="제작"      Style="{StaticResource InfoLabelStyle}"/>
+                        <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding Author}"      Style="{StaticResource InfoValueStyle}"/>
+
+                        <TextBlock Grid.Row="4" Grid.Column="0" Text="런타임"    Style="{StaticResource InfoLabelStyle}"/>
+                        <TextBlock Grid.Row="4" Grid.Column="2" Text="{Binding Runtime}"     Style="{StaticResource InfoValueStyle}"/>
+
+                        <TextBlock Grid.Row="6" Grid.Column="0" Text="빌드"      Style="{StaticResource InfoLabelStyle}"/>
+                        <TextBlock Grid.Row="6" Grid.Column="2" Text="{Binding BuildDate}"   Style="{StaticResource InfoValueStyle}"/>
+                    </Grid>
+
                 </StackPanel>
             </Border>
         </StackPanel>

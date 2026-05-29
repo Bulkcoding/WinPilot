@@ -223,6 +223,58 @@
                         </DockPanel>
                     </Button>
 
+                    <!-- Ping 테스트 -->
+                    <Button Command="{Binding NavigateToCommand}" CommandParameter="{Binding Ping}">
+                        <Button.Style>
+                            <Style BasedOn="{StaticResource NavBtnStyle}" TargetType="Button">
+                                <Style.Triggers>
+                                    <DataTrigger Value="True">
+                                        <DataTrigger.Binding>
+                                            <MultiBinding Converter="{StaticResource IsCurrentPage}">
+                                                <Binding Path="CurrentPage"/>
+                                                <Binding Path="Ping"/>
+                                            </MultiBinding>
+                                        </DataTrigger.Binding>
+                                        <Setter Property="Background" Value="#1E3A5F"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                        <DockPanel>
+                            <TextBlock Text="&#xE968;" FontFamily="Segoe MDL2 Assets" FontSize="16"
+                                       Foreground="#94A3B8" Width="24" TextAlignment="Center" VerticalAlignment="Center"/>
+                            <TextBlock Text="Ping 테스트" FontSize="13" Foreground="#CBD5E1" Margin="10,0,0,0"
+                                       VerticalAlignment="Center"
+                                       Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/>
+                        </DockPanel>
+                    </Button>
+
+                    <!-- Windows 설정 -->
+                    <Button Command="{Binding NavigateToCommand}" CommandParameter="{Binding WindowsSettings}">
+                        <Button.Style>
+                            <Style BasedOn="{StaticResource NavBtnStyle}" TargetType="Button">
+                                <Style.Triggers>
+                                    <DataTrigger Value="True">
+                                        <DataTrigger.Binding>
+                                            <MultiBinding Converter="{StaticResource IsCurrentPage}">
+                                                <Binding Path="CurrentPage"/>
+                                                <Binding Path="WindowsSettings"/>
+                                            </MultiBinding>
+                                        </DataTrigger.Binding>
+                                        <Setter Property="Background" Value="#1E3A5F"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                        <DockPanel>
+                            <TextBlock Text="&#xEBC7;" FontFamily="Segoe MDL2 Assets" FontSize="16"
+                                       Foreground="#94A3B8" Width="24" TextAlignment="Center" VerticalAlignment="Center"/>
+                            <TextBlock Text="Windows 설정" FontSize="13" Foreground="#CBD5E1" Margin="10,0,0,0"
+                                       VerticalAlignment="Center"
+                                       Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/>
+                        </DockPanel>
+                    </Button>
+
                     <!-- 설정 -->
                     <Button Command="{Binding NavigateToCommand}" CommandParameter="{Binding Settings}">
                         <Button.Style>
