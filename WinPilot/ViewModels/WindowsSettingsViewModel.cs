@@ -9,14 +9,13 @@ namespace WinPilot.ViewModels;
 public partial class WindowsSettingsViewModel : ObservableObject
 {
     // ─── Delivery Optimization ────────────────────────────────
-    // Windows 설정 앱이 읽고 쓰는 경로 (Win10/11 공통)
+    // Windows 설정이 읽고 쓰는 실제 경로
     private const string DoConfigKey = @"SOFTWARE\Microsoft\Windows\CurrentVersion\DeliveryOptimization\Config";
     private const string DoPolicyKey = @"SOFTWARE\Policies\Microsoft\Windows\DeliveryOptimization";
 
     [ObservableProperty] private bool   _deliveryOptEnabled;
     [ObservableProperty] private string _deliveryOptStatus  = "로딩 중...";
     [ObservableProperty] private bool   _deliveryOptPolicyLocked;
-    [ObservableProperty] private bool   _deliveryOptApplying;
 
     // ─── Smart App Control ────────────────────────────────────
     private const string SacKey = @"SYSTEM\CurrentControlSet\Control\CI\Policy";
@@ -27,159 +26,82 @@ public partial class WindowsSettingsViewModel : ObservableObject
 
     private bool _loading;
 
-    public WindowsSettingsViewModel() => _ = RefreshAllAsync();
+    public WindowsSettingsViewModel() => RefreshAll();
 
     // ─── Delivery Optimization ────────────────────────────────
 
     partial void OnDeliveryOptEnabledChanged(bool value)
     {
         if (_loading) return;
-        _ = ApplyDeliveryOptAsync(value);
+        ApplyDeliveryOpt(value);
     }
 
-    /// <summary>
-    /// PowerShell Get-DeliveryOptimizationStatus로 라이브 상태를 읽습니다.
-    /// Windows 설정 앱과 동일한 값을 보여줍니다.
-    /// </summary>
-    private async Task LoadDeliveryOptAsync()
+    private void LoadDeliveryOpt()
+    {
+        // ① 그룹 정책 확인 (최우선, 쓰기 불가)
+        using var policy = Registry.LocalMachine.OpenSubKey(DoPolicyKey);
+        if (policy?.GetValue("DODownloadMode") is int pm)
+        {
+            DeliveryOptPolicyLocked = true;
+            _loading = true;
+            DeliveryOptEnabled = pm != 0;
+            _loading = false;
+            DeliveryOptStatus = $"그룹 정책 적용 중 (모드 {pm}) — 변경 불가";
+            return;
+        }
+
+        DeliveryOptPolicyLocked = false;
+
+        // ② Config 레지스트리 읽기
+        // Windows 설정도 이 경로를 읽고 씁니다.
+        // 값이 없으면 기본값 = 1 (LAN 피어 허용)
+        using var cfg = Registry.LocalMachine.OpenSubKey(DoConfigKey);
+        int mode = cfg?.GetValue("DODownloadMode") is int m ? m : 1;
+
+        _loading = true;
+        DeliveryOptEnabled = mode != 0;
+        _loading = false;
+
+        DeliveryOptStatus = mode switch
+        {
+            0 => "꺼짐  (HTTP만 사용, 피어 다운로드 없음)",
+            1 => "켜짐  — 로컬 네트워크만",
+            2 => "켜짐  — 인터넷 + 로컬 네트워크",
+            3 => "켜짐  — 그룹 (LAN + 인터넷)",
+            _ => $"켜짐  (모드 {mode})"
+        };
+    }
+
+    private void ApplyDeliveryOpt(bool enable)
     {
         try
         {
-            // 1) 그룹 정책 확인 (최우선)
-            using var policy = Registry.LocalMachine.OpenSubKey(DoPolicyKey);
-            if (policy?.GetValue("DODownloadMode") is int policyMode)
-            {
-                DeliveryOptPolicyLocked = true;
-                _loading = true;
-                DeliveryOptEnabled = policyMode != 0;
-                _loading = false;
-                DeliveryOptStatus = $"그룹 정책 적용 중 (모드 {policyMode}) — 여기서 변경 불가";
-                return;
-            }
+            int mode = enable ? 1 : 0;
 
-            DeliveryOptPolicyLocked = false;
+            // Config 경로에 씁니다.
+            // Windows 설정과 동일한 경로를 사용합니다.
+            using var key = Registry.LocalMachine.CreateSubKey(DoConfigKey, writable: true);
+            key.SetValue("DODownloadMode", mode, RegistryValueKind.DWord);
 
-            // 2) PowerShell로 라이브 DO 모드 읽기 (Windows 설정과 동일한 소스)
-            int mode = await Task.Run(GetLiveDoMode);
+            // 즉시 다시 읽어서 UI 갱신
+            LoadDeliveryOpt();
 
-            _loading = true;
-            DeliveryOptEnabled = mode != 0;
-            _loading = false;
-            DeliveryOptStatus = DescribeMode(mode);
+            // ⚠ DoSvc(배달 최적화 서비스)는 OS 보호 서비스라 외부에서
+            //   재시작이 불가능합니다. 설정은 레지스트리에 저장되며
+            //   Windows 설정 앱을 닫았다 다시 열면 반영됩니다.
+            //   실제 다운로드 동작은 다음 Windows Update 시점에 적용됩니다.
         }
         catch (Exception ex)
         {
-            DeliveryOptStatus = $"읽기 실패: {ex.Message}";
-        }
-    }
-
-    /// <summary>
-    /// PowerShell Get-DeliveryOptimizationStatus로 현재 실제 모드를 반환합니다.
-    /// 실패 시 레지스트리 직접 읽기로 폴백합니다.
-    /// </summary>
-    private static int GetLiveDoMode()
-    {
-        // ① PowerShell로 서비스의 라이브 상태 확인
-        try
-        {
-            var raw = RunPs("(Get-DeliveryOptimizationStatus).DownloadMode");
-            if (int.TryParse(raw.Trim(), out int liveMode))
-                return liveMode;
-        }
-        catch { }
-
-        // ② 폴백: 레지스트리 직접 읽기
-        try
-        {
-            using var cfg = Registry.LocalMachine.OpenSubKey(DoConfigKey);
-            return cfg?.GetValue("DODownloadMode") is int m ? m : 1;
-        }
-        catch { return 1; }
-    }
-
-    private async Task ApplyDeliveryOptAsync(bool enable)
-    {
-        try
-        {
-            DeliveryOptApplying = true;
-            DeliveryOptStatus = "레지스트리 변경 중...";
-
-            // 1) 레지스트리에 쓰기
-            using (var key = Registry.LocalMachine.CreateSubKey(DoConfigKey, writable: true))
-                key.SetValue("DODownloadMode", enable ? 1 : 0, RegistryValueKind.DWord);
-
-            DeliveryOptStatus = "서비스 재시작 중... (최대 15초)";
-
-            // 2) DoSvc 재시작 (없으면 Windows 설정에 즉시 반영 안 됨)
-            bool restarted = await Task.Run(RestartDoSvc);
-
-            DeliveryOptApplying = false;
-
-            // 3) 재시작 후 라이브 상태 다시 읽기
-            await LoadDeliveryOptAsync();
-
-            if (!restarted)
-                DeliveryOptStatus += "  ※ 서비스 재시작 실패 — 재부팅 후 적용됩니다";
-        }
-        catch (Exception ex)
-        {
-            DeliveryOptApplying = false;
+            // 실패 시 UI 롤백
             _loading = true;
-            DeliveryOptEnabled = !enable;   // UI 롤백
+            DeliveryOptEnabled = !enable;
             _loading = false;
+            LoadDeliveryOpt();
             MessageBox.Show($"설정 변경 실패:\n{ex.Message}", "WinPilot",
                 MessageBoxButton.OK, MessageBoxImage.Error);
-            await LoadDeliveryOptAsync();
         }
     }
-
-    /// <summary>
-    /// PowerShell Restart-Service 우선, 실패 시 sc.exe 폴백.
-    /// true = 재시작 성공.
-    /// </summary>
-    private static bool RestartDoSvc()
-    {
-        // ① PowerShell Restart-Service (가장 안정적)
-        try
-        {
-            var psi = new ProcessStartInfo("powershell.exe",
-                "-NoProfile -NonInteractive -WindowStyle Hidden " +
-                "-Command \"Restart-Service -Name DoSvc -Force -ErrorAction Stop\"")
-            {
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-            using var p = Process.Start(psi);
-            p?.WaitForExit(15000);
-            if (p?.ExitCode == 0) return true;
-        }
-        catch { }
-
-        // ② sc.exe 폴백
-        try
-        {
-            using var stop = Process.Start(new ProcessStartInfo("sc.exe", "stop DoSvc")
-                { UseShellExecute = false, CreateNoWindow = true });
-            stop?.WaitForExit(8000);
-
-            Thread.Sleep(2000);
-
-            using var start = Process.Start(new ProcessStartInfo("sc.exe", "start DoSvc")
-                { UseShellExecute = false, CreateNoWindow = true });
-            start?.WaitForExit(8000);
-            return start?.ExitCode == 0;
-        }
-        catch { return false; }
-    }
-
-    private static string DescribeMode(int mode) => mode switch
-    {
-        0 => "꺼짐 — HTTP만 사용 (피어 다운로드 없음)",
-        1 => "켜짐 — 로컬 네트워크만",
-        2 => "켜짐 — 인터넷 + 로컬 네트워크",
-        3 => "켜짐 — 그룹 (HTTP + LAN + 인터넷)",
-        _ => $"켜짐 (모드 {mode})"
-    };
 
     // ─── Smart App Control ────────────────────────────────────
 
@@ -245,28 +167,11 @@ public partial class WindowsSettingsViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void Refresh() => _ = RefreshAllAsync();
+    private void Refresh() => RefreshAll();
 
-    private async Task RefreshAllAsync()
+    private void RefreshAll()
     {
-        await LoadDeliveryOptAsync();
+        LoadDeliveryOpt();
         LoadSac();
-    }
-
-    // ─── PowerShell 헬퍼 ───────────────────────────────────────
-
-    private static string RunPs(string command)
-    {
-        var psi = new ProcessStartInfo("powershell.exe",
-            $"-NoProfile -NonInteractive -WindowStyle Hidden -Command \"{command.Replace("\"", "\\\"")}\"")
-        {
-            UseShellExecute = false,
-            RedirectStandardOutput = true,
-            CreateNoWindow = true
-        };
-        using var p = Process.Start(psi) ?? throw new Exception("PowerShell 실행 실패");
-        var output = p.StandardOutput.ReadToEnd();
-        p.WaitForExit(8000);
-        return output.Trim();
     }
 }

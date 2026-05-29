@@ -109,11 +109,14 @@
                                    Text="⚠ 그룹 정책으로 관리되고 있어 여기서 변경할 수 없습니다."/>
                     </Border>
 
-                    <TextBlock Margin="0,12,0,0" TextWrapping="Wrap" FontSize="12"
-                               Foreground="{DynamicResource TextSecondaryBrush}">
-                        켜짐: Windows 업데이트 파일을 로컬 네트워크 내 다른 PC에서 내려받아 인터넷 트래픽을 절약합니다.
-                        끄기: Microsoft 서버(HTTP)에서만 다운로드합니다.
-                    </TextBlock>
+                    <Border Background="{DynamicResource ItemRowBrush}" CornerRadius="6"
+                            Padding="12,8" Margin="0,12,0,0">
+                        <TextBlock TextWrapping="Wrap" FontSize="12"
+                                   Foreground="{DynamicResource TextSecondaryBrush}">
+                            ℹ  설정은 레지스트리에 즉시 저장됩니다. Windows 설정 앱에서 확인하려면 해당 페이지를 닫았다가 다시 여세요.
+                            실제 다운로드 동작 변경은 다음 Windows 업데이트 시점에 적용됩니다.
+                        </TextBlock>
+                    </Border>
                 </StackPanel>
             </Border>
 
