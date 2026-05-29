@@ -19,16 +19,21 @@ public partial class MainViewModel : ObservableObject
 
     [ObservableProperty] private object _currentPage = null!;
     [ObservableProperty] private bool _isSidebarExpanded = true;
+    [ObservableProperty] private bool _isMiniMode;
 
-    private MiniWindow? _miniWindow;
+    public bool IsNormalMode => !IsMiniMode;
+    public MiniViewModel MiniVm { get; }
 
     public MainViewModel()
     {
         Dashboard = new DashboardViewModel(_sysInfo);
         SystemInfo = new SystemInfoViewModel(_sysInfo);
+        MiniVm = new MiniViewModel(_sysInfo);
         CurrentPage = Dashboard;
         Dashboard.StartAutoRefresh();
     }
+
+    partial void OnIsMiniModeChanged(bool value) => OnPropertyChanged(nameof(IsNormalMode));
 
     [RelayCommand]
     private void NavigateTo(object? vm)
@@ -43,22 +48,12 @@ public partial class MainViewModel : ObservableObject
     private void ToggleSidebar() => IsSidebarExpanded = !IsSidebarExpanded;
 
     [RelayCommand]
-    private void OpenMiniMode()
+    private void ToggleMiniMode()
     {
-        // 이미 열려있으면 앞으로 가져오기
-        if (_miniWindow != null)
-        {
-            _miniWindow.Activate();
-            return;
-        }
-        var miniVm = new MiniViewModel(_sysInfo);
-        _miniWindow = new MiniWindow { DataContext = miniVm };
-        _miniWindow.Closed += (_, _) =>
-        {
-            miniVm.StopAutoRefresh();
-            _miniWindow = null;
-        };
-        miniVm.StartAutoRefresh();
-        _miniWindow.Show();
+        IsMiniMode = !IsMiniMode;
+        if (IsMiniMode)
+            MiniVm.StartAutoRefresh();
+        else
+            MiniVm.StopAutoRefresh();
     }
 }

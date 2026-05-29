@@ -32,10 +32,24 @@
                     <TextBlock Text="미니 모드" Style="{StaticResource CardTitleStyle}" Margin="0,0,0,8"/>
                     <TextBlock Text="CPU, RAM, 운영 시간 등 주요 지표만 표시하는 컴팩트 창을 엽니다. 항상 위에 표시됩니다."
                                Foreground="#64748B" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,12"/>
-                    <Button Content="⊞  미니모드 열기"
-                            Command="{Binding DataContext.OpenMiniModeCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                    <Button Command="{Binding DataContext.ToggleMiniModeCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                             Style="{StaticResource SecondaryButtonStyle}"
-                            HorizontalAlignment="Left"/>
+                            HorizontalAlignment="Left">
+                        <Button.Content>
+                            <TextBlock>
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="⊞  미니 모드로 전환"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding DataContext.IsMiniMode, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                <Setter Property="Text" Value="⊡  기본 모드로 전환"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Button.Content>
+                    </Button>
                 </StackPanel>
             </Border>
         </StackPanel>
