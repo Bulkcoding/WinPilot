@@ -22,8 +22,10 @@ public partial class MainWindow : Window
         var isMini = ((MainViewModel)sender!).IsMiniMode;
         if (isMini)
         {
+            MinWidth = 0;
+            MinHeight = 0;
             SizeToContent = SizeToContent.Height;
-            Width = 340;
+            Width = 320;
             ResizeMode = ResizeMode.CanMinimize;
             Topmost = true;
         }
@@ -32,6 +34,8 @@ public partial class MainWindow : Window
             Topmost = false;
             SizeToContent = SizeToContent.Manual;
             ResizeMode = ResizeMode.CanResizeWithGrip;
+            MinWidth = 900;
+            MinHeight = 600;
             Width = 1100;
             Height = 720;
         }
