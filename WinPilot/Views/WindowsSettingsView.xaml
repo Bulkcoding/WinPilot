@@ -90,9 +90,14 @@
                             <TextBlock Text="다른 장치에서 다운로드 허용"
                                        Foreground="{DynamicResource TextPrimaryBrush}"
                                        FontSize="13" FontWeight="SemiBold"/>
-                            <TextBlock Text="{Binding DeliveryOptStatus}"
-                                       Foreground="{DynamicResource TextSecondaryBrush}"
-                                       FontSize="12" Margin="0,2,0,0"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                <ProgressBar Width="60" Height="3" IsIndeterminate="True"
+                                             Foreground="#3B82F6" Margin="0,0,8,0" VerticalAlignment="Center"
+                                             Visibility="{Binding DeliveryOptApplying, Converter={StaticResource BoolToVisibility}}"/>
+                                <TextBlock Text="{Binding DeliveryOptStatus}"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           FontSize="12"/>
+                            </StackPanel>
                         </StackPanel>
                     </DockPanel>
 

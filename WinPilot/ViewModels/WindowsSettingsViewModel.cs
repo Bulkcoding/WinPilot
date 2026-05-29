@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -14,11 +15,12 @@ public partial class WindowsSettingsViewModel : ObservableObject
     [ObservableProperty] private bool _deliveryOptEnabled;
     [ObservableProperty] private string _deliveryOptStatus = "";
     [ObservableProperty] private bool _deliveryOptPolicyLocked;
+    [ObservableProperty] private bool _deliveryOptApplying;   // 서비스 재시작 중
 
     // ─── Smart App Control ────────────────────────────────────
     private const string SacKey = @"SYSTEM\CurrentControlSet\Control\CI\Policy";
 
-    [ObservableProperty] private int _sacState = -1;   // -1=미지원, 0=Off, 1=평가, 2=On
+    [ObservableProperty] private int _sacState = -1;
     [ObservableProperty] private string _sacStatusText = "";
     [ObservableProperty] private bool _sacSupported;
 
@@ -31,7 +33,7 @@ public partial class WindowsSettingsViewModel : ObservableObject
     partial void OnDeliveryOptEnabledChanged(bool value)
     {
         if (_loading) return;
-        ApplyDeliveryOpt(value);
+        _ = ApplyDeliveryOptAsync(value);
     }
 
     private void LoadDeliveryOpt()
@@ -52,7 +54,7 @@ public partial class WindowsSettingsViewModel : ObservableObject
 
             DeliveryOptPolicyLocked = false;
             using var cfg = Registry.LocalMachine.OpenSubKey(DoConfigKey);
-            // 기본값은 1(LAN peers 허용)
+            // 기본값: 1 (LAN peers 허용)
             int mode = cfg?.GetValue("DODownloadMode") is int m ? m : 1;
 
             _loading = true;
@@ -74,23 +76,62 @@ public partial class WindowsSettingsViewModel : ObservableObject
         }
     }
 
-    private void ApplyDeliveryOpt(bool enable)
+    private async Task ApplyDeliveryOptAsync(bool enable)
     {
         try
         {
+            // 1. 레지스트리 쓰기
             using var key = Registry.LocalMachine.CreateSubKey(DoConfigKey, writable: true);
-            // 켜기 → 1(로컬 네트워크 피어), 끄기 → 0
             key.SetValue("DODownloadMode", enable ? 1 : 0, RegistryValueKind.DWord);
+
+            // 2. DoSvc 서비스 재시작 — 이 단계 없으면 Windows 설정에 반영 안 됨
+            DeliveryOptApplying = true;
+            DeliveryOptStatus = "서비스 재시작 중...";
+            await Task.Run(RestartDoSvc);
+            DeliveryOptApplying = false;
+
             LoadDeliveryOpt();
         }
         catch (Exception ex)
         {
-            // 실패 시 원상복구
+            DeliveryOptApplying = false;
             _loading = true;
-            DeliveryOptEnabled = !enable;
+            DeliveryOptEnabled = !enable;   // 롤백
             _loading = false;
             MessageBox.Show($"배달 최적화 설정 변경 실패:\n{ex.Message}", "WinPilot",
                 MessageBoxButton.OK, MessageBoxImage.Error);
+            LoadDeliveryOpt();
+        }
+    }
+
+    /// <summary>
+    /// DoSvc(배달 최적화 서비스)를 재시작해야 레지스트리 변경이 즉시 적용됩니다.
+    /// </summary>
+    private static void RestartDoSvc()
+    {
+        try
+        {
+            // stop
+            using var stop = Process.Start(new ProcessStartInfo("sc.exe", "stop DoSvc")
+            {
+                UseShellExecute = false,
+                CreateNoWindow = true
+            });
+            stop?.WaitForExit(6000);
+
+            Thread.Sleep(1500);
+
+            // start
+            using var start = Process.Start(new ProcessStartInfo("sc.exe", "start DoSvc")
+            {
+                UseShellExecute = false,
+                CreateNoWindow = true
+            });
+            start?.WaitForExit(6000);
+        }
+        catch
+        {
+            // 서비스 재시작 실패해도 레지스트리 변경은 유지됨 (재부팅 후 적용)
         }
     }
 
@@ -133,7 +174,6 @@ public partial class WindowsSettingsViewModel : ObservableObject
         if (!int.TryParse(stateStr, out int newState)) return;
         if (!SacSupported) return;
 
-        // 끄기 전 경고
         if (newState == 0 && SacState != 0)
         {
             var res = MessageBox.Show(

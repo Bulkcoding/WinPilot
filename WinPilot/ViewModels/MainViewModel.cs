@@ -15,7 +15,6 @@ public partial class MainViewModel : ObservableObject
     public RegistryViewModel     Registry        { get; } = new();
     public WindowsSettingsViewModel WindowsSettings { get; } = new();
     public SettingsViewModel     Settings        { get; } = SettingsViewModel.Current;
-    public AboutViewModel        About           { get; } = new();
 
     [ObservableProperty] private object _currentPage = null!;
     [ObservableProperty] private bool _isSidebarExpanded = true;
