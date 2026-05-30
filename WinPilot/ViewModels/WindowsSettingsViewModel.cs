@@ -42,11 +42,11 @@ public partial class WindowsSettingsViewModel : ObservableObject
         using var policy = Registry.LocalMachine.OpenSubKey(DoPolicyKey);
         if (policy?.GetValue("DODownloadMode") is int pm)
         {
-            bool winPilotManaged = policy.GetValue(WinPilotMarker) != null;
+            bool winPilotManaged = IsWinPilotPolicy(policy);
 
             if (!winPilotManaged)
             {
-                // ① IT 관리자 또는 그룹 정책이 설정한 경우 → 잠금
+                // ① 진짜 IT/그룹 정책 (DODownloadMode 외 다른 값이 있음) → 잠금
                 DeliveryOptPolicyLocked = true;
                 _loading = true;
                 DeliveryOptEnabled = pm != 0;
@@ -55,16 +55,17 @@ public partial class WindowsSettingsViewModel : ObservableObject
                 return;
             }
 
-            // ② WinPilot이 설정한 경우 → 잠금 해제, 변경 가능
+            // ② WinPilot이 설정한 Policy → 잠금 해제, 변경 가능
+            // (마커가 있거나, DODownloadMode 단독 존재 = 이전 버전 WinPilot이 설정)
             DeliveryOptPolicyLocked = false;
             _loading = true;
             DeliveryOptEnabled = pm != 0;
             _loading = false;
             DeliveryOptStatus = pm switch
             {
-                0 => "꺼짐  (WinPilot 정책 적용 중 — 즉시 반영됨)",
-                1 => "켜짐  — 로컬 네트워크만 (WinPilot 정책 적용 중)",
-                _ => $"켜짐  모드 {pm} (WinPilot 정책 적용 중)"
+                0 => "꺼짐  (즉시 반영됨)",
+                1 => "켜짐  — 로컬 네트워크만",
+                _ => $"켜짐  (모드 {pm})"
             };
             return;
         }
@@ -77,6 +78,19 @@ public partial class WindowsSettingsViewModel : ObservableObject
         DeliveryOptEnabled = mode != 0;
         _loading = false;
         DeliveryOptStatus = DescribeMode(mode);
+    }
+
+    /// WinPilot이 관리하는 Policy 키인지 판별합니다.
+    /// 마커가 있거나, DODownloadMode 값만 단독으로 존재하면 WinPilot이 만든 것.
+    /// IT 관리자 정책은 보통 다른 DO 값(DOCacheHost, DOGroupId 등)도 함께 있습니다.
+    private static bool IsWinPilotPolicy(RegistryKey key)
+    {
+        if (key.GetValue(WinPilotMarker) != null) return true;  // 신규 마커 있음
+
+        // 구버전 호환: 값이 DODownloadMode 하나뿐이면 WinPilot이 쓴 것으로 간주
+        var values = key.GetValueNames();
+        return values.Length == 1 && values[0] == "DODownloadMode"
+               && key.GetSubKeyNames().Length == 0;
     }
 
     private void ApplyDeliveryOpt(bool enable)
