@@ -21,7 +21,18 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
+      # 태그에서 버전 추출 (v1.2.3 → 1.2.3)
+      - name: Extract version
+        id: ver
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $version = $tag.TrimStart('v')
+          echo "VERSION=$version" >> $env:GITHUB_OUTPUT
+
+      # 어셈블리 버전을 태그 버전으로 설정
       - name: Publish
+        shell: pwsh
         run: |
           dotnet publish WinPilot/WinPilot.csproj `
             -c Release `
@@ -30,10 +41,30 @@ jobs:
             -p:PublishSingleFile=true `
             -p:EnableCompressionInSingleFile=true `
             -p:PublishReadyToRun=true `
+            -p:Version=${{ steps.ver.outputs.VERSION }} `
             -o publish
+
+      # Inno Setup 설치 (GitHub Actions Windows 러너에 내장)
+      - name: Build Installer
+        shell: pwsh
+        run: |
+          $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          & $iscc WinPilot/installer.iss /DAppVersion=${{ steps.ver.outputs.VERSION }}
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          files: publish/WinPilot.exe
+          files: |
+            publish/WinPilot.exe
+            WinPilot/installer_output/WinPilotSetup.exe
           generate_release_notes: true
+          body: |
+            ## WinPilot ${{ github.ref_name }}
+
+            ### 설치 방법
+            | 파일 | 설명 |
+            |---|---|
+            | **WinPilotSetup.exe** | 설치 프로그램 (권장) — 시작 메뉴 + 바탕화면 바로가기 생성 |
+            | **WinPilot.exe** | 포터블 버전 — 설치 없이 바로 실행 |
+
+            > **요구사항**: Windows 10/11 (64-bit), 관리자 권한

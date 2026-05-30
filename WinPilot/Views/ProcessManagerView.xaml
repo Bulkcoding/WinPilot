@@ -6,14 +6,13 @@
              mc:Ignorable="d">
     <UserControl.Resources>
 
-        <!-- 상하좌우 center -->
+        <!-- 모든 셀: 상하만 center (좌우는 Left) -->
         <Style x:Key="CCell" TargetType="TextBlock">
-            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
             <Setter Property="VerticalAlignment"   Value="Center"/>
-            <Setter Property="TextAlignment"       Value="Center"/>
         </Style>
 
-        <!-- 설명 열: 상하만 center (좌우는 Left) -->
+        <!-- 설명/경로 열: 동일하게 상하 center + 말줄임 -->
         <Style x:Key="DCell" TargetType="TextBlock">
             <Setter Property="HorizontalAlignment" Value="Left"/>
             <Setter Property="VerticalAlignment"   Value="Center"/>
@@ -21,7 +20,9 @@
         </Style>
 
         <!-- 서비스 상태 색상 -->
-        <Style x:Key="StateCell" TargetType="TextBlock" BasedOn="{StaticResource CCell}">
+        <Style x:Key="StateCell" TargetType="TextBlock">
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+            <Setter Property="VerticalAlignment"   Value="Center"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="Foreground" Value="{DynamicResource TextValueBrush}"/>
             <Style.Triggers>

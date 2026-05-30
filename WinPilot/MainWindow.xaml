@@ -336,6 +336,43 @@
 
         <!-- 콘텐츠 영역 -->
         <ContentControl Grid.Column="1" Content="{Binding CurrentPage}"/>
+
+        <!-- 업데이트 알림 (오른쪽 하단) -->
+        <Border Grid.Column="1"
+                VerticalAlignment="Bottom" HorizontalAlignment="Right"
+                Margin="0,0,20,20"
+                CornerRadius="10" Padding="14,10"
+                Background="#1E3A5F"
+                Visibility="{Binding UpdateAvailable, Converter={StaticResource BoolToVisibility}}">
+            <StackPanel>
+                <TextBlock FontSize="12" FontWeight="SemiBold" Foreground="#E2E8F0" Margin="0,0,0,6">
+                    <Run Text="🔔 새 버전 "/>
+                    <Run Text="{Binding LatestVersion}" Foreground="#3B82F6"/>
+                    <Run Text=" 다운로드 완료"/>
+                </TextBlock>
+                <StackPanel Visibility="{Binding IsDownloading, Converter={StaticResource BoolToVisibility}}">
+                    <ProgressBar Value="{Binding DownloadProgress}" Maximum="100"
+                                 Height="4" Foreground="#3B82F6" Margin="0,0,0,6"/>
+                    <TextBlock Text="다운로드 중..." FontSize="11" Foreground="#94A3B8"/>
+                </StackPanel>
+                <Button Content="▶ 재시작하여 업데이트 적용"
+                        Command="{Binding ApplyUpdateCommand}"
+                        Background="#3B82F6" Foreground="White"
+                        BorderThickness="0" Padding="10,6" FontSize="12"
+                        Cursor="Hand"
+                        Visibility="{Binding UpdateReady, Converter={StaticResource BoolToVisibility}}">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}" CornerRadius="6"
+                                    Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+            </StackPanel>
+        </Border>
+
         </Grid>
 
         <!-- ===== 미니 모드 ===== -->

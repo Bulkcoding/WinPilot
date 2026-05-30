@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using WinPilot.Services;
+
 namespace WinPilot.ViewModels;
 
 public partial class MainViewModel : ObservableObject
@@ -18,8 +19,21 @@ public partial class MainViewModel : ObservableObject
     public SettingsViewModel     Settings        { get; } = SettingsViewModel.Current;
 
     [ObservableProperty] private object _currentPage = null!;
-    [ObservableProperty] private bool _isSidebarExpanded = true;
-    [ObservableProperty] private bool _isMiniMode;
+    [ObservableProperty] private bool   _isSidebarExpanded = true;
+    [ObservableProperty] private bool   _isMiniMode;
+
+    // 업데이트
+    [ObservableProperty] private bool   _updateAvailable;
+    [ObservableProperty] private string _latestVersion = "";
+    [ObservableProperty] private string _updateDownloadUrl = "";
+    [ObservableProperty] private bool   _isDownloading;
+    [ObservableProperty] private int    _downloadProgress;
+
+    // 버튼 표시 조건: 다운로드 완료 후 적용 가능
+    public bool UpdateReady => UpdateAvailable && !IsDownloading;
+
+    partial void OnIsDownloadingChanged(bool value)  => OnPropertyChanged(nameof(UpdateReady));
+    partial void OnUpdateAvailableChanged(bool value) => OnPropertyChanged(nameof(UpdateReady));
 
     public bool IsNormalMode => !IsMiniMode;
     public MiniViewModel MiniVm { get; }
@@ -28,9 +42,52 @@ public partial class MainViewModel : ObservableObject
     {
         Dashboard  = new DashboardViewModel(_sysInfo);
         SystemInfo = new SystemInfoViewModel(_sysInfo);
-        MiniVm = new MiniViewModel(_sysInfo);
+        MiniVm     = new MiniViewModel(_sysInfo);
         CurrentPage = Dashboard;
         Dashboard.StartAutoRefresh();
+
+        // 시작 시 백그라운드 업데이트 체크 + 자동 다운로드
+        _ = CheckAndAutoDownloadUpdateAsync();
+    }
+
+    private async Task CheckAndAutoDownloadUpdateAsync()
+    {
+        var info = await UpdateService.CheckAsync();
+        if (info == null || string.IsNullOrEmpty(info.DownloadUrl)) return;
+
+        LatestVersion    = info.Version;
+        UpdateDownloadUrl = info.DownloadUrl;
+
+        // 자동 다운로드 (백그라운드)
+        IsDownloading = true;
+        try
+        {
+            await UpdateService.DownloadAndApplyAsync(
+                info.DownloadUrl,
+                progress: null,   // 다운로드 후 바로 재시작하지 않고 버튼만 표시
+                autoApply: false);
+            UpdateAvailable = true;
+        }
+        catch { /* 네트워크 없으면 무시 */ }
+        finally { IsDownloading = false; }
+    }
+
+    [RelayCommand]
+    private async Task ApplyUpdateAsync()
+    {
+        if (string.IsNullOrEmpty(UpdateDownloadUrl)) return;
+        IsDownloading = true;
+        var prog = new Progress<int>(v => DownloadProgress = v);
+        try
+        {
+            await UpdateService.DownloadAndApplyAsync(UpdateDownloadUrl, prog, autoApply: true);
+        }
+        catch (Exception ex)
+        {
+            System.Windows.MessageBox.Show($"업데이트 실패: {ex.Message}", "WinPilot",
+                System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            IsDownloading = false;
+        }
     }
 
     partial void OnIsMiniModeChanged(bool value) => OnPropertyChanged(nameof(IsNormalMode));
