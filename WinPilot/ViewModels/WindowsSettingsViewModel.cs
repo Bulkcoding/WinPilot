@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Management;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -10,13 +9,14 @@ namespace WinPilot.ViewModels;
 public partial class WindowsSettingsViewModel : ObservableObject
 {
     // ─── Delivery Optimization ────────────────────────────────
-    // Windows 설정이 읽고 쓰는 실제 경로
-    private const string DoConfigKey = @"SOFTWARE\Microsoft\Windows\CurrentVersion\DeliveryOptimization\Config";
-    private const string DoPolicyKey = @"SOFTWARE\Policies\Microsoft\Windows\DeliveryOptimization";
+    private const string DoConfigKey  = @"SOFTWARE\Microsoft\Windows\CurrentVersion\DeliveryOptimization\Config";
+    private const string DoPolicyKey  = @"SOFTWARE\Policies\Microsoft\Windows\DeliveryOptimization";
+    // WinPilot이 Policy 키를 직접 썼음을 표시하는 마커 값 이름
+    private const string WinPilotMarker = "WinPilotManaged";
 
     [ObservableProperty] private bool   _deliveryOptEnabled;
-    [ObservableProperty] private string _deliveryOptStatus  = "로딩 중...";
-    [ObservableProperty] private bool   _deliveryOptPolicyLocked;
+    [ObservableProperty] private string _deliveryOptStatus = "로딩 중...";
+    [ObservableProperty] private bool   _deliveryOptPolicyLocked;  // 실제 IT 정책만 잠금
 
     // ─── Smart App Control ────────────────────────────────────
     private const string SacKey = @"SYSTEM\CurrentControlSet\Control\CI\Policy";
@@ -39,38 +39,44 @@ public partial class WindowsSettingsViewModel : ObservableObject
 
     private void LoadDeliveryOpt()
     {
-        // ① 그룹 정책 확인 (최우선, 쓰기 불가)
         using var policy = Registry.LocalMachine.OpenSubKey(DoPolicyKey);
         if (policy?.GetValue("DODownloadMode") is int pm)
         {
-            DeliveryOptPolicyLocked = true;
+            bool winPilotManaged = policy.GetValue(WinPilotMarker) != null;
+
+            if (!winPilotManaged)
+            {
+                // ① IT 관리자 또는 그룹 정책이 설정한 경우 → 잠금
+                DeliveryOptPolicyLocked = true;
+                _loading = true;
+                DeliveryOptEnabled = pm != 0;
+                _loading = false;
+                DeliveryOptStatus = $"그룹 정책 적용 중 (모드 {pm}) — IT 관리자 설정, 변경 불가";
+                return;
+            }
+
+            // ② WinPilot이 설정한 경우 → 잠금 해제, 변경 가능
+            DeliveryOptPolicyLocked = false;
             _loading = true;
             DeliveryOptEnabled = pm != 0;
             _loading = false;
-            DeliveryOptStatus = $"그룹 정책 적용 중 (모드 {pm}) — 변경 불가";
+            DeliveryOptStatus = pm switch
+            {
+                0 => "꺼짐  (WinPilot 정책 적용 중 — 즉시 반영됨)",
+                1 => "켜짐  — 로컬 네트워크만 (WinPilot 정책 적용 중)",
+                _ => $"켜짐  모드 {pm} (WinPilot 정책 적용 중)"
+            };
             return;
         }
 
+        // ③ 정책 없음 → Config 경로 읽기
         DeliveryOptPolicyLocked = false;
-
-        // ② Config 레지스트리 읽기
-        // Windows 설정도 이 경로를 읽고 씁니다.
-        // 값이 없으면 기본값 = 1 (LAN 피어 허용)
         using var cfg = Registry.LocalMachine.OpenSubKey(DoConfigKey);
         int mode = cfg?.GetValue("DODownloadMode") is int m ? m : 1;
-
         _loading = true;
         DeliveryOptEnabled = mode != 0;
         _loading = false;
-
-        DeliveryOptStatus = mode switch
-        {
-            0 => "꺼짐  (HTTP만 사용, 피어 다운로드 없음)",
-            1 => "켜짐  — 로컬 네트워크만",
-            2 => "켜짐  — 인터넷 + 로컬 네트워크",
-            3 => "켜짐  — 그룹 (LAN + 인터넷)",
-            _ => $"켜짐  (모드 {mode})"
-        };
+        DeliveryOptStatus = DescribeMode(mode);
     }
 
     private void ApplyDeliveryOpt(bool enable)
@@ -78,32 +84,18 @@ public partial class WindowsSettingsViewModel : ObservableObject
         try
         {
             int mode = enable ? 1 : 0;
-            var log = new System.Text.StringBuilder();
 
-            // ① MDM Bridge WMI (Windows 설정 앱과 동일한 CSP 경로)
-            string? mdmErr = TrySetViaMdmBridge(mode);
-            log.AppendLine(mdmErr == null ? "MDM Bridge: 성공" : $"MDM Bridge: 실패 ({mdmErr})");
+            // ① Policy 경로 업데이트 (DoSvc 즉시 반영)
+            ApplyPolicyRegistry(mode);
 
-            // ② Policy 레지스트리 (DoSvc가 동적으로 인식, WinPilot 고권한 필요)
-            string? policyErr = TrySetPolicyRegistry(mode);
-            log.AppendLine(policyErr == null ? "Policy 레지스트리: 성공" : $"Policy 레지스트리: 실패 ({policyErr})");
+            // ② MDM Bridge 시도 (추가 반영 경로)
+            TrySetViaMdmBridge(mode);
 
-            // ③ Config 레지스트리 (재부팅 후 적용 보장)
+            // ③ Config 경로도 유지 (재부팅 후 보장)
             using var cfgKey = Registry.LocalMachine.CreateSubKey(DoConfigKey, writable: true);
             cfgKey.SetValue("DODownloadMode", mode, RegistryValueKind.DWord);
-            log.AppendLine("Config 레지스트리: 성공");
 
             LoadDeliveryOpt();
-
-            // 적어도 하나 이상 성공했는지 확인
-            bool anyLive = mdmErr == null || policyErr == null;
-            if (!anyLive)
-            {
-                DeliveryOptStatus += "  ※ 즉시 반영 불가 — Windows 설정 페이지 닫고 다시 열어 확인";
-                // 실패 원인 표시 (진단용)
-                MessageBox.Show(log.ToString(), "WinPilot — 배달 최적화 진단",
-                    MessageBoxButton.OK, MessageBoxImage.Information);
-            }
         }
         catch (Exception ex)
         {
@@ -116,34 +108,45 @@ public partial class WindowsSettingsViewModel : ObservableObject
         }
     }
 
-    /// Policy 경로에 쓰기 — DoSvc가 이 경로를 우선 읽으며 동적 반영됩니다.
-    /// WinPilot은 High Integrity 관리자로 실행되므로 가능할 수 있습니다.
-    /// 성공 시 null, 실패 시 오류 메시지 반환.
-    private static string? TrySetPolicyRegistry(int mode)
+    /// <summary>
+    /// Policy 레지스트리에 WinPilotManaged 마커와 함께 DO 모드를 씁니다.
+    /// DoSvc는 Policy 경로를 우선 읽으므로 서비스 재시작 없이 즉시 반영됩니다.
+    /// OFF(0): Policy 키에 값을 씁니다.
+    /// ON(1):  WinPilot이 쓴 Policy 값을 삭제해 Config 경로로 돌아갑니다.
+    /// </summary>
+    private static void ApplyPolicyRegistry(int mode)
     {
-        try
+        if (mode == 0)
         {
+            // 끄기: Policy 키에 DODownloadMode=0 + WinPilotManaged 마커 쓰기
             using var key = Registry.LocalMachine.CreateSubKey(DoPolicyKey, writable: true);
-            if (mode == 0)
-                key.SetValue("DODownloadMode", 0, RegistryValueKind.DWord);
-            else
-            {
-                // ON이면 Policy 강제 설정을 제거해 Config 기본값으로 돌아가게 함
-                try { key.DeleteValue("DODownloadMode", throwOnMissingValue: false); } catch { }
-                // Policy 키 자체를 삭제하려 시도
-                try { Registry.LocalMachine.DeleteSubKey(DoPolicyKey, throwOnMissingSubKey: false); } catch { }
-            }
-            return null; // 성공
+            key.SetValue("DODownloadMode", 0, RegistryValueKind.DWord);
+            key.SetValue(WinPilotMarker, 1, RegistryValueKind.DWord);
         }
-        catch (Exception ex)
+        else
         {
-            return ex.Message;
+            // 켜기: WinPilot이 쓴 Policy 값 제거 → Config 경로로 폴백
+            try
+            {
+                using var key = Registry.LocalMachine.OpenSubKey(DoPolicyKey, writable: true);
+                if (key == null) return;
+
+                // WinPilot 마커가 있을 때만 제거 (실제 IT 정책은 건드리지 않음)
+                if (key.GetValue(WinPilotMarker) != null)
+                {
+                    key.DeleteValue("DODownloadMode", throwOnMissingValue: false);
+                    key.DeleteValue(WinPilotMarker, throwOnMissingValue: false);
+
+                    // 키가 완전히 비었으면 삭제
+                    if (key.GetValueNames().Length == 0 && key.GetSubKeyNames().Length == 0)
+                        Registry.LocalMachine.DeleteSubKey(DoPolicyKey, throwOnMissingSubKey: false);
+                }
+            }
+            catch { /* 실제 IT 정책이면 무시 */ }
         }
     }
 
-    /// MDM Bridge WMI로 DoSvc에 직접 설정 전달.
-    /// 성공 시 null, 실패 시 오류 메시지 반환.
-    private static string? TrySetViaMdmBridge(int mode)
+    private static void TrySetViaMdmBridge(int mode)
     {
         try
         {
@@ -157,8 +160,7 @@ public partial class WindowsSettingsViewModel : ObservableObject
                     "AND ParentID='./Vendor/MSFT/Policy/Config'"));
 
             ManagementObject? existing = null;
-            foreach (ManagementObject o in searcher.Get())
-            { existing = o; break; }
+            foreach (ManagementObject o in searcher.Get()) { existing = o; break; }
 
             if (existing != null)
             {
@@ -175,14 +177,18 @@ public partial class WindowsSettingsViewModel : ObservableObject
                 inst["DODownloadMode"] = (uint)mode;
                 inst.Put();
             }
-
-            return null; // 성공
         }
-        catch (Exception ex)
-        {
-            return ex.Message;
-        }
+        catch { /* MDM Bridge 미지원 PC이면 무시 */ }
     }
+
+    private static string DescribeMode(int mode) => mode switch
+    {
+        0 => "꺼짐  (HTTP만 사용, 피어 다운로드 없음)",
+        1 => "켜짐  — 로컬 네트워크만",
+        2 => "켜짐  — 인터넷 + 로컬 네트워크",
+        3 => "켜짐  — 그룹 (LAN + 인터넷)",
+        _ => $"켜짐  (모드 {mode})"
+    };
 
     // ─── Smart App Control ────────────────────────────────────
 
