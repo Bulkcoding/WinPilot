@@ -53,6 +53,15 @@ public partial class ProcessManagerViewModel : ObservableObject
     [ObservableProperty] private string _serviceFilter  = "";
     [ObservableProperty] private string _statusText     = "";
 
+    // 탭별 선택 항목 (헤더 버튼이 바인딩)
+    [ObservableProperty] private ProcessRow?       _selectedProcess;
+    [ObservableProperty] private ProcessDetailRow? _selectedDetail;
+    [ObservableProperty] private ServiceRow?       _selectedService;
+
+    // 헤더 버튼 표시 여부
+    public bool ShowEndTask    => SelectedTab is 0 or 2;
+    public bool ShowServiceOps => SelectedTab == 3;
+
     public ObservableCollection<ProcessRow>       Processes   { get; } = [];
     public ObservableCollection<AppHistoryRow>    AppHistory  { get; } = [];
     public ObservableCollection<ProcessDetailRow> Details     { get; } = [];
@@ -66,7 +75,12 @@ public partial class ProcessManagerViewModel : ObservableObject
         _timer.Start();
     }
 
-    partial void OnSelectedTabChanged(int value)     => _ = RefreshCurrentAsync();
+    partial void OnSelectedTabChanged(int value)
+    {
+        _ = RefreshCurrentAsync();
+        OnPropertyChanged(nameof(ShowEndTask));
+        OnPropertyChanged(nameof(ShowServiceOps));
+    }
     partial void OnProcessFilterChanged(string value) => _ = RefreshCurrentAsync();
     partial void OnServiceFilterChanged(string value) => _ = RefreshCurrentAsync();
 
@@ -140,17 +154,14 @@ public partial class ProcessManagerViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void EndTask(object? row)
+    private void EndTask()
     {
-        // 프로세스 탭(ProcessRow) 또는 자세히 탭(ProcessDetailRow) 모두 처리
-        var (name, pid) = row switch
-        {
-            ProcessRow       pr => (pr.Name, pr.Pid),
-            ProcessDetailRow dr => (dr.Name, dr.Pid),
-            _                   => ("", -1)
-        };
-        if (pid < 0) return;
+        // 프로세스 탭 또는 자세히 탭의 선택 항목 사용
+        var (name, pid) = SelectedTab == 2
+            ? (SelectedDetail?.Name ?? "", SelectedDetail?.Pid ?? -1)
+            : (SelectedProcess?.Name ?? "", SelectedProcess?.Pid ?? -1);
 
+        if (pid < 0) return;
         var r = MessageBox.Show(
             $"'{name}' (PID {pid}) 를 종료하시겠습니까?",
             "WinPilot — 작업 끝내기", MessageBoxButton.YesNo, MessageBoxImage.Warning);
@@ -300,31 +311,31 @@ public partial class ProcessManagerViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task StartServiceAsync(ServiceRow? s)
+    private async Task StartServiceAsync()
     {
-        if (s == null) return;
-        await RunServiceMethodAsync(s.Name, "StartService");
+        if (SelectedService == null) return;
+        await RunServiceMethodAsync(SelectedService.Name, "StartService");
         await RefreshServicesAsync();
     }
 
     [RelayCommand]
-    private async Task StopServiceAsync(ServiceRow? s)
+    private async Task StopServiceAsync()
     {
-        if (s == null) return;
-        var r = MessageBox.Show($"'{s.DisplayName}' 서비스를 중지하시겠습니까?",
+        if (SelectedService == null) return;
+        var r = MessageBox.Show($"'{SelectedService.DisplayName}' 서비스를 중지하시겠습니까?",
             "WinPilot", MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (r != MessageBoxResult.Yes) return;
-        await RunServiceMethodAsync(s.Name, "StopService");
+        await RunServiceMethodAsync(SelectedService.Name, "StopService");
         await RefreshServicesAsync();
     }
 
     [RelayCommand]
-    private async Task RestartServiceAsync(ServiceRow? s)
+    private async Task RestartServiceAsync()
     {
-        if (s == null) return;
-        await RunServiceMethodAsync(s.Name, "StopService");
+        if (SelectedService == null) return;
+        await RunServiceMethodAsync(SelectedService.Name, "StopService");
         await Task.Delay(1500);
-        await RunServiceMethodAsync(s.Name, "StartService");
+        await RunServiceMethodAsync(SelectedService.Name, "StartService");
         await RefreshServicesAsync();
     }
 
