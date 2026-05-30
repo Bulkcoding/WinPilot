@@ -14,6 +14,8 @@
             <conv:IsCurrentPageConverter x:Key="IsCurrentPage"/>
             <conv:LogLevelToBrushConverter x:Key="LogLevelToBrush"/>
             <conv:StepStatusToBrushConverter x:Key="StepStatusToBrush"/>
+            <conv:EnumToBoolConverter x:Key="EnumToBoolConverter"/>
+            <conv:ZeroToVisibilityConverter x:Key="ZeroToVisibilityConverter"/>
 
             <!-- Color Brushes -->
             <SolidColorBrush x:Key="BgBrush"          Color="#1E1E2E"/>
@@ -545,6 +547,9 @@
             </DataTemplate>
             <DataTemplate DataType="{x:Type vm:PingViewModel}">
                 <views:PingView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:DefenderViewModel}">
+                <views:DefenderView/>
             </DataTemplate>
 <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
                 <views:SettingsView/>

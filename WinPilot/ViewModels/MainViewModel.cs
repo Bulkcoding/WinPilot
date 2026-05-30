@@ -12,6 +12,7 @@ public partial class MainViewModel : ObservableObject
     public EventViewerViewModel  EventViewer     { get; } = new();
     public RecoveryViewModel     Recovery        { get; } = new();
     public PingViewModel         Ping            { get; } = new();
+    public DefenderViewModel     Defender        { get; } = new();
     public RegistryViewModel     Registry        { get; } = new();
     public SettingsViewModel     Settings        { get; } = SettingsViewModel.Current;
 

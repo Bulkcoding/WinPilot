@@ -252,6 +252,32 @@
                         </DockPanel>
                     </Button>
 
+                    <!-- Defender 제외 -->
+                    <Button Command="{Binding NavigateToCommand}" CommandParameter="{Binding Defender}">
+                        <Button.Style>
+                            <Style BasedOn="{StaticResource NavBtnStyle}" TargetType="Button">
+                                <Style.Triggers>
+                                    <DataTrigger Value="True">
+                                        <DataTrigger.Binding>
+                                            <MultiBinding Converter="{StaticResource IsCurrentPage}">
+                                                <Binding Path="CurrentPage"/>
+                                                <Binding Path="Defender"/>
+                                            </MultiBinding>
+                                        </DataTrigger.Binding>
+                                        <Setter Property="Background" Value="#1E3A5F"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                        <DockPanel>
+                            <TextBlock Text="&#xEA18;" FontFamily="Segoe MDL2 Assets" FontSize="16"
+                                       Foreground="#94A3B8" Width="24" TextAlignment="Center" VerticalAlignment="Center"/>
+                            <TextBlock Text="Defender 제외" FontSize="13" Foreground="#CBD5E1" Margin="10,0,0,0"
+                                       VerticalAlignment="Center"
+                                       Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/>
+                        </DockPanel>
+                    </Button>
+
                     <!-- 설정 -->
                     <Button Command="{Binding NavigateToCommand}" CommandParameter="{Binding Settings}">
                         <Button.Style>
