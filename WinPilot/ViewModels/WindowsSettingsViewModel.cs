@@ -78,18 +78,32 @@ public partial class WindowsSettingsViewModel : ObservableObject
         try
         {
             int mode = enable ? 1 : 0;
+            var log = new System.Text.StringBuilder();
 
-            // ① MDM Bridge WMI 시도 (성공 시 DoSvc에 즉시 반영됨)
-            bool mdmOk = TrySetViaMdmBridge(mode);
+            // ① MDM Bridge WMI (Windows 설정 앱과 동일한 CSP 경로)
+            string? mdmErr = TrySetViaMdmBridge(mode);
+            log.AppendLine(mdmErr == null ? "MDM Bridge: 성공" : $"MDM Bridge: 실패 ({mdmErr})");
 
-            // ② 레지스트리에도 씁니다 (재부팅 후에도 유지)
-            using var key = Registry.LocalMachine.CreateSubKey(DoConfigKey, writable: true);
-            key.SetValue("DODownloadMode", mode, RegistryValueKind.DWord);
+            // ② Policy 레지스트리 (DoSvc가 동적으로 인식, WinPilot 고권한 필요)
+            string? policyErr = TrySetPolicyRegistry(mode);
+            log.AppendLine(policyErr == null ? "Policy 레지스트리: 성공" : $"Policy 레지스트리: 실패 ({policyErr})");
+
+            // ③ Config 레지스트리 (재부팅 후 적용 보장)
+            using var cfgKey = Registry.LocalMachine.CreateSubKey(DoConfigKey, writable: true);
+            cfgKey.SetValue("DODownloadMode", mode, RegistryValueKind.DWord);
+            log.AppendLine("Config 레지스트리: 성공");
 
             LoadDeliveryOpt();
 
-            if (!mdmOk)
-                DeliveryOptStatus += "  ※ 서비스 즉시 반영 실패 — Windows 설정을 닫았다 다시 열어 확인하세요";
+            // 적어도 하나 이상 성공했는지 확인
+            bool anyLive = mdmErr == null || policyErr == null;
+            if (!anyLive)
+            {
+                DeliveryOptStatus += "  ※ 즉시 반영 불가 — Windows 설정 페이지 닫고 다시 열어 확인";
+                // 실패 원인 표시 (진단용)
+                MessageBox.Show(log.ToString(), "WinPilot — 배달 최적화 진단",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+            }
         }
         catch (Exception ex)
         {
@@ -102,22 +116,40 @@ public partial class WindowsSettingsViewModel : ObservableObject
         }
     }
 
-    /// <summary>
-    /// MDM Bridge WMI를 통해 DoSvc에 직접 설정을 전달합니다.
-    /// Windows 설정 앱이 내부적으로 사용하는 경로와 동일한 방식으로
-    /// CSP(Configuration Service Provider)를 통해 서비스에 반영됩니다.
-    ///
-    /// 경로: root\cimv2\mdm\dmmap → MDM_Policy_Config01_DeliveryOptimization02
-    /// CSP: ./Vendor/MSFT/Policy/Config/DeliveryOptimization/DODownloadMode
-    /// </summary>
-    private static bool TrySetViaMdmBridge(int mode)
+    /// Policy 경로에 쓰기 — DoSvc가 이 경로를 우선 읽으며 동적 반영됩니다.
+    /// WinPilot은 High Integrity 관리자로 실행되므로 가능할 수 있습니다.
+    /// 성공 시 null, 실패 시 오류 메시지 반환.
+    private static string? TrySetPolicyRegistry(int mode)
+    {
+        try
+        {
+            using var key = Registry.LocalMachine.CreateSubKey(DoPolicyKey, writable: true);
+            if (mode == 0)
+                key.SetValue("DODownloadMode", 0, RegistryValueKind.DWord);
+            else
+            {
+                // ON이면 Policy 강제 설정을 제거해 Config 기본값으로 돌아가게 함
+                try { key.DeleteValue("DODownloadMode", throwOnMissingValue: false); } catch { }
+                // Policy 키 자체를 삭제하려 시도
+                try { Registry.LocalMachine.DeleteSubKey(DoPolicyKey, throwOnMissingSubKey: false); } catch { }
+            }
+            return null; // 성공
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
+        }
+    }
+
+    /// MDM Bridge WMI로 DoSvc에 직접 설정 전달.
+    /// 성공 시 null, 실패 시 오류 메시지 반환.
+    private static string? TrySetViaMdmBridge(int mode)
     {
         try
         {
             var scope = new ManagementScope(@"\\.\root\cimv2\mdm\dmmap");
             scope.Connect();
 
-            // 기존 인스턴스 조회
             using var searcher = new ManagementObjectSearcher(scope,
                 new ObjectQuery(
                     "SELECT * FROM MDM_Policy_Config01_DeliveryOptimization02 " +
@@ -130,13 +162,11 @@ public partial class WindowsSettingsViewModel : ObservableObject
 
             if (existing != null)
             {
-                // 기존 인스턴스 업데이트
                 existing["DODownloadMode"] = (uint)mode;
                 existing.Put();
             }
             else
             {
-                // 새 인스턴스 생성
                 using var cls = new ManagementClass(scope,
                     new ManagementPath("MDM_Policy_Config01_DeliveryOptimization02"), null);
                 using var inst = cls.CreateInstance();
@@ -146,12 +176,11 @@ public partial class WindowsSettingsViewModel : ObservableObject
                 inst.Put();
             }
 
-            return true;
+            return null; // 성공
         }
-        catch
+        catch (Exception ex)
         {
-            // MDM Bridge 사용 불가 (미지원 PC, 권한 부족 등)
-            return false;
+            return ex.Message;
         }
     }
 
