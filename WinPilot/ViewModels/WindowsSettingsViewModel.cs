@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Management;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -78,28 +79,79 @@ public partial class WindowsSettingsViewModel : ObservableObject
         {
             int mode = enable ? 1 : 0;
 
-            // Config 경로에 씁니다.
-            // Windows 설정과 동일한 경로를 사용합니다.
+            // ① MDM Bridge WMI 시도 (성공 시 DoSvc에 즉시 반영됨)
+            bool mdmOk = TrySetViaMdmBridge(mode);
+
+            // ② 레지스트리에도 씁니다 (재부팅 후에도 유지)
             using var key = Registry.LocalMachine.CreateSubKey(DoConfigKey, writable: true);
             key.SetValue("DODownloadMode", mode, RegistryValueKind.DWord);
 
-            // 즉시 다시 읽어서 UI 갱신
             LoadDeliveryOpt();
 
-            // ⚠ DoSvc(배달 최적화 서비스)는 OS 보호 서비스라 외부에서
-            //   재시작이 불가능합니다. 설정은 레지스트리에 저장되며
-            //   Windows 설정 앱을 닫았다 다시 열면 반영됩니다.
-            //   실제 다운로드 동작은 다음 Windows Update 시점에 적용됩니다.
+            if (!mdmOk)
+                DeliveryOptStatus += "  ※ 서비스 즉시 반영 실패 — Windows 설정을 닫았다 다시 열어 확인하세요";
         }
         catch (Exception ex)
         {
-            // 실패 시 UI 롤백
             _loading = true;
             DeliveryOptEnabled = !enable;
             _loading = false;
             LoadDeliveryOpt();
             MessageBox.Show($"설정 변경 실패:\n{ex.Message}", "WinPilot",
                 MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    /// <summary>
+    /// MDM Bridge WMI를 통해 DoSvc에 직접 설정을 전달합니다.
+    /// Windows 설정 앱이 내부적으로 사용하는 경로와 동일한 방식으로
+    /// CSP(Configuration Service Provider)를 통해 서비스에 반영됩니다.
+    ///
+    /// 경로: root\cimv2\mdm\dmmap → MDM_Policy_Config01_DeliveryOptimization02
+    /// CSP: ./Vendor/MSFT/Policy/Config/DeliveryOptimization/DODownloadMode
+    /// </summary>
+    private static bool TrySetViaMdmBridge(int mode)
+    {
+        try
+        {
+            var scope = new ManagementScope(@"\\.\root\cimv2\mdm\dmmap");
+            scope.Connect();
+
+            // 기존 인스턴스 조회
+            using var searcher = new ManagementObjectSearcher(scope,
+                new ObjectQuery(
+                    "SELECT * FROM MDM_Policy_Config01_DeliveryOptimization02 " +
+                    "WHERE InstanceID='DeliveryOptimization' " +
+                    "AND ParentID='./Vendor/MSFT/Policy/Config'"));
+
+            ManagementObject? existing = null;
+            foreach (ManagementObject o in searcher.Get())
+            { existing = o; break; }
+
+            if (existing != null)
+            {
+                // 기존 인스턴스 업데이트
+                existing["DODownloadMode"] = (uint)mode;
+                existing.Put();
+            }
+            else
+            {
+                // 새 인스턴스 생성
+                using var cls = new ManagementClass(scope,
+                    new ManagementPath("MDM_Policy_Config01_DeliveryOptimization02"), null);
+                using var inst = cls.CreateInstance();
+                inst["InstanceID"] = "DeliveryOptimization";
+                inst["ParentID"]   = "./Vendor/MSFT/Policy/Config";
+                inst["DODownloadMode"] = (uint)mode;
+                inst.Put();
+            }
+
+            return true;
+        }
+        catch
+        {
+            // MDM Bridge 사용 불가 (미지원 PC, 권한 부족 등)
+            return false;
         }
     }
 
