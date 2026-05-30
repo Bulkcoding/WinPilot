@@ -10,6 +10,7 @@ public partial class MainViewModel : ObservableObject
     public DashboardViewModel    Dashboard       { get; }
     public SystemInfoViewModel   SystemInfo      { get; }
     public EventViewerViewModel  EventViewer     { get; } = new();
+    public ProcessManagerViewModel ProcessManager { get; } = new();
     public RecoveryViewModel     Recovery        { get; } = new();
     public PingViewModel         Ping            { get; } = new();
     public DefenderViewModel     Defender        { get; } = new();

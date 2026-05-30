@@ -1,0 +1,314 @@
+<UserControl x:Class="WinPilot.Views.ProcessManagerView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <!-- 서비스 상태 색상 -->
+        <Style x:Key="StateTextStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextValueBrush}"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding State}" Value="Running">
+                    <Setter Property="Foreground" Value="#22C55E"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding State}" Value="Stopped">
+                    <Setter Property="Foreground" Value="#EF4444"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <!-- CPU % 색상 -->
+        <Style x:Key="CpuTextStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextValueBrush}"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Background="{DynamicResource BgBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- 헤더 -->
+        <DockPanel Grid.Row="0" Margin="24,16,24,0">
+            <Button DockPanel.Dock="Right" Content="↺ 새로고침"
+                    Command="{Binding RefreshCommand}"
+                    Style="{StaticResource SecondaryButtonStyle}"
+                    VerticalAlignment="Center"/>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="작업 관리자" FontSize="22" FontWeight="SemiBold"
+                           Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <TextBlock Text="{Binding StatusText}" FontSize="12"
+                           Foreground="{DynamicResource TextSecondaryBrush}"
+                           Margin="12,0,0,0" VerticalAlignment="Bottom" Padding="0,0,0,2"/>
+            </StackPanel>
+        </DockPanel>
+
+        <!-- 탭 -->
+        <TabControl Grid.Row="1" Margin="16,8,16,16"
+                    SelectedIndex="{Binding SelectedTab}"
+                    Background="{DynamicResource BgBrush}"
+                    BorderThickness="0">
+            <TabControl.Resources>
+                <Style TargetType="TabItem">
+                    <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
+                    <Setter Property="Background" Value="Transparent"/>
+                    <Setter Property="BorderThickness" Value="0"/>
+                    <Setter Property="Padding" Value="14,8"/>
+                    <Setter Property="FontSize" Value="13"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="TabItem">
+                                <Border x:Name="Bd" Padding="{TemplateBinding Padding}"
+                                        Background="Transparent" BorderThickness="0,0,0,2"
+                                        BorderBrush="Transparent">
+                                    <ContentPresenter ContentSource="Header"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter TargetName="Bd" Property="BorderBrush" Value="#3B82F6"/>
+                                        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                    </Trigger>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="Bd" Property="Background" Value="{DynamicResource ItemRowBrush}"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </TabControl.Resources>
+
+            <!-- ══════════════════════════════════════════════════════ -->
+            <!-- 프로세스 탭                                             -->
+            <!-- ══════════════════════════════════════════════════════ -->
+            <TabItem Header="프로세스">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- 검색 -->
+                    <TextBox Grid.Row="0" Margin="0,8,0,8"
+                             Text="{Binding ProcessFilter, UpdateSourceTrigger=PropertyChanged}"
+                             Background="{DynamicResource ItemRowBrush}"
+                             Foreground="{DynamicResource TextPrimaryBrush}"
+                             CaretBrush="{DynamicResource TextPrimaryBrush}"
+                             BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                             Padding="10,6" FontSize="12"
+                             Tag="프로세스 이름으로 필터링..."/>
+
+                    <DataGrid Grid.Row="1" x:Name="ProcessGrid"
+                              ItemsSource="{Binding Processes}"
+                              AutoGenerateColumns="False"
+                              CanUserReorderColumns="False"
+                              CanUserResizeRows="False"
+                              IsReadOnly="True"
+                              SelectionMode="Single"
+                              GridLinesVisibility="None"
+                              HeadersVisibility="Column"
+                              RowHeight="32"
+                              Background="{DynamicResource SurfaceBrush}"
+                              RowBackground="{DynamicResource SurfaceBrush}"
+                              AlternatingRowBackground="{DynamicResource AltRowBrush}"
+                              BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}"
+                              ColumnHeaderStyle="{StaticResource DataGridHeaderStyle}"
+                              CellStyle="{StaticResource DataGridCellStyle}"
+                              RowStyle="{StaticResource DataGridRowStyle}"
+                              EnableRowVirtualization="True"
+                              VirtualizingPanel.IsVirtualizing="True">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="이름"    Binding="{Binding Name}"       Width="*"   />
+                            <DataGridTextColumn Header="상태"    Binding="{Binding Status}"     Width="80"  />
+                            <DataGridTextColumn Header="CPU %"   Binding="{Binding CpuPercent, StringFormat={}{0:F1}%}" Width="70" />
+                            <DataGridTextColumn Header="메모리(MB)" Binding="{Binding MemoryMB, StringFormat={}{0:F1}}" Width="90" />
+                            <DataGridTextColumn Header="PID"     Binding="{Binding Pid}"        Width="65"  />
+                            <DataGridTextColumn Header="설명"    Binding="{Binding Description}" Width="180" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- 작업 끝내기 버튼 -->
+                    <DockPanel Grid.Row="2" Margin="0,8,0,0">
+                        <Button DockPanel.Dock="Right" Content="작업 끝내기"
+                                Command="{Binding EndTaskCommand}"
+                                CommandParameter="{Binding ElementName=ProcessGrid, Path=SelectedItem}"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Padding="12,6"/>
+                        <ProgressBar IsIndeterminate="{Binding IsLoading}"
+                                     Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibility}}"
+                                     Width="80" Height="3" Foreground="#3B82F6"
+                                     VerticalAlignment="Center"/>
+                    </DockPanel>
+                </Grid>
+            </TabItem>
+
+            <!-- ══════════════════════════════════════════════════════ -->
+            <!-- 앱 기록 탭                                             -->
+            <!-- ══════════════════════════════════════════════════════ -->
+            <TabItem Header="앱 기록">
+                <DataGrid ItemsSource="{Binding AppHistory}"
+                          AutoGenerateColumns="False"
+                          CanUserReorderColumns="False" CanUserResizeRows="False"
+                          IsReadOnly="True" SelectionMode="Single"
+                          GridLinesVisibility="None" HeadersVisibility="Column"
+                          RowHeight="32" Margin="0,8,0,0"
+                          Background="{DynamicResource SurfaceBrush}"
+                          RowBackground="{DynamicResource SurfaceBrush}"
+                          AlternatingRowBackground="{DynamicResource AltRowBrush}"
+                          BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}"
+                          ColumnHeaderStyle="{StaticResource DataGridHeaderStyle}"
+                          CellStyle="{StaticResource DataGridCellStyle}"
+                          RowStyle="{StaticResource DataGridRowStyle}"
+                          EnableRowVirtualization="True">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="이름"         Binding="{Binding Name}"          Width="*"   />
+                        <DataGridTextColumn Header="CPU 시간"     Binding="{Binding CpuTimeText}"   Width="100" />
+                        <DataGridTextColumn Header="메모리 피크(MB)" Binding="{Binding PeakMemoryMB, StringFormat={}{0:F1}}" Width="110" />
+                        <DataGridTextColumn Header="인스턴스"     Binding="{Binding InstanceCount}" Width="80"  />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </TabItem>
+
+            <!-- ══════════════════════════════════════════════════════ -->
+            <!-- 자세히 탭                                              -->
+            <!-- ══════════════════════════════════════════════════════ -->
+            <TabItem Header="자세히">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBox Grid.Row="0" Margin="0,8,0,8"
+                             Text="{Binding ProcessFilter, UpdateSourceTrigger=PropertyChanged}"
+                             Background="{DynamicResource ItemRowBrush}"
+                             Foreground="{DynamicResource TextPrimaryBrush}"
+                             CaretBrush="{DynamicResource TextPrimaryBrush}"
+                             BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                             Padding="10,6" FontSize="12"/>
+
+                    <DataGrid Grid.Row="1" x:Name="DetailGrid"
+                              ItemsSource="{Binding Details}"
+                              AutoGenerateColumns="False"
+                              CanUserReorderColumns="False" CanUserResizeRows="False"
+                              IsReadOnly="True" SelectionMode="Single"
+                              GridLinesVisibility="None" HeadersVisibility="Column"
+                              RowHeight="32"
+                              Background="{DynamicResource SurfaceBrush}"
+                              RowBackground="{DynamicResource SurfaceBrush}"
+                              AlternatingRowBackground="{DynamicResource AltRowBrush}"
+                              BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}"
+                              ColumnHeaderStyle="{StaticResource DataGridHeaderStyle}"
+                              CellStyle="{StaticResource DataGridCellStyle}"
+                              RowStyle="{StaticResource DataGridRowStyle}"
+                              EnableRowVirtualization="True">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="이름"      Binding="{Binding Name}"       Width="160" />
+                            <DataGridTextColumn Header="PID"       Binding="{Binding Pid}"        Width="65"  />
+                            <DataGridTextColumn Header="상태"      Binding="{Binding Status}"     Width="80"  />
+                            <DataGridTextColumn Header="CPU %"     Binding="{Binding CpuPercent, StringFormat={}{0:F1}%}" Width="70" />
+                            <DataGridTextColumn Header="메모리(MB)" Binding="{Binding MemoryMB, StringFormat={}{0:F1}}" Width="90" />
+                            <DataGridTextColumn Header="사용자"    Binding="{Binding UserName}"   Width="130" />
+                            <DataGridTextColumn Header="설명"      Binding="{Binding Description}" Width="200" />
+                            <DataGridTextColumn Header="경로"      Binding="{Binding Path}"       Width="*"   />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <DockPanel Grid.Row="2" Margin="0,8,0,0">
+                        <Button DockPanel.Dock="Right" Content="작업 끝내기"
+                                Command="{Binding EndTaskCommand}"
+                                CommandParameter="{Binding ElementName=DetailGrid, Path=SelectedItem}"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Padding="12,6"/>
+                    </DockPanel>
+                </Grid>
+            </TabItem>
+
+            <!-- ══════════════════════════════════════════════════════ -->
+            <!-- 서비스 탭                                              -->
+            <!-- ══════════════════════════════════════════════════════ -->
+            <TabItem Header="서비스">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBox Grid.Row="0" Margin="0,8,0,8"
+                             Text="{Binding ServiceFilter, UpdateSourceTrigger=PropertyChanged}"
+                             Background="{DynamicResource ItemRowBrush}"
+                             Foreground="{DynamicResource TextPrimaryBrush}"
+                             CaretBrush="{DynamicResource TextPrimaryBrush}"
+                             BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                             Padding="10,6" FontSize="12"/>
+
+                    <DataGrid Grid.Row="1" x:Name="ServiceGrid"
+                              ItemsSource="{Binding Services}"
+                              AutoGenerateColumns="False"
+                              CanUserReorderColumns="False" CanUserResizeRows="False"
+                              IsReadOnly="True" SelectionMode="Single"
+                              GridLinesVisibility="None" HeadersVisibility="Column"
+                              RowHeight="32"
+                              Background="{DynamicResource SurfaceBrush}"
+                              RowBackground="{DynamicResource SurfaceBrush}"
+                              AlternatingRowBackground="{DynamicResource AltRowBrush}"
+                              BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}"
+                              ColumnHeaderStyle="{StaticResource DataGridHeaderStyle}"
+                              CellStyle="{StaticResource DataGridCellStyle}"
+                              RowStyle="{StaticResource DataGridRowStyle}"
+                              EnableRowVirtualization="True">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="표시 이름"   Binding="{Binding DisplayName}" Width="*"   />
+                            <DataGridTextColumn Header="이름"        Binding="{Binding Name}"        Width="160" />
+                            <DataGridTemplateColumn Header="상태" Width="80">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding State}" Style="{StaticResource StateTextStyle}"
+                                                   VerticalAlignment="Center" Padding="4,0"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Header="시작 유형"   Binding="{Binding StartMode}"   Width="80"  />
+                            <DataGridTextColumn Header="PID"         Binding="{Binding Pid}"         Width="65"  />
+                            <DataGridTextColumn Header="설명"        Binding="{Binding Description}" Width="220" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- 서비스 제어 버튼 -->
+                    <DockPanel Grid.Row="2" Margin="0,8,0,0">
+                        <ProgressBar DockPanel.Dock="Right" Width="60" Height="3"
+                                     IsIndeterminate="{Binding IsLoading}"
+                                     Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibility}}"
+                                     Foreground="#3B82F6" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                        <Button DockPanel.Dock="Right" Content="다시 시작"
+                                Command="{Binding RestartServiceCommand}"
+                                CommandParameter="{Binding ElementName=ServiceGrid, Path=SelectedItem}"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Padding="12,6" Margin="8,0,0,0"/>
+                        <Button DockPanel.Dock="Right" Content="중지"
+                                Command="{Binding StopServiceCommand}"
+                                CommandParameter="{Binding ElementName=ServiceGrid, Path=SelectedItem}"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Padding="12,6" Margin="8,0,0,0"/>
+                        <Button DockPanel.Dock="Right" Content="시작"
+                                Command="{Binding StartServiceCommand}"
+                                CommandParameter="{Binding ElementName=ServiceGrid, Path=SelectedItem}"
+                                Style="{StaticResource PrimaryButtonStyle}"
+                                Padding="12,6"/>
+                        <TextBlock Text="{Binding ElementName=ServiceGrid, Path=SelectedItem.DisplayName}"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12"
+                                   VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                    </DockPanel>
+                </Grid>
+            </TabItem>
+
+        </TabControl>
+    </Grid>
+</UserControl>

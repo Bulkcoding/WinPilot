@@ -545,6 +545,9 @@
             <DataTemplate DataType="{x:Type vm:RegistryViewModel}">
                 <views:RegistryView/>
             </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:ProcessManagerViewModel}">
+                <views:ProcessManagerView/>
+            </DataTemplate>
             <DataTemplate DataType="{x:Type vm:PingViewModel}">
                 <views:PingView/>
             </DataTemplate>

@@ -174,6 +174,32 @@
                         </DockPanel>
                     </Button>
 
+                    <!-- 작업 관리자 -->
+                    <Button Command="{Binding NavigateToCommand}" CommandParameter="{Binding ProcessManager}">
+                        <Button.Style>
+                            <Style BasedOn="{StaticResource NavBtnStyle}" TargetType="Button">
+                                <Style.Triggers>
+                                    <DataTrigger Value="True">
+                                        <DataTrigger.Binding>
+                                            <MultiBinding Converter="{StaticResource IsCurrentPage}">
+                                                <Binding Path="CurrentPage"/>
+                                                <Binding Path="ProcessManager"/>
+                                            </MultiBinding>
+                                        </DataTrigger.Binding>
+                                        <Setter Property="Background" Value="#1E3A5F"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                        <DockPanel>
+                            <TextBlock Text="&#xE7F8;" FontFamily="Segoe MDL2 Assets" FontSize="16"
+                                       Foreground="#94A3B8" Width="24" TextAlignment="Center" VerticalAlignment="Center"/>
+                            <TextBlock Text="작업 관리자" FontSize="13" Foreground="#CBD5E1" Margin="10,0,0,0"
+                                       VerticalAlignment="Center"
+                                       Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/>
+                        </DockPanel>
+                    </Button>
+
                     <!-- 복구 도구 -->
                     <Button Command="{Binding NavigateToCommand}" CommandParameter="{Binding Recovery}">
                         <Button.Style>
