@@ -5,7 +5,23 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              mc:Ignorable="d">
     <UserControl.Resources>
-        <Style x:Key="StateTextStyle" TargetType="TextBlock">
+
+        <!-- 상하좌우 center -->
+        <Style x:Key="CCell" TargetType="TextBlock">
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment"   Value="Center"/>
+            <Setter Property="TextAlignment"       Value="Center"/>
+        </Style>
+
+        <!-- 설명 열: 상하만 center (좌우는 Left) -->
+        <Style x:Key="DCell" TargetType="TextBlock">
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+            <Setter Property="VerticalAlignment"   Value="Center"/>
+            <Setter Property="TextTrimming"        Value="CharacterEllipsis"/>
+        </Style>
+
+        <!-- 서비스 상태 색상 -->
+        <Style x:Key="StateCell" TargetType="TextBlock" BasedOn="{StaticResource CCell}">
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="Foreground" Value="{DynamicResource TextValueBrush}"/>
             <Style.Triggers>
@@ -17,6 +33,7 @@
                 </DataTrigger>
             </Style.Triggers>
         </Style>
+
     </UserControl.Resources>
 
     <Grid Background="{DynamicResource BgBrush}">
@@ -25,17 +42,15 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- 헤더 (버튼 모두 여기에) -->
+        <!-- 헤더 -->
         <DockPanel Grid.Row="0" Margin="24,16,24,0">
-
-            <!-- ① 새로고침 (항상 표시, 맨 오른쪽) -->
             <Button DockPanel.Dock="Right"
                     Content="↺ 새로고침"
                     Command="{Binding RefreshCommand}"
                     Style="{StaticResource SecondaryButtonStyle}"
                     VerticalAlignment="Center" Margin="8,0,0,0"/>
 
-            <!-- ② 프로세스/자세히 탭: 작업 끝내기 -->
+            <!-- 프로세스/자세히 탭: 작업 끝내기 -->
             <Button DockPanel.Dock="Right"
                     Content="작업 끝내기"
                     Command="{Binding EndTaskCommand}"
@@ -43,7 +58,7 @@
                     VerticalAlignment="Center" Margin="8,0,0,0"
                     Visibility="{Binding ShowEndTask, Converter={StaticResource BoolToVisibility}}"/>
 
-            <!-- ③ 서비스 탭: 시작 / 중지 / 다시 시작 -->
+            <!-- 서비스 탭: 시작 / 중지 / 다시 시작 -->
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"
                         Visibility="{Binding ShowServiceOps, Converter={StaticResource BoolToVisibility}}"
                         VerticalAlignment="Center" Margin="8,0,0,0">
@@ -61,7 +76,6 @@
                         Padding="10,6" Margin="6,0,0,0"/>
             </StackPanel>
 
-            <!-- 타이틀 (남은 공간 채움) -->
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                 <TextBlock Text="작업 관리자" FontSize="22" FontWeight="SemiBold"
                            Foreground="{DynamicResource TextPrimaryBrush}"/>
@@ -136,12 +150,12 @@
                               RowStyle="{StaticResource DataGridRowStyle}"
                               EnableRowVirtualization="True" VirtualizingPanel.IsVirtualizing="True">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="이름"       Binding="{Binding Name}"       Width="*"  />
-                            <DataGridTextColumn Header="상태"       Binding="{Binding Status}"     Width="80" />
-                            <DataGridTextColumn Header="CPU %"      Binding="{Binding CpuPercent, StringFormat={}{0:F1}%}" Width="70" />
-                            <DataGridTextColumn Header="메모리(MB)" Binding="{Binding MemoryMB, StringFormat={}{0:F1}}"    Width="90" />
-                            <DataGridTextColumn Header="PID"        Binding="{Binding Pid}"        Width="65" />
-                            <DataGridTextColumn Header="설명"       Binding="{Binding Description}" Width="180"/>
+                            <DataGridTextColumn Header="이름"       Binding="{Binding Name}"       Width="*"   ElementStyle="{StaticResource CCell}"/>
+                            <DataGridTextColumn Header="상태"       Binding="{Binding Status}"     Width="80"  ElementStyle="{StaticResource CCell}"/>
+                            <DataGridTextColumn Header="CPU %"      Binding="{Binding CpuPercent, StringFormat={}{0:F1}%}" Width="70" ElementStyle="{StaticResource CCell}"/>
+                            <DataGridTextColumn Header="메모리(MB)" Binding="{Binding MemoryMB, StringFormat={}{0:F1}}"    Width="90" ElementStyle="{StaticResource CCell}"/>
+                            <DataGridTextColumn Header="PID"        Binding="{Binding Pid}"        Width="65"  ElementStyle="{StaticResource CCell}"/>
+                            <DataGridTextColumn Header="설명"       Binding="{Binding Description}" Width="180" ElementStyle="{StaticResource DCell}"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </Grid>
@@ -163,10 +177,10 @@
                           RowStyle="{StaticResource DataGridRowStyle}"
                           EnableRowVirtualization="True">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="이름"          Binding="{Binding Name}"          Width="*"   />
-                        <DataGridTextColumn Header="CPU 시간"      Binding="{Binding CpuTimeText}"   Width="100" />
-                        <DataGridTextColumn Header="메모리 피크(MB)" Binding="{Binding PeakMemoryMB, StringFormat={}{0:F1}}" Width="110"/>
-                        <DataGridTextColumn Header="인스턴스"      Binding="{Binding InstanceCount}" Width="80"  />
+                        <DataGridTextColumn Header="이름"          Binding="{Binding Name}"          Width="*"   ElementStyle="{StaticResource CCell}"/>
+                        <DataGridTextColumn Header="CPU 시간"      Binding="{Binding CpuTimeText}"   Width="100" ElementStyle="{StaticResource CCell}"/>
+                        <DataGridTextColumn Header="메모리 피크(MB)" Binding="{Binding PeakMemoryMB, StringFormat={}{0:F1}}" Width="110" ElementStyle="{StaticResource CCell}"/>
+                        <DataGridTextColumn Header="인스턴스"      Binding="{Binding InstanceCount}" Width="80"  ElementStyle="{StaticResource CCell}"/>
                     </DataGrid.Columns>
                 </DataGrid>
             </TabItem>
@@ -200,14 +214,14 @@
                               RowStyle="{StaticResource DataGridRowStyle}"
                               EnableRowVirtualization="True">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="이름"       Binding="{Binding Name}"        Width="160"/>
-                            <DataGridTextColumn Header="PID"        Binding="{Binding Pid}"         Width="65" />
-                            <DataGridTextColumn Header="상태"       Binding="{Binding Status}"      Width="80" />
-                            <DataGridTextColumn Header="CPU %"      Binding="{Binding CpuPercent, StringFormat={}{0:F1}%}" Width="70"/>
-                            <DataGridTextColumn Header="메모리(MB)" Binding="{Binding MemoryMB, StringFormat={}{0:F1}}"    Width="90"/>
-                            <DataGridTextColumn Header="사용자"     Binding="{Binding UserName}"    Width="130"/>
-                            <DataGridTextColumn Header="설명"       Binding="{Binding Description}" Width="200"/>
-                            <DataGridTextColumn Header="경로"       Binding="{Binding Path}"        Width="*"  />
+                            <DataGridTextColumn Header="이름"       Binding="{Binding Name}"        Width="160" ElementStyle="{StaticResource CCell}"/>
+                            <DataGridTextColumn Header="PID"        Binding="{Binding Pid}"         Width="65"  ElementStyle="{StaticResource CCell}"/>
+                            <DataGridTextColumn Header="상태"       Binding="{Binding Status}"      Width="80"  ElementStyle="{StaticResource CCell}"/>
+                            <DataGridTextColumn Header="CPU %"      Binding="{Binding CpuPercent, StringFormat={}{0:F1}%}" Width="70" ElementStyle="{StaticResource CCell}"/>
+                            <DataGridTextColumn Header="메모리(MB)" Binding="{Binding MemoryMB, StringFormat={}{0:F1}}"    Width="90" ElementStyle="{StaticResource CCell}"/>
+                            <DataGridTextColumn Header="사용자"     Binding="{Binding UserName}"    Width="130" ElementStyle="{StaticResource CCell}"/>
+                            <DataGridTextColumn Header="설명"       Binding="{Binding Description}" Width="200" ElementStyle="{StaticResource DCell}"/>
+                            <DataGridTextColumn Header="경로"       Binding="{Binding Path}"        Width="*"   ElementStyle="{StaticResource DCell}"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </Grid>
@@ -242,19 +256,19 @@
                               RowStyle="{StaticResource DataGridRowStyle}"
                               EnableRowVirtualization="True">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="표시 이름" Binding="{Binding DisplayName}" Width="*"   />
-                            <DataGridTextColumn Header="이름"      Binding="{Binding Name}"        Width="160" />
+                            <DataGridTextColumn Header="표시 이름" Binding="{Binding DisplayName}" Width="*"   ElementStyle="{StaticResource CCell}"/>
+                            <DataGridTextColumn Header="이름"      Binding="{Binding Name}"        Width="160" ElementStyle="{StaticResource CCell}"/>
                             <DataGridTemplateColumn Header="상태"  Width="80">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <TextBlock Text="{Binding State}" Style="{StaticResource StateTextStyle}"
-                                                   VerticalAlignment="Center" Padding="4,0"/>
+                                        <TextBlock Text="{Binding State}" Style="{StaticResource StateCell}"
+                                                   Padding="4,0"/>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
-                            <DataGridTextColumn Header="시작 유형" Binding="{Binding StartMode}"   Width="80"  />
-                            <DataGridTextColumn Header="PID"       Binding="{Binding Pid}"         Width="65"  />
-                            <DataGridTextColumn Header="설명"      Binding="{Binding Description}" Width="220" />
+                            <DataGridTextColumn Header="시작 유형" Binding="{Binding StartMode}"   Width="80"  ElementStyle="{StaticResource CCell}"/>
+                            <DataGridTextColumn Header="PID"       Binding="{Binding Pid}"         Width="65"  ElementStyle="{StaticResource CCell}"/>
+                            <DataGridTextColumn Header="설명"      Binding="{Binding Description}" Width="220" ElementStyle="{StaticResource DCell}"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </Grid>
