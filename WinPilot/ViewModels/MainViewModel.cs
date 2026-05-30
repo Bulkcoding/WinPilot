@@ -13,7 +13,6 @@ public partial class MainViewModel : ObservableObject
     public RecoveryViewModel     Recovery        { get; } = new();
     public PingViewModel         Ping            { get; } = new();
     public RegistryViewModel     Registry        { get; } = new();
-    public WindowsSettingsViewModel WindowsSettings { get; } = new();
     public SettingsViewModel     Settings        { get; } = SettingsViewModel.Current;
 
     [ObservableProperty] private object _currentPage = null!;

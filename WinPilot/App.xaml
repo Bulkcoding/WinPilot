@@ -546,10 +546,7 @@
             <DataTemplate DataType="{x:Type vm:PingViewModel}">
                 <views:PingView/>
             </DataTemplate>
-            <DataTemplate DataType="{x:Type vm:WindowsSettingsViewModel}">
-                <views:WindowsSettingsView/>
-            </DataTemplate>
-            <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
+<DataTemplate DataType="{x:Type vm:SettingsViewModel}">
                 <views:SettingsView/>
             </DataTemplate>
 
