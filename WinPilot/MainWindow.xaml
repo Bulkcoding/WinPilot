@@ -177,50 +177,28 @@
 
             <DockPanel>
                 <!-- 로고 + 토글 -->
-                <Border DockPanel.Dock="Top" Padding="10,13,10,13"
+                <Border DockPanel.Dock="Top" Padding="12,14,12,14"
                         BorderBrush="#1A1A30" BorderThickness="0,0,0,1">
                     <DockPanel>
                         <!-- 토글 버튼 -->
                         <Button DockPanel.Dock="Right" Command="{Binding ToggleSidebarCommand}"
                                 Style="{StaticResource NavBtnStyle}"
                                 Padding="4" Width="28" Height="28" VerticalAlignment="Center">
-                            <TextBlock Text="☰" FontSize="13" Foreground="#475569"
+                            <TextBlock Text="☰" FontSize="14" Foreground="#475569"
                                        HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Button>
 
-                        <!-- 확장: W 타일 + WinPilot + PC 모니터링 -->
+                        <!-- 확장: W(파랑) + inPilot(흰색) 텍스트 로고 -->
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
                                     Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}">
-                            <Border Width="30" Height="30" CornerRadius="7" VerticalAlignment="Center">
-                                <Border.Background>
-                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                        <GradientStop Color="#3B82F6" Offset="0"/>
-                                        <GradientStop Color="#1D4ED8" Offset="1"/>
-                                    </LinearGradientBrush>
-                                </Border.Background>
-                                <TextBlock Text="W" FontSize="16" FontWeight="Black" Foreground="White"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
-                            <StackPanel Margin="9,0,0,0" VerticalAlignment="Center">
-                                <TextBlock Text="WinPilot" FontSize="14" FontWeight="Bold" Foreground="#F1F5F9"/>
-                                <TextBlock Text="PC 모니터링" FontSize="9" Foreground="#475569" Margin="0,2,0,0"/>
-                            </StackPanel>
+                            <TextBlock Text="W" FontSize="22" FontWeight="Black"
+                                       Foreground="#3B82F6" VerticalAlignment="Bottom"/>
+                            <TextBlock Text="inPilot" FontSize="14" FontWeight="SemiBold"
+                                       Foreground="#E2E8F0" VerticalAlignment="Bottom"
+                                       Margin="0,0,0,2"/>
                         </StackPanel>
 
-                        <!-- 접힘: W 타일만 -->
-                        <Border Width="30" Height="30" CornerRadius="7" VerticalAlignment="Center"
-                                Visibility="{Binding IsSidebarExpanded,
-                                             Converter={StaticResource InverseBoolConverter},
-                                             ConverterParameter=Visibility}">
-                            <Border.Background>
-                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                    <GradientStop Color="#3B82F6" Offset="0"/>
-                                    <GradientStop Color="#1D4ED8" Offset="1"/>
-                                </LinearGradientBrush>
-                            </Border.Background>
-                            <TextBlock Text="W" FontSize="16" FontWeight="Black" Foreground="White"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
+                        <!-- 접힘: 로고 없음 (토글만) -->
                     </DockPanel>
                 </Border>
 
