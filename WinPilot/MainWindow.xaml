@@ -439,34 +439,6 @@
         <!-- 콘텐츠 영역 -->
         <ContentControl Grid.Column="1" Content="{Binding CurrentPage}"/>
 
-        <!-- 창 컨트롤 버튼 오버레이 (사이드바 헤더 높이에 맞게 우측 상단) -->
-        <StackPanel Grid.Column="1"
-                    HorizontalAlignment="Right" VerticalAlignment="Top"
-                    Orientation="Horizontal" Height="56" Panel.ZIndex="100">
-            <Button Style="{StaticResource WinCtrlStyle}" Click="MinimizeClick">
-                <TextBlock Text="&#xE921;" FontFamily="Segoe MDL2 Assets" FontSize="10"/>
-            </Button>
-            <Button Style="{StaticResource WinCtrlStyle}" Click="MaximizeRestoreClick">
-                <TextBlock FontFamily="Segoe MDL2 Assets" FontSize="10">
-                    <TextBlock.Style>
-                        <Style TargetType="TextBlock">
-                            <Setter Property="Text" Value="&#xE922;"/>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding WindowState,
-                                             RelativeSource={RelativeSource AncestorType=Window}}"
-                                             Value="Maximized">
-                                    <Setter Property="Text" Value="&#xE923;"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </TextBlock.Style>
-                </TextBlock>
-            </Button>
-            <Button Style="{StaticResource WinCtrlCloseStyle}" Click="CloseClick">
-                <TextBlock Text="&#xE8BB;" FontFamily="Segoe MDL2 Assets" FontSize="10"/>
-            </Button>
-        </StackPanel>
-
         <!-- 업데이트 알림 (오른쪽 하단) -->
         <Border Grid.Column="1"
                 VerticalAlignment="Bottom" HorizontalAlignment="Right"
@@ -504,6 +476,33 @@
         </Border>
 
         </Grid>
+
+        <!-- ===== 창 컨트롤 (외부 Grid - 항상 최상단 우측) ===== -->
+        <StackPanel HorizontalAlignment="Right" VerticalAlignment="Top"
+                    Orientation="Horizontal" Height="56" Panel.ZIndex="999">
+            <Button Style="{StaticResource WinCtrlStyle}" Click="MinimizeClick">
+                <TextBlock Text="&#xE921;" FontFamily="Segoe MDL2 Assets" FontSize="10"/>
+            </Button>
+            <Button Style="{StaticResource WinCtrlStyle}" Click="MaximizeRestoreClick">
+                <TextBlock FontFamily="Segoe MDL2 Assets" FontSize="10">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Text" Value="&#xE922;"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding WindowState,
+                                             RelativeSource={RelativeSource AncestorType=Window}}"
+                                             Value="Maximized">
+                                    <Setter Property="Text" Value="&#xE923;"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+            </Button>
+            <Button Style="{StaticResource WinCtrlCloseStyle}" Click="CloseClick">
+                <TextBlock Text="&#xE8BB;" FontFamily="Segoe MDL2 Assets" FontSize="10"/>
+            </Button>
+        </StackPanel>
 
         <!-- ===== 미니 모드 ===== -->
         <Border Visibility="{Binding IsMiniMode, Converter={StaticResource BoolToVisibility}}"

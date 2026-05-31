@@ -34,27 +34,38 @@ public partial class MainWindow : Window
 
     // ─── 사이드바 헤더 드래그 (= 타이틀바 역할) ──────────────────────
 
+    [DllImport("user32.dll")]
+    private static extern bool ReleaseCapture();
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr SendMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
+
     private void SidebarHeader_MouseDown(object sender, MouseButtonEventArgs e)
     {
         if (e.ChangedButton != MouseButton.Left) return;
 
+        // 버튼 클릭이면 드래그 안 함 (toggle 버튼 등)
+        if (e.OriginalSource is System.Windows.Controls.Primitives.ButtonBase) return;
+        var dep = e.OriginalSource as DependencyObject;
+        while (dep != null)
+        {
+            if (dep is System.Windows.Controls.Primitives.ButtonBase) return;
+            dep = System.Windows.Media.VisualTreeHelper.GetParent(dep);
+        }
+
         if (e.ClickCount == 2)
         {
             MaximizeRestore();
+            return;
         }
-        else if (e.ButtonState == MouseButtonState.Pressed)
-        {
-            // 최대화 상태에서 드래그: 먼저 일반 크기로 복원
-            if (WindowState == WindowState.Maximized)
-            {
-                var pos = e.GetPosition(this);
-                WindowState = WindowState.Normal;
-                // 마우스 위치 기준으로 창 위치 조정
-                Left = pos.X - (Width / 2);
-                Top = 0;
-            }
-            DragMove();
-        }
+
+        // OS 레벨 드래그 (DragMove보다 안정적)
+        if (WindowState == WindowState.Maximized)
+            WindowState = WindowState.Normal;
+
+        var hwnd = new WindowInteropHelper(this).Handle;
+        ReleaseCapture();
+        SendMessage(hwnd, 0xA1 /* WM_NCLBUTTONDOWN */, (IntPtr)2 /* HTCAPTION */, IntPtr.Zero);
     }
 
     // ─── 창 컨트롤 버튼 ─────────────────────────────────────────────
