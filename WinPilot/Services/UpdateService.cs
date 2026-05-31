@@ -8,16 +8,17 @@ using System.Windows;
 
 namespace WinPilot.Services;
 
-public record UpdateInfo(string Version, string DownloadUrl);
+/// <param name="IsInstaller">true = WinPilotSetup.exe, false = 단일 EXE</param>
+public record UpdateInfo(string Version, string DownloadUrl, bool IsInstaller);
 
 file class GitHubRelease
 {
-    [JsonPropertyName("tag_name")]  public string?           TagName { get; set; }
+    [JsonPropertyName("tag_name")]  public string?            TagName { get; set; }
     [JsonPropertyName("assets")]    public List<GitHubAsset>? Assets  { get; set; }
 }
 file class GitHubAsset
 {
-    [JsonPropertyName("name")]                  public string? Name                { get; set; }
+    [JsonPropertyName("name")]                 public string? Name               { get; set; }
     [JsonPropertyName("browser_download_url")] public string? BrowserDownloadUrl { get; set; }
 }
 
@@ -29,11 +30,8 @@ public static class UpdateService
         Timeout = TimeSpan.FromSeconds(15)
     };
 
-    private const string ApiUrl      = "https://api.github.com/repos/Bulkcoding/WinPilot/releases/latest";
-    private static readonly string   PendingExe = Path.Combine(Path.GetTempPath(), "WinPilot_update.exe");
-    private static readonly string   UpdaterBat = Path.Combine(Path.GetTempPath(), "WinPilot_updater.bat");
+    private const string ApiUrl = "https://api.github.com/repos/Bulkcoding/WinPilot/releases/latest";
 
-    // 현재 실행 파일에서 버전 읽기 (csproj <Version> 태그와 연동)
     public static Version CurrentVersion
         => Assembly.GetExecutingAssembly().GetName().Version ?? new Version(1, 0, 0);
 
@@ -42,7 +40,7 @@ public static class UpdateService
 
     /// <summary>
     /// GitHub Releases API로 최신 버전 확인.
-    /// 새 버전이 있으면 UpdateInfo 반환, 없으면 null.
+    /// WinPilotSetup.exe(인스톨러) 우선, 없으면 WinPilot.exe(포터블) 반환.
     /// </summary>
     public static async Task<UpdateInfo?> CheckAsync()
     {
@@ -55,30 +53,40 @@ public static class UpdateService
             if (!Version.TryParse(tagText, out var latest)) return null;
             if (latest <= CurrentVersion) return null;
 
-            // WinPilot.exe asset 찾기
-            var asset = release.Assets?.FirstOrDefault(a =>
+            // 인스톨러 우선, 없으면 포터블 EXE
+            var setup = release.Assets?.FirstOrDefault(a =>
+                string.Equals(a.Name, "WinPilotSetup.exe", StringComparison.OrdinalIgnoreCase));
+            var exe   = release.Assets?.FirstOrDefault(a =>
                 string.Equals(a.Name, "WinPilot.exe", StringComparison.OrdinalIgnoreCase));
-            return new UpdateInfo(release.TagName, asset?.BrowserDownloadUrl ?? "");
+
+            var chosen = setup ?? exe;
+            if (chosen?.BrowserDownloadUrl == null) return null;
+
+            return new UpdateInfo(release.TagName, chosen.BrowserDownloadUrl, setup != null);
         }
         catch { return null; }
     }
 
     /// <summary>
-    /// 새 버전을 다운로드합니다.
-    /// autoApply=true : 다운로드 완료 후 즉시 배치 스크립트로 교체 + 재시작.
-    /// autoApply=false: 다운로드만 하고 PendingExe를 보관 (나중에 재호출로 적용).
-    /// progress: 0~100 다운로드 진행률
+    /// 다운로드 + 적용.
+    /// 인스톨러(WinPilotSetup.exe): /VERYSILENT 로 자동 설치 후 재시작.
+    /// 포터블 EXE: 배치 스크립트로 교체 후 재시작.
     /// </summary>
-    public static async Task DownloadAndApplyAsync(string downloadUrl,
-        IProgress<int>? progress = null, bool autoApply = true)
+    public static async Task DownloadAndApplyAsync(
+        UpdateInfo info,
+        IProgress<int>? progress = null,
+        bool autoApply = true)
     {
+        var tempPath = Path.Combine(Path.GetTempPath(),
+            info.IsInstaller ? "WinPilotSetup_update.exe" : "WinPilot_update.exe");
+
         // 1. 다운로드
-        using var response = await Http.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead);
+        using var response = await Http.GetAsync(info.DownloadUrl, HttpCompletionOption.ResponseHeadersRead);
         response.EnsureSuccessStatusCode();
 
         var total = response.Content.Headers.ContentLength ?? -1L;
         await using var src  = await response.Content.ReadAsStreamAsync();
-        await using var dest = File.Create(PendingExe);
+        await using var dest = File.Create(tempPath);
         var buf  = new byte[81920];
         long done = 0;
         int  read;
@@ -90,24 +98,44 @@ public static class UpdateService
         }
         dest.Close();
 
-        if (!autoApply) return;   // 다운로드만 하고 종료
+        if (!autoApply) return;
 
-        // 2. 배치 스크립트 생성 (앱 종료 후 교체 → 재시작)
         var currentExe = Process.GetCurrentProcess().MainModule?.FileName
                          ?? Path.Combine(AppContext.BaseDirectory, "WinPilot.exe");
+        var updaterBat = Path.Combine(Path.GetTempPath(), "WinPilot_updater.bat");
 
-        var script = $"""
-            @echo off
-            timeout /t 2 /nobreak >nul
-            copy /Y "{PendingExe}" "{currentExe}"
-            del "{PendingExe}"
-            start "" "{currentExe}"
-            del "%~f0"
-            """;
-        await File.WriteAllTextAsync(UpdaterBat, script, System.Text.Encoding.Default);
+        string script;
+        if (info.IsInstaller)
+        {
+            // 인스톨러: 조용히 업그레이드 설치 후 앱 재시작
+            // /VERYSILENT: 창 없음  /SUPPRESSMSGBOXES: 팝업 없음
+            // /NORESTART: 설치 후 OS 재시작 안 함
+            script = $"""
+                @echo off
+                timeout /t 2 /nobreak >nul
+                "{tempPath}" /VERYSILENT /SUPPRESSMSGBOXES /NORESTART
+                timeout /t 3 /nobreak >nul
+                del "{tempPath}"
+                start "" "{currentExe}"
+                del "%~f0"
+                """;
+        }
+        else
+        {
+            // 포터블: 단일 EXE 교체
+            script = $"""
+                @echo off
+                timeout /t 2 /nobreak >nul
+                copy /Y "{tempPath}" "{currentExe}"
+                del "{tempPath}"
+                start "" "{currentExe}"
+                del "%~f0"
+                """;
+        }
 
-        // 3. 배치 실행 후 앱 종료
-        Process.Start(new ProcessStartInfo("cmd.exe", $"/c \"{UpdaterBat}\"")
+        await File.WriteAllTextAsync(updaterBat, script, System.Text.Encoding.Default);
+
+        Process.Start(new ProcessStartInfo("cmd.exe", $"/c \"{updaterBat}\"")
         {
             UseShellExecute = true,
             WindowStyle     = ProcessWindowStyle.Hidden

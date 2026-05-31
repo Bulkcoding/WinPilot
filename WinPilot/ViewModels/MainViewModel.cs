@@ -55,17 +55,14 @@ public partial class MainViewModel : ObservableObject
         var info = await UpdateService.CheckAsync();
         if (info == null || string.IsNullOrEmpty(info.DownloadUrl)) return;
 
-        LatestVersion    = info.Version;
+        LatestVersion     = info.Version;
         UpdateDownloadUrl = info.DownloadUrl;
 
-        // 자동 다운로드 (백그라운드)
+        // 자동 다운로드 (백그라운드, autoApply=false → 버튼만 표시)
         IsDownloading = true;
         try
         {
-            await UpdateService.DownloadAndApplyAsync(
-                info.DownloadUrl,
-                progress: null,   // 다운로드 후 바로 재시작하지 않고 버튼만 표시
-                autoApply: false);
+            await UpdateService.DownloadAndApplyAsync(info, progress: null, autoApply: false);
             UpdateAvailable = true;
         }
         catch { /* 네트워크 없으면 무시 */ }
@@ -76,11 +73,14 @@ public partial class MainViewModel : ObservableObject
     private async Task ApplyUpdateAsync()
     {
         if (string.IsNullOrEmpty(UpdateDownloadUrl)) return;
+        var info = await UpdateService.CheckAsync();   // 최신 정보 재확인
+        if (info == null) return;
+
         IsDownloading = true;
         var prog = new Progress<int>(v => DownloadProgress = v);
         try
         {
-            await UpdateService.DownloadAndApplyAsync(UpdateDownloadUrl, prog, autoApply: true);
+            await UpdateService.DownloadAndApplyAsync(info, prog, autoApply: true);
         }
         catch (Exception ex)
         {
