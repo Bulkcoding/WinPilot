@@ -29,6 +29,11 @@ bld/
 [Ll]og/
 [Ll]ogs/
 
+## Publish / Installer output (빌드 산출물)
+publish/
+publish_installer/
+installer_output/
+
 ## OS
 .DS_Store
 Thumbs.db

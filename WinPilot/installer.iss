@@ -35,7 +35,8 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "publish\{#AppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+; 폴더 배포: WPF 네이티브 DLL(wpfgfx_cor3.dll 등)을 모두 포함
+Source: "publish_installer\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{group}\{#AppName}";        Filename: "{app}\{#AppExeName}"

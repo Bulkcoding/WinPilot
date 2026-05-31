@@ -30,8 +30,8 @@ jobs:
           $version = $tag.TrimStart('v')
           echo "VERSION=$version" >> $env:GITHUB_OUTPUT
 
-      # 어셈블리 버전을 태그 버전으로 설정
-      - name: Publish
+      # ① 포터블 단일 EXE (GitHub Release 직접 다운로드용)
+      - name: Publish portable EXE
         shell: pwsh
         run: |
           dotnet publish WinPilot/WinPilot.csproj `
@@ -39,10 +39,20 @@ jobs:
             -r win-x64 `
             --self-contained true `
             -p:PublishSingleFile=true `
-            -p:EnableCompressionInSingleFile=true `
             -p:PublishReadyToRun=true `
             -p:Version=${{ steps.ver.outputs.VERSION }} `
             -o publish
+
+      # ② 인스톨러용 폴더 배포 (WPF 네이티브 DLL 모두 포함)
+      - name: Publish for installer
+        shell: pwsh
+        run: |
+          dotnet publish WinPilot/WinPilot.csproj `
+            -c Release `
+            -r win-x64 `
+            --self-contained true `
+            -p:Version=${{ steps.ver.outputs.VERSION }} `
+            -o WinPilot/publish_installer
 
       # Inno Setup 설치 (GitHub Actions Windows 러너에 내장)
       - name: Build Installer

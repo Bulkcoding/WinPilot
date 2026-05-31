@@ -10,7 +10,8 @@ namespace WinPilot.Services;
 public class SystemInfoService : IDisposable
 {
     private PerformanceCounter? _cpuCounter;
-    private PerformanceCounter? _ramCounter;
+    private PerformanceCounter? _ramAvailableCounter;  // Available MBytes (물리 RAM)
+    private double _totalRamMb;
     private bool _disposed;
 
     public SystemInfoService()
@@ -24,17 +25,46 @@ public class SystemInfoService : IDisposable
 
         try
         {
-            _ramCounter = new PerformanceCounter("Memory", "% Committed Bytes In Use");
-            _ramCounter.NextValue();
+            // "Available MBytes" = 물리 RAM 남은 용량 (MB)
+            // "% Committed Bytes In Use" 는 페이지파일 포함 가상 메모리 → 물리 RAM %와 다름
+            _ramAvailableCounter = new PerformanceCounter("Memory", "Available MBytes");
+            _ramAvailableCounter.NextValue();
+            // 총 물리 RAM 한 번만 조회
+            _totalRamMb = GetTotalPhysicalRamMb();
         }
-        catch { _ramCounter = null; }
+        catch { _ramAvailableCounter = null; }
+    }
+
+    private static double GetTotalPhysicalRamMb()
+    {
+        try
+        {
+            using var searcher = new ManagementObjectSearcher(
+                "SELECT TotalVisibleMemorySize FROM Win32_OperatingSystem");
+            foreach (ManagementObject obj in searcher.Get())
+            {
+                var kb = (ulong)(obj["TotalVisibleMemorySize"] ?? 0UL);
+                return kb / 1024.0;  // KB → MB
+            }
+        }
+        catch { }
+        return 0;
     }
 
     public async Task<float> GetCpuUsageAsync() => await Task.Run(GetCpuUsage);
 
+    /// <summary>
+    /// 물리 RAM 사용률 (0~100%)을 빠르게 반환합니다.
+    /// PerformanceCounter "Available MBytes" 기반이므로 WMI보다 경량합니다.
+    /// </summary>
     public async Task<float> GetRamUsagePercentAsync() => await Task.Run(() =>
     {
-        try { return _ramCounter?.NextValue() ?? 0f; }
+        try
+        {
+            if (_ramAvailableCounter == null || _totalRamMb <= 0) return 0f;
+            var availableMb = _ramAvailableCounter.NextValue();
+            return (float)Math.Max(0, Math.Min(100, (1.0 - availableMb / _totalRamMb) * 100.0));
+        }
         catch { return 0f; }
     });
 
@@ -160,7 +190,7 @@ public class SystemInfoService : IDisposable
     {
         if (_disposed) return;
         _cpuCounter?.Dispose();
-        _ramCounter?.Dispose();
+        _ramAvailableCounter?.Dispose();
         _disposed = true;
     }
 }
