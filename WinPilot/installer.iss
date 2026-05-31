@@ -22,7 +22,8 @@ PrivilegesRequired=admin
 ; 앱 자체가 관리자 권한 필요 (manifest)
 PrivilegesRequiredOverridesAllowed=dialog
 ; 아이콘 설정
-SetupIconFile=
+SetupIconFile=Resources\icon.ico
+UninstallDisplayIcon={app}\WinPilot.exe
 ; 64-bit 전용
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
