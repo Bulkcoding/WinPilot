@@ -9,8 +9,7 @@
         Title="WinPilot" Height="720" Width="1100"
         MinHeight="600" MinWidth="900"
         Background="{DynamicResource BgBrush}"
-        FontFamily="Segoe UI"
-        Icon="/Resources/icon.png">
+        FontFamily="Segoe UI">
     <Window.DataContext>
         <vm:MainViewModel/>
     </Window.DataContext>
