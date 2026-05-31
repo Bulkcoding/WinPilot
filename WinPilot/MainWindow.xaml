@@ -69,32 +69,58 @@
 
             <DockPanel>
                 <!-- 로고 + 토글 -->
-                <Border DockPanel.Dock="Top" Padding="10,12,10,12" BorderBrush="#1E1E35" BorderThickness="0,0,0,1">
+                <Border DockPanel.Dock="Top" Padding="10,13,10,13" BorderBrush="#1A1A30" BorderThickness="0,0,0,1">
                     <DockPanel>
-                        <!-- 토글 버튼 -->
+                        <!-- 토글 -->
                         <Button DockPanel.Dock="Right" Command="{Binding ToggleSidebarCommand}"
                                 Style="{StaticResource NavBtnStyle}" Padding="4" Width="28" Height="28"
                                 VerticalAlignment="Center">
-                            <TextBlock Text="☰" FontSize="13" Foreground="#64748B"
+                            <TextBlock Text="☰" FontSize="13" Foreground="#475569"
                                        HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Button>
 
-                        <!-- 로고 영역: 아이콘은 항상 표시, 텍스트는 확장 시만 -->
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <Image Source="/Resources/icon_logo.png"
-                                   Width="30" Height="30"
-                                   RenderOptions.BitmapScalingMode="HighQuality"
-                                   VerticalAlignment="Center"/>
-                            <StackPanel Margin="9,0,0,0" VerticalAlignment="Center"
-                                        Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}">
-                                <TextBlock Text="WinPilot"
-                                           FontSize="15" FontWeight="Bold"
+                        <!-- 확장: 아이콘 타일 + 텍스트 -->
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
+                                    Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}">
+                            <!-- 파란 아이콘 타일 (이미지 없이 WPF 도형으로) -->
+                            <Border Width="30" Height="30" CornerRadius="7"
+                                    VerticalAlignment="Center">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                        <GradientStop Color="#3B82F6" Offset="0"/>
+                                        <GradientStop Color="#1D4ED8" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                                <TextBlock Text="W" FontSize="16" FontWeight="Black"
+                                           Foreground="White"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"/>
+                            </Border>
+                            <StackPanel Margin="9,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="WinPilot" FontSize="14" FontWeight="Bold"
                                            Foreground="#F1F5F9"/>
-                                <TextBlock Text="PC 모니터링"
-                                           FontSize="9" Foreground="#475569"
-                                           Margin="1,2,0,0"/>
+                                <TextBlock Text="PC 모니터링" FontSize="9" Foreground="#475569"
+                                           Margin="0,2,0,0"/>
                             </StackPanel>
                         </StackPanel>
+
+                        <!-- 접힘: 작은 타일만 -->
+                        <Border Width="30" Height="30" CornerRadius="7"
+                                VerticalAlignment="Center"
+                                Visibility="{Binding IsSidebarExpanded,
+                                             Converter={StaticResource InverseBoolConverter},
+                                             ConverterParameter=Visibility}">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                    <GradientStop Color="#3B82F6" Offset="0"/>
+                                    <GradientStop Color="#1D4ED8" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                            <TextBlock Text="W" FontSize="16" FontWeight="Black"
+                                       Foreground="White"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"/>
+                        </Border>
                     </DockPanel>
                 </Border>
 
