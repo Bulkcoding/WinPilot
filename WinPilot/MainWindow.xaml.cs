@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -11,44 +12,69 @@ namespace WinPilot;
 
 public partial class MainWindow : Window
 {
-    // DWM API — 타이틀바를 다크 모드로 전환
     [DllImport("dwmapi.dll")]
     private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int value, int size);
 
     public MainWindow()
     {
         InitializeComponent();
-
-        // 프로그래밍으로 W 타일 아이콘 생성 (이미지 파일 불필요)
         Icon = CreateWIcon();
 
         Loaded += (_, _) =>
         {
-            ApplyDarkTitleBar();
+            // Windows 11: 둥근 모서리 (DWM)
+            var hwnd = new WindowInteropHelper(this).Handle;
+            int round = 2; // DWMWCP_ROUND
+            DwmSetWindowAttribute(hwnd, 33, ref round, sizeof(int));
 
             if (DataContext is MainViewModel vm)
                 vm.PropertyChanged += OnVmPropertyChanged;
         };
     }
 
-    /// <summary>
-    /// DWM API로 타이틀바 색상을 앱 테마(다크)에 맞춥니다.
-    /// Windows 10 20H1 이상에서 동작합니다.
-    /// </summary>
-    private void ApplyDarkTitleBar()
+    // ─── 사이드바 헤더 드래그 (= 타이틀바 역할) ──────────────────────
+
+    private void SidebarHeader_MouseDown(object sender, MouseButtonEventArgs e)
     {
-        var hwnd = new WindowInteropHelper(this).Handle;
-        int val = 1;
-        // DWMWA_USE_IMMERSIVE_DARK_MODE = 20 (Win10 20H1+)
-        // 구버전 폴백 = 19
-        if (DwmSetWindowAttribute(hwnd, 20, ref val, sizeof(int)) != 0)
-            DwmSetWindowAttribute(hwnd, 19, ref val, sizeof(int));
+        if (e.ChangedButton != MouseButton.Left) return;
+
+        if (e.ClickCount == 2)
+        {
+            MaximizeRestore();
+        }
+        else if (e.ButtonState == MouseButtonState.Pressed)
+        {
+            // 최대화 상태에서 드래그: 먼저 일반 크기로 복원
+            if (WindowState == WindowState.Maximized)
+            {
+                var pos = e.GetPosition(this);
+                WindowState = WindowState.Normal;
+                // 마우스 위치 기준으로 창 위치 조정
+                Left = pos.X - (Width / 2);
+                Top = 0;
+            }
+            DragMove();
+        }
     }
 
-    /// <summary>
-    /// WPF DrawingVisual로 파란 그라디언트 W 타일 아이콘을 생성합니다.
-    /// icon.png / icon_logo.png 없이 코드만으로 동작합니다.
-    /// </summary>
+    // ─── 창 컨트롤 버튼 ─────────────────────────────────────────────
+
+    private void MinimizeClick(object sender, RoutedEventArgs e)
+        => WindowState = WindowState.Minimized;
+
+    private void MaximizeRestoreClick(object sender, RoutedEventArgs e)
+        => MaximizeRestore();
+
+    private void CloseClick(object sender, RoutedEventArgs e)
+        => Close();
+
+    private void MaximizeRestore()
+        => WindowState = WindowState == WindowState.Maximized
+            ? WindowState.Normal
+            : WindowState.Maximized;
+
+    // ─── W 타일 아이콘 (코드로 직접 생성) ───────────────────────────
+
     private static BitmapSource CreateWIcon(int size = 64)
     {
         var target = new RenderTargetBitmap(size, size, 96, 96, PixelFormats.Pbgra32);
@@ -56,28 +82,21 @@ public partial class MainWindow : Window
 
         using (var ctx = visual.RenderOpen())
         {
-            // 파란 그라디언트 둥근 타일
             var brush = new LinearGradientBrush(
                 Color.FromRgb(0x3B, 0x82, 0xF6),
                 Color.FromRgb(0x1D, 0x4E, 0xD8),
                 new Point(0, 0), new Point(1, 1));
 
-            var radius = size * 0.18;
-            ctx.DrawRoundedRectangle(brush, null,
-                new Rect(0, 0, size, size), radius, radius);
-
-            // 흰색 W 텍스트 (중앙 정렬)
-            var typeface = new Typeface(
-                new FontFamily("Segoe UI"),
-                FontStyles.Normal, FontWeights.Black, FontStretches.Normal);
+            var r = size * 0.18;
+            ctx.DrawRoundedRectangle(brush, null, new Rect(0, 0, size, size), r, r);
 
             var text = new FormattedText("W",
                 CultureInfo.InvariantCulture,
                 FlowDirection.LeftToRight,
-                typeface,
-                size * 0.54,
-                Brushes.White,
-                96);
+                new Typeface(
+                    new FontFamily("Segoe UI"),
+                    FontStyles.Normal, FontWeights.Black, FontStretches.Normal),
+                size * 0.54, Brushes.White, 96);
 
             ctx.DrawText(text, new Point(
                 (size - text.Width)  / 2,
@@ -87,6 +106,8 @@ public partial class MainWindow : Window
         target.Render(visual);
         return target;
     }
+
+    // ─── 미니 모드 전환 ──────────────────────────────────────────────
 
     private void OnVmPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {

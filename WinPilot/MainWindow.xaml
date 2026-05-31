@@ -9,12 +9,73 @@
         Title="WinPilot" Height="720" Width="1100"
         MinHeight="600" MinWidth="900"
         Background="{DynamicResource BgBrush}"
-        FontFamily="Segoe UI">
+        FontFamily="Segoe UI"
+        WindowStyle="None"
+        AllowsTransparency="False">
+    <WindowChrome.WindowChrome>
+        <!-- ResizeBorderThickness: 창 가장자리 리사이즈 영역 -->
+        <!-- CaptionHeight="0": 드래그는 코드로 직접 처리 -->
+        <!-- GlassFrameThickness: DWM 그림자 유지 -->
+        <WindowChrome CaptionHeight="0"
+                      ResizeBorderThickness="5"
+                      UseAeroCaptionButtons="False"
+                      GlassFrameThickness="1"/>
+    </WindowChrome.WindowChrome>
     <Window.DataContext>
         <vm:MainViewModel/>
     </Window.DataContext>
     <Window.Resources>
         <conv:IsCurrentPageConverter x:Key="IsCurrentPage"/>
+
+        <!-- 창 컨트롤 버튼 (최소화/최대화/닫기) -->
+        <Style x:Key="WinCtrlStyle" TargetType="Button">
+            <Setter Property="Width" Value="46"/>
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#4B5563"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="WindowChrome.IsHitTestVisibleInChrome" Value="True"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#1E293B"/>
+                                <Setter Property="Foreground" Value="#E2E8F0"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="WinCtrlCloseStyle" TargetType="Button">
+            <Setter Property="Width" Value="46"/>
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#4B5563"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="WindowChrome.IsHitTestVisibleInChrome" Value="True"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#EF4444"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
         <!-- Nav 버튼 기본 스타일 (active DataTrigger 포함) -->
         <Style x:Key="NavBtnStyle" TargetType="Button">
@@ -67,8 +128,10 @@
             </Border.Style>
 
             <DockPanel>
-                <!-- 로고 + 토글 -->
-                <Border DockPanel.Dock="Top" Padding="10,13,10,13" BorderBrush="#1A1A30" BorderThickness="0,0,0,1">
+                <!-- 로고 + 토글 (이 Border가 타이틀바 역할 → 드래그/더블클릭으로 최대화) -->
+                <Border DockPanel.Dock="Top" Padding="10,13,10,13" BorderBrush="#1A1A30" BorderThickness="0,0,0,1"
+                        MouseLeftButtonDown="SidebarHeader_MouseDown"
+                        Cursor="Arrow">
                     <DockPanel>
                         <!-- 토글 -->
                         <Button DockPanel.Dock="Right" Command="{Binding ToggleSidebarCommand}"
@@ -375,6 +438,34 @@
 
         <!-- 콘텐츠 영역 -->
         <ContentControl Grid.Column="1" Content="{Binding CurrentPage}"/>
+
+        <!-- 창 컨트롤 버튼 오버레이 (사이드바 헤더 높이에 맞게 우측 상단) -->
+        <StackPanel Grid.Column="1"
+                    HorizontalAlignment="Right" VerticalAlignment="Top"
+                    Orientation="Horizontal" Height="56" Panel.ZIndex="100">
+            <Button Style="{StaticResource WinCtrlStyle}" Click="MinimizeClick">
+                <TextBlock Text="&#xE921;" FontFamily="Segoe MDL2 Assets" FontSize="10"/>
+            </Button>
+            <Button Style="{StaticResource WinCtrlStyle}" Click="MaximizeRestoreClick">
+                <TextBlock FontFamily="Segoe MDL2 Assets" FontSize="10">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Text" Value="&#xE922;"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding WindowState,
+                                             RelativeSource={RelativeSource AncestorType=Window}}"
+                                             Value="Maximized">
+                                    <Setter Property="Text" Value="&#xE923;"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+            </Button>
+            <Button Style="{StaticResource WinCtrlCloseStyle}" Click="CloseClick">
+                <TextBlock Text="&#xE8BB;" FontFamily="Segoe MDL2 Assets" FontSize="10"/>
+            </Button>
+        </StackPanel>
 
         <!-- 업데이트 알림 (오른쪽 하단) -->
         <Border Grid.Column="1"
