@@ -16,11 +16,53 @@
 
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="24,0,24,24">
+
+                <!-- 고정 경로 -->
+                <Border Style="{StaticResource CardStyle}" Margin="0,0,0,16">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
+                            <TextBlock Text="📌" FontSize="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBlock Text="고정 경로" FontSize="15" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <ItemsControl ItemsSource="{Binding PinnedShortcuts}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{DynamicResource ItemRowBrush}" CornerRadius="6" Padding="16,14" Margin="0,0,0,8">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0" Margin="0,0,16,0">
+                                                <TextBlock Text="{Binding Name}" Foreground="{DynamicResource TextPrimaryBrush}"
+                                                           FontSize="13" FontWeight="SemiBold"/>
+                                                <TextBlock Text="{Binding Description}" Foreground="#94A3B8"
+                                                           FontSize="11" Margin="0,3,0,0" TextWrapping="Wrap"/>
+                                                <TextBlock Text="{Binding Path}" Foreground="#475569"
+                                                           FontSize="10" FontFamily="Consolas"
+                                                           Margin="0,4,0,0" TextTrimming="CharacterEllipsis"/>
+                                            </StackPanel>
+                                            <Button Grid.Column="1"
+                                                    Content="regedit에서 열기"
+                                                    Command="{Binding DataContext.OpenInRegeditCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}"
+                                                    Style="{StaticResource SecondaryButtonStyle}"
+                                                    VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
+                <!-- 자주 사용하는 경로 -->
                 <Border Style="{StaticResource CardStyle}">
                     <StackPanel>
-                        <TextBlock Text="자주 사용하는 레지스트리 경로에 빠르게 접근합니다."
-                                   Foreground="#94A3B8" FontSize="12" Margin="0,0,0,16"/>
-                        <ItemsControl ItemsSource="{Binding Shortcuts}">
+                        <TextBlock Text="자주 사용하는 경로" FontSize="15" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,14"/>
+                        <ItemsControl ItemsSource="{Binding CommonShortcuts}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <Border Background="{DynamicResource ItemRowBrush}" CornerRadius="6" Padding="16,14" Margin="0,0,0,8">
@@ -51,6 +93,7 @@
                         </ItemsControl>
                     </StackPanel>
                 </Border>
+
             </StackPanel>
         </ScrollViewer>
     </Grid>

@@ -4,6 +4,31 @@ namespace WinPilot.Services;
 
 public static class RegistryService
 {
+    public static List<(string Name, string Path, string Description)> GetPinnedShortcuts() =>
+    [
+        ("LoginToken 위치",
+            @"HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\MccClinic\Setting",
+            "MccClinic 로그인 토큰 저장 경로"),
+        ("배달 최적화 서비스 (DoSvc)",
+            @"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\DoSvc",
+            "전송 끄기: start → 4  |  관련 번호: #39752"),
+        ("메신저 대화창 투명도 설정",
+            @"HKEY_CURRENT_USER\SOFTWARE\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_BROWSER_EMULATION",
+            "DWORD로 eGhisMSG.exe 추가  |  관련 번호: #46289"),
+        ("빠른 시작 켜기 해제",
+            @"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Power",
+            "HiberbootEnabled → 0으로 설정  |  관련 번호: #53251"),
+        ("메신저 '내 문서' 경로 오류",
+            @"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer",
+            "UserShellFolders / Personal 값 → %USERPROFILE%\\Documents  |  관련 번호: #46289"),
+        ("일일수납현황 총수납액 미계산",
+            @"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Internet Explorer\Main",
+            "DWORD로 JScriptReplacement 값 0 생성 (키 없으면 생성)  |  관련 번호: #43574"),
+        ("U2Check 클릭 오류",
+            @"HKEY_CURRENT_USER\Software\U2Bio\Lab2Gene",
+            "InstalledPath 값에 u2viewer.exe 전체 경로 입력  |  관련 번호: #46925"),
+    ];
+
     public static List<(string Name, string Path, string Description)> GetDefaultShortcuts() =>
     [
         ("자동 시작 프로그램 (시스템)",

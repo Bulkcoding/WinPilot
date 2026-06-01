@@ -13,7 +13,11 @@ public class RegistryShortcut
 
 public partial class RegistryViewModel : ObservableObject
 {
-    public List<RegistryShortcut> Shortcuts { get; } = RegistryService.GetDefaultShortcuts()
+    public List<RegistryShortcut> PinnedShortcuts { get; } = RegistryService.GetPinnedShortcuts()
+        .Select(s => new RegistryShortcut { Name = s.Name, Path = s.Path, Description = s.Description })
+        .ToList();
+
+    public List<RegistryShortcut> CommonShortcuts { get; } = RegistryService.GetDefaultShortcuts()
         .Select(s => new RegistryShortcut { Name = s.Name, Path = s.Path, Description = s.Description })
         .ToList();
 
