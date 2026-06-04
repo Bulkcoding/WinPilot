@@ -9,11 +9,12 @@ using System.Windows;
 namespace WinPilot.Services;
 
 /// <param name="IsInstaller">true = WinPilotSetup.exe, false = 단일 EXE</param>
-public record UpdateInfo(string Version, string DownloadUrl, bool IsInstaller);
+public record UpdateInfo(string Version, string DownloadUrl, bool IsInstaller, List<string> ReleaseNotes);
 
 file class GitHubRelease
 {
     [JsonPropertyName("tag_name")]  public string?            TagName { get; set; }
+    [JsonPropertyName("body")]      public string?            Body    { get; set; }
     [JsonPropertyName("assets")]    public List<GitHubAsset>? Assets  { get; set; }
 }
 file class GitHubAsset
@@ -62,9 +63,30 @@ public static class UpdateService
             var chosen = setup ?? exe;
             if (chosen?.BrowserDownloadUrl == null) return null;
 
-            return new UpdateInfo(release.TagName, chosen.BrowserDownloadUrl, setup != null);
+            return new UpdateInfo(release.TagName, chosen.BrowserDownloadUrl, setup != null,
+                ParseReleaseNotes(release.Body));
         }
         catch { return null; }
+    }
+
+    private static List<string> ParseReleaseNotes(string? body)
+    {
+        if (string.IsNullOrWhiteSpace(body)) return [];
+        var lines = body.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+        // "- " 또는 "* " 또는 "• "로 시작하는 줄을 불릿 항목으로 파싱
+        var bullets = lines
+            .Select(l => l.Trim())
+            .Where(l => l.StartsWith("- ") || l.StartsWith("* ") || l.StartsWith("• "))
+            .Select(l => l[2..].Trim())
+            .Take(8)
+            .ToList();
+        if (bullets.Count > 0) return bullets;
+        // fallback: 헤더(#)·빈 줄 제외 첫 5줄
+        return lines
+            .Select(l => l.Trim())
+            .Where(l => l.Length > 0 && !l.StartsWith("#"))
+            .Take(5)
+            .ToList();
     }
 
     /// <summary>

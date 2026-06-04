@@ -23,11 +23,13 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private bool   _isMiniMode;
 
     // 업데이트
-    [ObservableProperty] private bool   _updateAvailable;
-    [ObservableProperty] private string _latestVersion = "";
-    [ObservableProperty] private string _updateDownloadUrl = "";
-    [ObservableProperty] private bool   _isDownloading;
-    [ObservableProperty] private int    _downloadProgress;
+    [ObservableProperty] private bool         _updateAvailable;
+    [ObservableProperty] private string       _latestVersion = "";
+    [ObservableProperty] private string       _updateDownloadUrl = "";
+    [ObservableProperty] private bool         _isDownloading;
+    [ObservableProperty] private int          _downloadProgress;
+    [ObservableProperty] private bool         _showUpdatePopup;
+    [ObservableProperty] private List<string> _updateReleaseNotes = [];
 
     // 버튼 표시 조건: 다운로드 완료 후 적용 가능
     public bool UpdateReady => UpdateAvailable && !IsDownloading;
@@ -63,7 +65,9 @@ public partial class MainViewModel : ObservableObject
         try
         {
             await UpdateService.DownloadAndApplyAsync(info, progress: null, autoApply: false);
-            UpdateAvailable = true;
+            UpdateAvailable     = true;
+            UpdateReleaseNotes  = info.ReleaseNotes;
+            ShowUpdatePopup     = true;
         }
         catch { /* 네트워크 없으면 무시 */ }
         finally { IsDownloading = false; }
@@ -91,6 +95,9 @@ public partial class MainViewModel : ObservableObject
     }
 
     partial void OnIsMiniModeChanged(bool value) => OnPropertyChanged(nameof(IsNormalMode));
+
+    [RelayCommand]
+    private void DismissUpdatePopup() => ShowUpdatePopup = false;
 
     [RelayCommand]
     private void NavigateTo(object? vm)

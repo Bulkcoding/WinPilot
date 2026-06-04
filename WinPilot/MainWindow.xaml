@@ -455,42 +455,112 @@
         <!-- 콘텐츠 영역 -->
         <ContentControl Grid.Column="1" Content="{Binding CurrentPage}"/>
 
-        <!-- 업데이트 알림 (오른쪽 하단) -->
-        <Border Grid.Column="1"
-                VerticalAlignment="Bottom" HorizontalAlignment="Right"
-                Margin="0,0,20,20"
-                CornerRadius="10" Padding="14,10"
-                Background="#1E3A5F"
-                Visibility="{Binding UpdateAvailable, Converter={StaticResource BoolToVisibility}}">
-            <StackPanel>
-                <TextBlock FontSize="12" FontWeight="SemiBold" Foreground="#E2E8F0" Margin="0,0,0,6">
-                    <Run Text="🔔 새 버전 "/>
-                    <Run Text="{Binding LatestVersion}" Foreground="#3B82F6"/>
-                    <Run Text=" 다운로드 완료"/>
-                </TextBlock>
-                <StackPanel Visibility="{Binding IsDownloading, Converter={StaticResource BoolToVisibility}}">
-                    <ProgressBar Value="{Binding DownloadProgress}" Maximum="100"
-                                 Height="4" Foreground="#3B82F6" Margin="0,0,0,6"/>
-                    <TextBlock Text="다운로드 중..." FontSize="11" Foreground="#94A3B8"/>
-                </StackPanel>
-                <Button Content="▶ 재시작하여 업데이트 적용"
-                        Command="{Binding ApplyUpdateCommand}"
-                        Background="#3B82F6" Foreground="White"
-                        BorderThickness="0" Padding="10,6" FontSize="12"
-                        Cursor="Hand"
-                        Visibility="{Binding UpdateReady, Converter={StaticResource BoolToVisibility}}">
-                    <Button.Template>
-                        <ControlTemplate TargetType="Button">
-                            <Border Background="{TemplateBinding Background}" CornerRadius="6"
-                                    Padding="{TemplateBinding Padding}">
-                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
-                        </ControlTemplate>
-                    </Button.Template>
-                </Button>
-            </StackPanel>
-        </Border>
+        </Grid>
 
+        <!-- ===== 업데이트 모달 팝업 ===== -->
+        <Grid Grid.RowSpan="2" Panel.ZIndex="100"
+              Background="#88000000"
+              Visibility="{Binding ShowUpdatePopup, Converter={StaticResource BoolToVisibility}}">
+            <Border Width="400"
+                    Background="{DynamicResource SurfaceBrush}"
+                    CornerRadius="14" Padding="28,24"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="30" ShadowDepth="0" Opacity="0.35" Color="#000000"/>
+                </Border.Effect>
+                <StackPanel>
+
+                    <!-- 타이틀 + 닫기 -->
+                    <DockPanel Margin="0,0,0,16">
+                        <Button DockPanel.Dock="Right"
+                                Command="{Binding DismissUpdatePopupCommand}"
+                                Background="Transparent" BorderThickness="0"
+                                Cursor="Hand" Width="28" Height="28" Padding="0">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border x:Name="Bd" Background="Transparent" CornerRadius="6">
+                                        <TextBlock Text="✕" FontSize="13"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource ControlBrush}"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                        <TextBlock VerticalAlignment="Center" FontSize="17" FontWeight="SemiBold">
+                            <Run Text="업데이트 " Foreground="{DynamicResource TextPrimaryBrush}"/>
+                            <Run Text="{Binding LatestVersion}" Foreground="#3B82F6"/>
+                        </TextBlock>
+                    </DockPanel>
+
+                    <!-- 구분선 -->
+                    <Rectangle Height="1" Fill="{DynamicResource BorderBrush}" Margin="0,0,0,16"/>
+
+                    <!-- 릴리즈 노트 -->
+                    <ItemsControl ItemsSource="{Binding UpdateReleaseNotes}" Margin="0,0,0,4">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <DockPanel Margin="0,0,0,10">
+                                    <Ellipse DockPanel.Dock="Left" Width="5" Height="5"
+                                             Fill="#3B82F6" VerticalAlignment="Top" Margin="2,5,10,0"/>
+                                    <TextBlock Text="{Binding}" TextWrapping="Wrap" FontSize="13"
+                                               Foreground="{DynamicResource TextPrimaryBrush}" LineHeight="20"/>
+                                </DockPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <!-- 릴리즈 노트 없을 때 fallback -->
+                    <TextBlock Text="새 버전이 준비되었습니다."
+                               FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}"
+                               Margin="0,0,0,4">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding UpdateReleaseNotes.Count}" Value="0">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+
+                    <!-- 다운로드 진행 -->
+                    <StackPanel Margin="0,8,0,16"
+                                Visibility="{Binding IsDownloading, Converter={StaticResource BoolToVisibility}}">
+                        <ProgressBar Value="{Binding DownloadProgress}" Maximum="100"
+                                     Height="4" Foreground="#3B82F6" Margin="0,0,0,6"/>
+                        <TextBlock Text="다운로드 중..." FontSize="11"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"/>
+                    </StackPanel>
+
+                    <Rectangle Height="1" Fill="{DynamicResource BorderBrush}" Margin="0,12,0,16"/>
+
+                    <!-- 버튼 -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="10"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Button Grid.Column="0" Content="나중에"
+                                Command="{Binding DismissUpdatePopupCommand}"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Padding="0,10"/>
+                        <Button Grid.Column="2" Content="지금 업데이트"
+                                Command="{Binding ApplyUpdateCommand}"
+                                Style="{StaticResource PrimaryButtonStyle}"
+                                Padding="0,10"
+                                IsEnabled="{Binding UpdateReady}"/>
+                    </Grid>
+
+                </StackPanel>
+            </Border>
         </Grid>
 
         <!-- ===== 미니 모드 ===== -->
