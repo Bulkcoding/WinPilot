@@ -208,12 +208,10 @@
                         <Ellipse Width="8" Height="8" Fill="#22C55E" VerticalAlignment="Center"/>
                         <!-- 확장: 시스템 정상(IP) -->
                         <TextBlock Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"
-                                   FontSize="12" Margin="8,0,0,0" VerticalAlignment="Center">
-                            <Run Text="시스템 정상" Foreground="#CBD5E1" FontWeight="SemiBold"/>
-                            <Run Text="(" Foreground="#64748B"/>
-                            <Run Text="{Binding LocalIpAddress}" Foreground="#94A3B8"/>
-                            <Run Text=")" Foreground="#64748B"/>
-                        </TextBlock>
+                                   Text="{Binding SystemStatusText}"
+                                   FontSize="12" FontWeight="SemiBold"
+                                   Foreground="#CBD5E1"
+                                   Margin="8,0,0,0" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Border>
 

@@ -40,7 +40,9 @@ public partial class MainViewModel : ObservableObject
 
     public bool IsNormalMode => !IsMiniMode;
     public MiniViewModel MiniVm { get; }
-    public string LocalIpAddress { get; } = GetLocalIp();
+    public string LocalIpAddress  { get; } = GetLocalIp();
+    // Run.Text에 Binding 불가 → 미리 조합된 문자열 사용
+    public string SystemStatusText => $"시스템 정상({GetLocalIp()})";
 
     public MainViewModel()
     {
