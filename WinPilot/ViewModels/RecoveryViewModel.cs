@@ -34,9 +34,12 @@ public partial class RecoveryStep : ObservableObject
 public partial class RecoveryViewModel : ObservableObject
 {
     private readonly RecoveryService _service = new();
-    // DISM 진행률 줄 패턴: "[====55.5%====]" 형태
-    private static readonly Regex ProgressLineRx =
-        new(@"^\[=+\s*\d+\.?\d*\s*%", RegexOptions.Compiled);
+    // 진행률 줄 패턴
+    // DISM: "[====55.5%====]"
+    // SFC:  "          1"  또는 "          1%"  (앞에 공백이 많은 숫자)
+    private static readonly Regex ProgressLineRx = new(
+        @"(^\[=+\s*\d+\.?\d*\s*%)|(^\s{2,}\d+\.?\d*\s*%?\s*$)",
+        RegexOptions.Compiled);
 
     [ObservableProperty] private bool _isAdmin;
     [ObservableProperty] private bool _isRunning;

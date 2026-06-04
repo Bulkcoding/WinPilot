@@ -203,17 +203,17 @@
                 </Border>
 
                 <!-- 시스템 상태 (하단) -->
-                <Border DockPanel.Dock="Bottom" Padding="12,12">
-                    <StackPanel>
-                        <StackPanel Orientation="Horizontal">
-                            <Ellipse Width="8" Height="8" Fill="#22C55E" VerticalAlignment="Center"/>
-                            <TextBlock Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"
-                                       Text="시스템 정상" Foreground="#64748B" FontSize="11" Margin="8,0,0,0" VerticalAlignment="Center"/>
-                        </StackPanel>
+                <Border DockPanel.Dock="Bottom" Padding="12,10">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Ellipse Width="8" Height="8" Fill="#22C55E" VerticalAlignment="Center"/>
+                        <!-- 확장: 시스템 정상(IP) -->
                         <TextBlock Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"
-                                   Text="{Binding LocalIpAddress}"
-                                   Foreground="#475569" FontSize="10" FontFamily="Consolas"
-                                   Margin="16,3,0,0"/>
+                                   FontSize="12" Margin="8,0,0,0" VerticalAlignment="Center">
+                            <Run Text="시스템 정상" Foreground="#CBD5E1" FontWeight="SemiBold"/>
+                            <Run Text="(" Foreground="#64748B"/>
+                            <Run Text="{Binding LocalIpAddress}" Foreground="#94A3B8"/>
+                            <Run Text=")" Foreground="#64748B"/>
+                        </TextBlock>
                     </StackPanel>
                 </Border>
 
