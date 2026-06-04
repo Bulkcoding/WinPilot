@@ -1,3 +1,4 @@
+using System.Net.Sockets;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using WinPilot.Services;
@@ -39,6 +40,7 @@ public partial class MainViewModel : ObservableObject
 
     public bool IsNormalMode => !IsMiniMode;
     public MiniViewModel MiniVm { get; }
+    public string LocalIpAddress { get; } = GetLocalIp();
 
     public MainViewModel()
     {
@@ -95,6 +97,17 @@ public partial class MainViewModel : ObservableObject
     }
 
     partial void OnIsMiniModeChanged(bool value) => OnPropertyChanged(nameof(IsNormalMode));
+
+    private static string GetLocalIp()
+    {
+        try
+        {
+            using var socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, 0);
+            socket.Connect("8.8.8.8", 65530);
+            return (socket.LocalEndPoint as System.Net.IPEndPoint)?.Address.ToString() ?? "N/A";
+        }
+        catch { return "N/A"; }
+    }
 
     [RelayCommand]
     private void DismissUpdatePopup() => ShowUpdatePopup = false;

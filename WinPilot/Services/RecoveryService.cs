@@ -25,18 +25,17 @@ public class RecoveryService
     public Process? StartCommand(string fileName, string arguments,
         DataReceivedEventHandler? outputHandler, EventHandler? exitedHandler)
     {
-        var oemEncoding = System.Text.Encoding.GetEncoding(
-            System.Globalization.CultureInfo.CurrentCulture.TextInfo.OEMCodePage);
+        // cmd /c chcp 65001로 UTF-8 강제 → sfc/dism 한글 깨짐 방지
         var info = new ProcessStartInfo
         {
-            FileName = fileName,
-            Arguments = arguments,
+            FileName = "cmd.exe",
+            Arguments = $"/c \"chcp 65001 >nul 2>&1 & {fileName} {arguments}\"",
             UseShellExecute = false,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             CreateNoWindow = true,
-            StandardOutputEncoding = oemEncoding,
-            StandardErrorEncoding  = oemEncoding
+            StandardOutputEncoding = System.Text.Encoding.UTF8,
+            StandardErrorEncoding  = System.Text.Encoding.UTF8
         };
 
         var process = new Process { StartInfo = info, EnableRaisingEvents = true };

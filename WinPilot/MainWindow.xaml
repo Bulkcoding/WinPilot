@@ -204,10 +204,16 @@
 
                 <!-- 시스템 상태 (하단) -->
                 <Border DockPanel.Dock="Bottom" Padding="12,12">
-                    <StackPanel Orientation="Horizontal">
-                        <Ellipse Width="8" Height="8" Fill="#22C55E" VerticalAlignment="Center"/>
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse Width="8" Height="8" Fill="#22C55E" VerticalAlignment="Center"/>
+                            <TextBlock Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"
+                                       Text="시스템 정상" Foreground="#64748B" FontSize="11" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
                         <TextBlock Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"
-                                   Text="시스템 정상" Foreground="#64748B" FontSize="11" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                   Text="{Binding LocalIpAddress}"
+                                   Foreground="#475569" FontSize="10" FontFamily="Consolas"
+                                   Margin="16,3,0,0"/>
                     </StackPanel>
                 </Border>
 
