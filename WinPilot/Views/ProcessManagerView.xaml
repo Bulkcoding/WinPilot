@@ -166,7 +166,7 @@
                             </DataGridTextColumn>
                             <DataGridTextColumn Header="상태"       Binding="{Binding Status}"     Width="80"  ElementStyle="{StaticResource CCell}"/>
                             <DataGridTextColumn Header="CPU %"      Binding="{Binding CpuPercent, StringFormat={}{0:F1}%}" Width="70" ElementStyle="{StaticResource CCell}"/>
-                            <DataGridTextColumn Header="메모리(MB)" Binding="{Binding MemoryMB, StringFormat={}{0:F1}}"    Width="90" ElementStyle="{StaticResource CCell}"/>
+                            <DataGridTextColumn Header="전용 메모리(MB)" Binding="{Binding MemoryMB, StringFormat={}{0:F1}}"    Width="90" ElementStyle="{StaticResource CCell}"/>
                             <DataGridTextColumn Header="PID"        Binding="{Binding Pid}"        Width="65"  ElementStyle="{StaticResource CCell}"/>
                             <DataGridTextColumn Header="설명"       Binding="{Binding Description}" Width="180" ElementStyle="{StaticResource DCell}"/>
                         </DataGrid.Columns>
@@ -243,7 +243,7 @@
                             <DataGridTextColumn Header="PID"        Binding="{Binding Pid}"         Width="65"  ElementStyle="{StaticResource CCell}"/>
                             <DataGridTextColumn Header="상태"       Binding="{Binding Status}"      Width="80"  ElementStyle="{StaticResource CCell}"/>
                             <DataGridTextColumn Header="CPU %"      Binding="{Binding CpuPercent, StringFormat={}{0:F1}%}" Width="70" ElementStyle="{StaticResource CCell}"/>
-                            <DataGridTextColumn Header="메모리(MB)" Binding="{Binding MemoryMB, StringFormat={}{0:F1}}"    Width="90" ElementStyle="{StaticResource CCell}"/>
+                            <DataGridTextColumn Header="전용 메모리(MB)" Binding="{Binding MemoryMB, StringFormat={}{0:F1}}"    Width="90" ElementStyle="{StaticResource CCell}"/>
                             <DataGridTextColumn Header="사용자"     Binding="{Binding UserName}"    Width="130" ElementStyle="{StaticResource CCell}"/>
                             <DataGridTextColumn Header="설명"       Binding="{Binding Description}" Width="200" ElementStyle="{StaticResource DCell}"/>
                             <DataGridTextColumn Header="경로"       Binding="{Binding Path}"        Width="*"   ElementStyle="{StaticResource DCell}"/>

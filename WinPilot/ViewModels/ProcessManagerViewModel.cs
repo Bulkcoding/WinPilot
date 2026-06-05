@@ -142,7 +142,7 @@ public partial class ProcessManagerViewModel : ObservableObject
                     Name:        p.ProcessName,
                     Pid:         p.Id,
                     CpuPercent:  Math.Round(cpu, 1),
-                    MemoryMB:    Math.Round(p.WorkingSet64 / 1_048_576.0, 1),
+                    MemoryMB:    Math.Round(p.PrivateMemorySize64 / 1_048_576.0, 1),
                     Status:      p.Responding ? "실행 중" : "응답 없음",
                     Description: SafeFileDescription(p),
                     UserName:    "",   // 별도 WMI 조회 생략 (성능)
@@ -197,7 +197,7 @@ public partial class ProcessManagerViewModel : ObservableObject
             {
                 var key = p.ProcessName;
                 var cpu = p.TotalProcessorTime;
-                var mem = p.WorkingSet64 / 1_048_576.0;
+                var mem = p.PrivateMemorySize64 / 1_048_576.0;
                 if (groups.TryGetValue(key, out var g))
                     groups[key] = (g.cpu + cpu, Math.Max(g.mem, mem), g.count + 1);
                 else
