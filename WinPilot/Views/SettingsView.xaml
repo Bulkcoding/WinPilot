@@ -26,6 +26,39 @@
                 </StackPanel>
             </Border>
 
+            <!-- 버전 정보 -->
+            <Border Style="{StaticResource CardStyle}" Margin="0,16,0,0">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="버전 정보" Style="{StaticResource CardTitleStyle}" Margin="0,0,0,8"/>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="현재 버전" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="13" Width="80"/>
+                            <TextBlock Text="{Binding CurrentVersionText}" Foreground="{DynamicResource TextPrimaryBrush}"
+                                       FontSize="13" FontWeight="SemiBold" FontFamily="Consolas"/>
+                        </StackPanel>
+                        <!-- 업데이트 있을 때 최신 버전 표시 -->
+                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0"
+                                    Visibility="{Binding DataContext.UpdateAvailable, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVisibility}}">
+                            <TextBlock Text="최신 버전" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="13" Width="80"/>
+                            <TextBlock Text="{Binding DataContext.LatestVersion, RelativeSource={RelativeSource AncestorType=Window}}"
+                                       Foreground="#3B82F6" FontSize="13" FontWeight="SemiBold" FontFamily="Consolas"/>
+                            <TextBlock Text=" · 업데이트 있음" Foreground="#3B82F6" FontSize="12" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </StackPanel>
+                    <!-- 업데이트 버튼 -->
+                    <Button Grid.Column="1"
+                            Content="업데이트 보기"
+                            Command="{Binding DataContext.ReopenUpdatePopupCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            VerticalAlignment="Center"
+                            Visibility="{Binding DataContext.UpdateAvailable, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVisibility}}"/>
+                </Grid>
+            </Border>
+
             <!-- 미니 모드 -->
             <Border Style="{StaticResource CardStyle}" Margin="0,16,0,0">
                 <StackPanel>

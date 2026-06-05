@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
+using WinPilot.Services;
 
 namespace WinPilot.ViewModels;
 
@@ -9,6 +10,8 @@ public partial class SettingsViewModel : ObservableObject
     public static SettingsViewModel Current { get; } = new();
 
     [ObservableProperty] private bool _isDarkTheme = true;
+
+    public string CurrentVersionText => UpdateService.CurrentVersionText;
 
     partial void OnIsDarkThemeChanged(bool value) => ApplyTheme(value);
 

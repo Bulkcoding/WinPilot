@@ -61,21 +61,12 @@ public partial class MainViewModel : ObservableObject
         var info = await UpdateService.CheckAsync();
         if (info == null || string.IsNullOrEmpty(info.DownloadUrl)) return;
 
-        // 업데이트 감지 즉시 팝업 표시 (다운로드 완료를 기다리지 않음)
+        // 업데이트 감지 즉시 팝업 표시 (다운로드는 '지금 업데이트' 클릭 시 진행)
         LatestVersion      = info.Version;
         UpdateDownloadUrl  = info.DownloadUrl;
         UpdateReleaseNotes = info.ReleaseNotes;
         UpdateAvailable    = true;
         ShowUpdatePopup    = true;
-
-        // 백그라운드 사전 다운로드 (실패해도 팝업에는 영향 없음 — ApplyUpdate가 재시도)
-        IsDownloading = true;
-        try
-        {
-            await UpdateService.DownloadAndApplyAsync(info, progress: null, autoApply: false);
-        }
-        catch { /* 네트워크 없으면 무시 */ }
-        finally { IsDownloading = false; }
     }
 
     [RelayCommand]
