@@ -53,8 +53,10 @@ public partial class MainViewModel : ObservableObject
         CurrentPage = Dashboard;
         Dashboard.StartAutoRefresh();
 
-        // 시작 시 백그라운드 업데이트 체크 + 자동 다운로드
+        // 시작 시 백그라운드 업데이트 체크 (DEBUG 빌드에서는 스킵)
+#if !DEBUG
         _ = CheckAndAutoDownloadUpdateAsync();
+#endif
     }
 
     private async Task CheckAndAutoDownloadUpdateAsync()

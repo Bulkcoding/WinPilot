@@ -6,6 +6,12 @@
              mc:Ignorable="d">
     <UserControl.Resources>
 
+        <!-- 이름 컬럼 셀: 가운데 정렬 -->
+        <Style x:Key="NameCell" TargetType="TextBlock">
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment"   Value="Center"/>
+        </Style>
+
         <!-- 모든 셀: 상하만 center (좌우는 Left) -->
         <Style x:Key="CCell" TargetType="TextBlock">
             <Setter Property="HorizontalAlignment" Value="Left"/>
@@ -151,7 +157,11 @@
                               RowStyle="{StaticResource DataGridRowStyle}"
                               EnableRowVirtualization="True" VirtualizingPanel.IsVirtualizing="True">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="이름"       Binding="{Binding Name}"       Width="*"   ElementStyle="{StaticResource CCell}"/>
+                            <DataGridTextColumn Binding="{Binding Name}" Width="*" ElementStyle="{StaticResource NameCell}">
+                                <DataGridTextColumn.Header>
+                                    <TextBlock Text="이름" HorizontalAlignment="Center" Width="9999"/>
+                                </DataGridTextColumn.Header>
+                            </DataGridTextColumn>
                             <DataGridTextColumn Header="상태"       Binding="{Binding Status}"     Width="80"  ElementStyle="{StaticResource CCell}"/>
                             <DataGridTextColumn Header="CPU %"      Binding="{Binding CpuPercent, StringFormat={}{0:F1}%}" Width="70" ElementStyle="{StaticResource CCell}"/>
                             <DataGridTextColumn Header="메모리(MB)" Binding="{Binding MemoryMB, StringFormat={}{0:F1}}"    Width="90" ElementStyle="{StaticResource CCell}"/>
@@ -178,7 +188,11 @@
                           RowStyle="{StaticResource DataGridRowStyle}"
                           EnableRowVirtualization="True">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="이름"          Binding="{Binding Name}"          Width="*"   ElementStyle="{StaticResource CCell}"/>
+                        <DataGridTextColumn Binding="{Binding Name}" Width="*" ElementStyle="{StaticResource NameCell}">
+                            <DataGridTextColumn.Header>
+                                <TextBlock Text="이름" HorizontalAlignment="Center" Width="9999"/>
+                            </DataGridTextColumn.Header>
+                        </DataGridTextColumn>
                         <DataGridTextColumn Header="CPU 시간"      Binding="{Binding CpuTimeText}"   Width="100" ElementStyle="{StaticResource CCell}"/>
                         <DataGridTextColumn Header="메모리 피크(MB)" Binding="{Binding PeakMemoryMB, StringFormat={}{0:F1}}" Width="110" ElementStyle="{StaticResource CCell}"/>
                         <DataGridTextColumn Header="인스턴스"      Binding="{Binding InstanceCount}" Width="80"  ElementStyle="{StaticResource CCell}"/>
@@ -215,7 +229,11 @@
                               RowStyle="{StaticResource DataGridRowStyle}"
                               EnableRowVirtualization="True">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="이름"       Binding="{Binding Name}"        Width="160" ElementStyle="{StaticResource CCell}"/>
+                            <DataGridTextColumn Binding="{Binding Name}" Width="160" ElementStyle="{StaticResource NameCell}">
+                                <DataGridTextColumn.Header>
+                                    <TextBlock Text="이름" HorizontalAlignment="Center" Width="9999"/>
+                                </DataGridTextColumn.Header>
+                            </DataGridTextColumn>
                             <DataGridTextColumn Header="PID"        Binding="{Binding Pid}"         Width="65"  ElementStyle="{StaticResource CCell}"/>
                             <DataGridTextColumn Header="상태"       Binding="{Binding Status}"      Width="80"  ElementStyle="{StaticResource CCell}"/>
                             <DataGridTextColumn Header="CPU %"      Binding="{Binding CpuPercent, StringFormat={}{0:F1}%}" Width="70" ElementStyle="{StaticResource CCell}"/>
@@ -257,7 +275,11 @@
                               RowStyle="{StaticResource DataGridRowStyle}"
                               EnableRowVirtualization="True">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="표시 이름" Binding="{Binding DisplayName}" Width="*"   ElementStyle="{StaticResource CCell}"/>
+                            <DataGridTextColumn Binding="{Binding DisplayName}" Width="*" ElementStyle="{StaticResource NameCell}">
+                                <DataGridTextColumn.Header>
+                                    <TextBlock Text="표시 이름" HorizontalAlignment="Center" Width="9999"/>
+                                </DataGridTextColumn.Header>
+                            </DataGridTextColumn>
                             <DataGridTextColumn Header="이름"      Binding="{Binding Name}"        Width="160" ElementStyle="{StaticResource CCell}"/>
                             <DataGridTemplateColumn Header="상태"  Width="80">
                                 <DataGridTemplateColumn.CellTemplate>
