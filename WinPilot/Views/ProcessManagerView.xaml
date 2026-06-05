@@ -217,10 +217,10 @@
                                                     </TextBlock.Style>
                                                 </TextBlock>
                                                 <Border Margin="6,0,0,0" Padding="5,1" CornerRadius="8"
-                                                        Background="{DynamicResource ControlBrush}"
+                                                        Background="#3B82F6"
                                                         Visibility="{Binding HasChildren, Converter={StaticResource BoolToVisibility}}"
-                                                        VerticalAlignment="Center">
-                                                    <TextBlock Text="{Binding ChildCount}" FontSize="10" Opacity="0.75"/>
+                                                        VerticalAlignment="Center" Opacity="0.85">
+                                                    <TextBlock Text="{Binding ChildCount}" FontSize="10" Foreground="White"/>
                                                 </Border>
                                             </StackPanel>
                                         </Grid>
