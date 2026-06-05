@@ -433,6 +433,32 @@
                         </DockPanel>
                     </Button>
 
+                    <!-- 파서 -->
+                    <Button Command="{Binding NavigateToCommand}" CommandParameter="{Binding Parser}">
+                        <Button.Style>
+                            <Style BasedOn="{StaticResource NavBtnStyle}" TargetType="Button">
+                                <Style.Triggers>
+                                    <DataTrigger Value="True">
+                                        <DataTrigger.Binding>
+                                            <MultiBinding Converter="{StaticResource IsCurrentPage}">
+                                                <Binding Path="CurrentPage"/>
+                                                <Binding Path="Parser"/>
+                                            </MultiBinding>
+                                        </DataTrigger.Binding>
+                                        <Setter Property="Background" Value="#1E3A5F"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                        <DockPanel>
+                            <TextBlock Text="&#xE8F1;" FontFamily="Segoe MDL2 Assets" FontSize="16"
+                                       Foreground="#94A3B8" Width="24" TextAlignment="Center" VerticalAlignment="Center"/>
+                            <TextBlock Text="파서" FontSize="13" Foreground="#CBD5E1" Margin="10,0,0,0"
+                                       VerticalAlignment="Center"
+                                       Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/>
+                        </DockPanel>
+                    </Button>
+
                     <!-- Defender 제외 -->
                     <Button Command="{Binding NavigateToCommand}" CommandParameter="{Binding Defender}">
                         <Button.Style>
