@@ -73,20 +73,39 @@ public static class UpdateService
     {
         if (string.IsNullOrWhiteSpace(body)) return [];
         var lines = body.Split('\n', StringSplitOptions.RemoveEmptyEntries);
-        // "- " 또는 "* " 또는 "• "로 시작하는 줄을 불릿 항목으로 파싱
+
+        // "- " 또는 "* " 또는 "• "로 시작하는 줄을 불릿 항목으로 파싱 (마크다운 서식 제거)
         var bullets = lines
             .Select(l => l.Trim())
             .Where(l => l.StartsWith("- ") || l.StartsWith("* ") || l.StartsWith("• "))
-            .Select(l => l[2..].Trim())
+            .Select(l => CleanMarkdown(l[2..].Trim()))
+            .Where(l => l.Length > 0)
             .Take(8)
             .ToList();
         if (bullets.Count > 0) return bullets;
-        // fallback: 헤더(#)·빈 줄 제외 첫 5줄
+
+        // fallback: 헤더(#)·테이블(|)·인용구(>)·이미지(!) 제외 첫 5줄
         return lines
             .Select(l => l.Trim())
-            .Where(l => l.Length > 0 && !l.StartsWith("#"))
+            .Where(l => l.Length > 2
+                     && !l.StartsWith("#")
+                     && !l.StartsWith("|")
+                     && !l.StartsWith(">")
+                     && !l.StartsWith("!"))
+            .Select(CleanMarkdown)
+            .Where(l => l.Length > 0)
             .Take(5)
             .ToList();
+    }
+
+    // **bold**, *italic*, `code` 등 마크다운 서식 제거
+    private static string CleanMarkdown(string text)
+    {
+        text = System.Text.RegularExpressions.Regex.Replace(text, @"\*\*(.*?)\*\*", "$1");
+        text = System.Text.RegularExpressions.Regex.Replace(text, @"\*(.*?)\*",     "$1");
+        text = System.Text.RegularExpressions.Regex.Replace(text, @"`(.*?)`",       "$1");
+        text = System.Text.RegularExpressions.Regex.Replace(text, @"\[(.*?)\]\(.*?\)", "$1"); // [링크](url) → 링크
+        return text.Trim();
     }
 
     /// <summary>
