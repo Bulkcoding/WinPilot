@@ -115,6 +115,9 @@ public partial class MainViewModel : ObservableObject
     private void DismissUpdatePopup() => ShowUpdatePopup = false;
 
     [RelayCommand]
+    private void ReopenUpdatePopup() => ShowUpdatePopup = true;
+
+    [RelayCommand]
     private void NavigateTo(object? vm)
     {
         if (vm == null) return;
