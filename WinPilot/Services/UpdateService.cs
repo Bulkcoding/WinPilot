@@ -33,16 +33,20 @@ public static class UpdateService
 
     private const string ApiUrl = "https://api.github.com/repos/Bulkcoding/WinPilot/releases/latest";
 
-    // AssemblyVersion은 항상 1.0.0.0으로 고정 → FileVersion을 사용해야 실제 빌드 버전을 읽을 수 있음
+    // AssemblyVersion은 빌드 시 고정될 수 있으므로 FileVersion으로 읽음
     public static Version CurrentVersion
     {
         get
         {
             try
             {
-                var loc = Assembly.GetExecutingAssembly().Location;
-                var fv  = FileVersionInfo.GetVersionInfo(loc).FileVersion;
-                if (Version.TryParse(fv, out var v)) return v;
+                // Process.MainModule이 가장 신뢰할 수 있는 실행 파일 경로
+                var path = Process.GetCurrentProcess().MainModule?.FileName ?? "";
+                if (!string.IsNullOrEmpty(path))
+                {
+                    var fv = FileVersionInfo.GetVersionInfo(path).FileVersion;
+                    if (Version.TryParse(fv, out var v)) return v;
+                }
             }
             catch { }
             return Assembly.GetExecutingAssembly().GetName().Version ?? new Version(1, 0, 0);

@@ -202,7 +202,19 @@
                     </DockPanel>
                 </Border>
 
-                <!-- 업데이트 알림 버튼 (나중에 클릭 후 표시) -->
+                <!-- 시스템 상태 (하단 고정) -->
+                <Border DockPanel.Dock="Bottom" Padding="12,10">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Ellipse Width="8" Height="8" Fill="#22C55E" VerticalAlignment="Center"/>
+                        <TextBlock Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"
+                                   Text="{Binding SystemStatusText}"
+                                   FontSize="12" FontWeight="SemiBold"
+                                   Foreground="#CBD5E1"
+                                   Margin="8,0,0,0" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- 업데이트 알림 버튼 (시스템 정상 위) -->
                 <Border DockPanel.Dock="Bottom" Padding="8,4,8,2"
                         Visibility="{Binding UpdateReady, Converter={StaticResource BoolToVisibility}}">
                     <Button Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"
@@ -234,19 +246,6 @@
                             </ControlTemplate>
                         </Button.Template>
                     </Button>
-                </Border>
-
-                <!-- 시스템 상태 (하단) -->
-                <Border DockPanel.Dock="Bottom" Padding="12,10">
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <Ellipse Width="8" Height="8" Fill="#22C55E" VerticalAlignment="Center"/>
-                        <!-- 확장: 시스템 정상(IP) -->
-                        <TextBlock Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"
-                                   Text="{Binding SystemStatusText}"
-                                   FontSize="12" FontWeight="SemiBold"
-                                   Foreground="#CBD5E1"
-                                   Margin="8,0,0,0" VerticalAlignment="Center"/>
-                    </StackPanel>
                 </Border>
 
                 <!-- 네비게이션 버튼들 -->
