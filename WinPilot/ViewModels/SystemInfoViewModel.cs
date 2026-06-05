@@ -44,6 +44,16 @@ public partial class SystemInfoViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void SearchByCpuName()
+    {
+        var cpuName = Snapshot?.CpuName;
+        if (string.IsNullOrEmpty(cpuName)) return;
+        var query = $"{cpuName} 그래픽 드라이버 다운로드";
+        var url   = $"https://www.google.com/search?q={Uri.EscapeDataString(query)}";
+        try { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }); } catch { }
+    }
+
+    [RelayCommand]
     private void OpenDriverPage(GpuInfo? gpu)
     {
         if (gpu == null || string.IsNullOrEmpty(gpu.DriverPageUrl)) return;
