@@ -92,7 +92,9 @@ public partial class ProcessManagerViewModel : ObservableObject
     public bool ShowServiceOps => SelectedTab == 3;
 
     // 그룹화된 flat list (그룹헤더 + 확장 시 자식 행)
-    private List<ProcessGroupItem> _allGroups = [];
+    private List<ProcessGroupItem> _allGroups  = [];
+    private string _sortColumn      = "CpuPercent";
+    private bool   _sortDescending  = true;
     public ObservableCollection<ProcessGroupItem>  FlatGroups  { get; } = [];
     public ObservableCollection<AppHistoryRow>    AppHistory  { get; } = [];
     public ObservableCollection<ProcessDetailRow> Details     { get; } = [];
@@ -133,6 +135,34 @@ public partial class ProcessManagerViewModel : ObservableObject
 
     // ─── 프로세스 (그룹화) ───────────────────────────────────────────────────
 
+    /// <summary>컬럼 헤더 클릭 시 그룹 단위 정렬</summary>
+    [RelayCommand]
+    private void SortBy(string? column)
+    {
+        if (string.IsNullOrEmpty(column)) return;
+        if (_sortColumn == column) _sortDescending = !_sortDescending;
+        else { _sortColumn = column; _sortDescending = true; }
+        ApplySort();
+        RebuildFlatList();
+    }
+
+    private void ApplySort()
+    {
+        Comparison<ProcessGroupItem> cmp = _sortColumn switch
+        {
+            "MemoryMB"   => (a, b) => _sortDescending ? b.MemoryMB.CompareTo(a.MemoryMB)   : a.MemoryMB.CompareTo(b.MemoryMB),
+            "Name"       => (a, b) => _sortDescending ? string.Compare(b.Name, a.Name, StringComparison.OrdinalIgnoreCase)
+                                                       : string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase),
+            "Status"     => (a, b) => _sortDescending ? string.Compare(b.Status, a.Status) : string.Compare(a.Status, b.Status),
+            _            => (a, b) => _sortDescending ? b.CpuPercent.CompareTo(a.CpuPercent) : a.CpuPercent.CompareTo(b.CpuPercent),
+        };
+        _allGroups.Sort(cmp);
+
+        // 그룹 내 자식도 동일 기준 정렬
+        foreach (var g in _allGroups)
+            g.Children.Sort(cmp);
+    }
+
     [RelayCommand]
     private void ToggleGroup(ProcessGroupItem? item)
     {
@@ -170,6 +200,7 @@ public partial class ProcessManagerViewModel : ObservableObject
             ? groups.Where(g => g.Name.Contains(filter, StringComparison.OrdinalIgnoreCase)).ToList()
             : groups;
 
+        ApplySort();
         RebuildFlatList();
 
         var total = _allGroups.Sum(g => g.ChildCount);

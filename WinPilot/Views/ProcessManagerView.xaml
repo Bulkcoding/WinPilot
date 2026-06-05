@@ -142,7 +142,7 @@
                              CaretBrush="{DynamicResource TextPrimaryBrush}"
                              BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
                              Padding="10,6" FontSize="12"/>
-                    <DataGrid Grid.Row="1"
+                    <DataGrid Grid.Row="1" x:Name="ProcessDataGrid"
                               ItemsSource="{Binding FlatGroups}"
                               SelectedItem="{Binding SelectedGroupItem}"
                               AutoGenerateColumns="False" CanUserReorderColumns="False"
@@ -155,7 +155,8 @@
                               ColumnHeaderStyle="{StaticResource DataGridHeaderStyle}"
                               CellStyle="{StaticResource DataGridCellStyle}"
                               RowStyle="{StaticResource DataGridRowStyle}"
-                              EnableRowVirtualization="True" VirtualizingPanel.IsVirtualizing="True">
+                              EnableRowVirtualization="True" VirtualizingPanel.IsVirtualizing="True"
+                              Sorting="ProcessDataGrid_Sorting">
                         <DataGrid.Columns>
 
                             <!-- 이름 (토글 버튼 + 이름 + 카운트 뱃지) -->
@@ -228,11 +229,11 @@
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
 
-                            <DataGridTextColumn Header="상태"            Binding="{Binding Status}"     Width="80"  ElementStyle="{StaticResource CCell}"/>
-                            <DataGridTextColumn Header="CPU %"           Binding="{Binding CpuPercent, StringFormat={}{0:F1}%}" Width="70" ElementStyle="{StaticResource CCell}"/>
-                            <DataGridTextColumn Header="전용 메모리(MB)" Binding="{Binding MemoryMB, StringFormat={}{0:F1}}"    Width="100" ElementStyle="{StaticResource CCell}"/>
-                            <DataGridTextColumn Header="PID"             Binding="{Binding PidDisplay}" Width="65"  ElementStyle="{StaticResource CCell}"/>
-                            <DataGridTextColumn Header="설명"            Binding="{Binding Description}" Width="180" ElementStyle="{StaticResource DCell}"/>
+                            <DataGridTextColumn Header="상태"            Binding="{Binding Status}"     Width="80"  SortMemberPath="Status"     ElementStyle="{StaticResource CCell}"/>
+                            <DataGridTextColumn Header="CPU %"           Binding="{Binding CpuPercent, StringFormat={}{0:F1}%}" Width="70" SortMemberPath="CpuPercent" ElementStyle="{StaticResource CCell}"/>
+                            <DataGridTextColumn Header="전용 메모리(MB)" Binding="{Binding MemoryMB, StringFormat={}{0:F1}}"    Width="100" SortMemberPath="MemoryMB"  ElementStyle="{StaticResource CCell}"/>
+                            <DataGridTextColumn Header="PID"             Binding="{Binding PidDisplay}" Width="65"  ElementStyle="{StaticResource CCell}" CanUserSort="False"/>
+                            <DataGridTextColumn Header="설명"            Binding="{Binding Description}" Width="180" ElementStyle="{StaticResource DCell}" CanUserSort="False"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </Grid>
