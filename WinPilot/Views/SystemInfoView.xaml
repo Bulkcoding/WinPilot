@@ -140,7 +140,6 @@
                                                     Content="드라이버 홈페이지"
                                                     Command="{Binding DataContext.OpenDriverPageCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                     CommandParameter="{Binding}"
-                                                    Style="{StaticResource PrimaryButtonStyle}"
                                                     Padding="10,6"
                                                     VerticalAlignment="Center">
                                                 <Button.Style>
