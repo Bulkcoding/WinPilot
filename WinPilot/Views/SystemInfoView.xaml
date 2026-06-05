@@ -97,6 +97,70 @@
                     </Border>
                 </Grid>
 
+                <!-- 그래픽 -->
+                <Border Style="{StaticResource CardStyle}" Margin="0,0,0,16">
+                    <StackPanel>
+                        <TextBlock Text="그래픽" Style="{StaticResource CardTitleStyle}"/>
+                        <ItemsControl ItemsSource="{Binding Gpus}" Margin="0,12,0,0">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{DynamicResource ItemRowBrush}" CornerRadius="6"
+                                            Padding="16,12" Margin="0,0,0,8">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <!-- GPU 정보 -->
+                                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Name}"
+                                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                                           FontSize="13" FontWeight="SemiBold"/>
+                                                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                                    <TextBlock Text="VRAM: " Foreground="#64748B" FontSize="11"/>
+                                                    <TextBlock Text="{Binding VramText}" Foreground="#94A3B8" FontSize="11" Margin="0,0,16,0"/>
+                                                    <TextBlock Text="드라이버: " Foreground="#64748B" FontSize="11"/>
+                                                    <TextBlock Text="{Binding DriverVersion}" Foreground="#94A3B8" FontSize="11" FontFamily="Consolas"/>
+                                                </StackPanel>
+                                            </StackPanel>
+
+                                            <!-- 드라이버 검색 -->
+                                            <Button Grid.Column="1"
+                                                    Content="드라이버 검색"
+                                                    Command="{Binding DataContext.SearchGpuDriverCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}"
+                                                    Style="{StaticResource SecondaryButtonStyle}"
+                                                    Padding="10,6" Margin="0,0,8,0"
+                                                    VerticalAlignment="Center"/>
+
+                                            <!-- 드라이버 홈페이지 (벤더 없으면 숨김) -->
+                                            <Button Grid.Column="2"
+                                                    Content="드라이버 홈페이지"
+                                                    Command="{Binding DataContext.OpenDriverPageCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}"
+                                                    Style="{StaticResource PrimaryButtonStyle}"
+                                                    Padding="10,6"
+                                                    VerticalAlignment="Center">
+                                                <Button.Style>
+                                                    <Style BasedOn="{StaticResource PrimaryButtonStyle}" TargetType="Button">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding HasDriverPage}" Value="False">
+                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Button.Style>
+                                            </Button>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
                 <!-- 디스크 -->
                 <Border Style="{StaticResource CardStyle}" Margin="0,0,0,16">
                     <StackPanel>

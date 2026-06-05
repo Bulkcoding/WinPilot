@@ -59,6 +59,25 @@
                 </Grid>
             </Border>
 
+            <!-- 폰트 크기 -->
+            <Border Style="{StaticResource CardStyle}" Margin="0,16,0,0">
+                <StackPanel>
+                    <TextBlock Text="폰트 크기" Style="{StaticResource CardTitleStyle}" Margin="0,0,0,12"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                        <RadioButton Content="보통"
+                                     IsChecked="{Binding IsFontLarge, Converter={StaticResource InverseBoolConverter}}"
+                                     Foreground="{DynamicResource TextPrimaryBrush}" FontSize="13"
+                                     Margin="0,0,24,0" VerticalAlignment="Center"/>
+                        <RadioButton Content="크게"
+                                     IsChecked="{Binding IsFontLarge}"
+                                     Foreground="{DynamicResource TextPrimaryBrush}" FontSize="13"
+                                     VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <TextBlock Text="앱 재시작 없이 즉시 적용됩니다."
+                               Foreground="#64748B" FontSize="11" Margin="0,8,0,0"/>
+                </StackPanel>
+            </Border>
+
             <!-- 미니 모드 -->
             <Border Style="{StaticResource CardStyle}" Margin="0,16,0,0">
                 <StackPanel>
