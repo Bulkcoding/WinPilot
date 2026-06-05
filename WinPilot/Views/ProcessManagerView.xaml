@@ -184,7 +184,7 @@
                                                     CommandParameter="{Binding}"
                                                     Visibility="{Binding HasChildren, Converter={StaticResource BoolToVisibility}}">
                                                 <TextBlock FontSize="9" VerticalAlignment="Center" HorizontalAlignment="Center"
-                                                           Foreground="{DynamicResource TextSecondaryBrush}">
+                                                           Opacity="0.6">
                                                     <TextBlock.Style>
                                                         <Style TargetType="TextBlock">
                                                             <Setter Property="Text" Value="▶"/>
@@ -204,13 +204,13 @@
 
                                             <!-- 이름 + 카운트 뱃지 -->
                                             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                                                <TextBlock Text="{Binding Name}" VerticalAlignment="Center"
-                                                           Foreground="{DynamicResource TextPrimaryBrush}">
+                                                <!-- Foreground 미지정 → DataGridCellStyle 상속 (선택 시 자동으로 밝은 색) -->
+                                                <TextBlock Text="{Binding Name}" VerticalAlignment="Center">
                                                     <TextBlock.Style>
                                                         <Style TargetType="TextBlock">
                                                             <Style.Triggers>
                                                                 <DataTrigger Binding="{Binding IsChild}" Value="True">
-                                                                    <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
+                                                                    <Setter Property="Opacity" Value="0.75"/>
                                                                 </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
@@ -220,8 +220,7 @@
                                                         Background="{DynamicResource ControlBrush}"
                                                         Visibility="{Binding HasChildren, Converter={StaticResource BoolToVisibility}}"
                                                         VerticalAlignment="Center">
-                                                    <TextBlock Text="{Binding ChildCount}" FontSize="10"
-                                                               Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                                    <TextBlock Text="{Binding ChildCount}" FontSize="10" Opacity="0.75"/>
                                                 </Border>
                                             </StackPanel>
                                         </Grid>
