@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
+using WinPilot.Services;
 
 namespace WinPilot.ViewModels;
 
@@ -8,9 +9,28 @@ public partial class SettingsViewModel : ObservableObject
 {
     public static SettingsViewModel Current { get; } = new();
 
-    [ObservableProperty] private bool _isDarkTheme = true;
+    [ObservableProperty] private bool _isDarkTheme  = false;  // 기본: 라이트
+    [ObservableProperty] private bool _isFontLarge  = false;  // 기본: 보통
 
-    partial void OnIsDarkThemeChanged(bool value) => ApplyTheme(value);
+    public string CurrentVersionText => UpdateService.CurrentVersionText;
+
+    private SettingsViewModel()
+    {
+        ApplyTheme(_isDarkTheme);
+        ApplyFontSize(_isFontLarge);
+    }
+
+    partial void OnIsDarkThemeChanged(bool value)  => ApplyTheme(value);
+    partial void OnIsFontLargeChanged(bool value)  => ApplyFontSize(value);
+
+    public static void ApplyFontSize(bool isLarge)
+    {
+        var res = Application.Current.Resources;
+        res["FontSm"] = isLarge ? 13.0 : 11.0;
+        res["FontMd"] = isLarge ? 14.0 : 12.0;
+        res["FontLg"] = isLarge ? 15.0 : 13.0;
+        res["FontXl"] = isLarge ? 16.0 : 14.0;
+    }
 
     public static void ApplyTheme(bool isDark)
     {

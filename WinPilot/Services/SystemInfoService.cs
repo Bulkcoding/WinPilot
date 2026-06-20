@@ -137,6 +137,53 @@ public class SystemInfoService : IDisposable
         });
     }
 
+    public List<Models.GpuInfo> GetGpuInfo()
+    {
+        var result = new List<Models.GpuInfo>();
+        try
+        {
+            using var searcher = new ManagementObjectSearcher("SELECT * FROM Win32_VideoController");
+            foreach (ManagementObject obj in searcher.Get())
+            {
+                var name = obj["Name"]?.ToString()?.Trim() ?? "";
+                if (string.IsNullOrEmpty(name)) continue;
+
+                // AdapterRAM은 32bit 한계로 4GB 초과분은 0으로 표시되는 경우 있음
+                var vramBytes = Convert.ToUInt64(obj["AdapterRAM"] ?? 0UL);
+                var vramText  = vramBytes >= 1_073_741_824
+                    ? $"{vramBytes / 1_073_741_824.0:F1} GB"
+                    : vramBytes > 0
+                        ? $"{vramBytes / 1_048_576} MB"
+                        : "공유 메모리";
+
+                var driverVer = obj["DriverVersion"]?.ToString() ?? "";
+                var upper     = name.ToUpperInvariant();
+                var vendor    = upper.Contains("NVIDIA")                       ? "NVIDIA"
+                              : upper.Contains("AMD") || upper.Contains("RADEON") ? "AMD"
+                              : upper.Contains("INTEL")                        ? "Intel"
+                              : "";
+                var driverUrl = vendor switch
+                {
+                    "NVIDIA" => "https://www.nvidia.com/en-us/software/nvidia-app/",
+                    "AMD"    => "https://www.amd.com/en/products/software/adrenalin.html",
+                    "Intel"  => "https://www.intel.com/content/www/us/en/support/detect.html",
+                    _        => ""
+                };
+
+                result.Add(new Models.GpuInfo
+                {
+                    Name          = name,
+                    VramText      = vramText,
+                    DriverVersion = driverVer,
+                    Vendor        = vendor,
+                    DriverPageUrl = driverUrl
+                });
+            }
+        }
+        catch { }
+        return result;
+    }
+
     public List<DiskInfo> GetDiskInfo()
     {
         var result = new List<DiskInfo>();

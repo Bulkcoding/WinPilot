@@ -10,7 +10,8 @@
     <ApplicationIcon>Resources\icon.ico</ApplicationIcon>
     <!-- CI에서 -p:Version=x.y.z 로 덮어씀 -->
     <Version>1.1.0</Version>
-    <AssemblyVersion>1.1.0.0</AssemblyVersion>
+    <AssemblyVersion>$(Version).0</AssemblyVersion>
+    <FileVersion>$(Version).0</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

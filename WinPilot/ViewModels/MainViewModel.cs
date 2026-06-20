@@ -16,6 +16,7 @@ public partial class MainViewModel : ObservableObject
     public RecoveryViewModel     Recovery        { get; } = new();
     public PingViewModel         Ping            { get; } = new();
     public DefenderViewModel     Defender        { get; } = new();
+    public ParserViewModel       Parser          { get; } = new();
     public RegistryViewModel     Registry        { get; } = new();
     public TextCounterViewModel  TextCounter     { get; } = new();
     public SettingsViewModel     Settings        { get; } = SettingsViewModel.Current;
@@ -54,8 +55,10 @@ public partial class MainViewModel : ObservableObject
         Dashboard.StartAutoRefresh();
         _ = SystemInfo.LoadAsync();
 
-        // 시작 시 백그라운드 업데이트 체크 + 자동 다운로드
+        // 시작 시 백그라운드 업데이트 체크 (DEBUG 빌드에서는 스킵)
+#if !DEBUG
         _ = CheckAndAutoDownloadUpdateAsync();
+#endif
     }
 
     private async Task CheckAndAutoDownloadUpdateAsync()
@@ -63,20 +66,12 @@ public partial class MainViewModel : ObservableObject
         var info = await UpdateService.CheckAsync();
         if (info == null || string.IsNullOrEmpty(info.DownloadUrl)) return;
 
-        LatestVersion     = info.Version;
-        UpdateDownloadUrl = info.DownloadUrl;
-
-        // 자동 다운로드 (백그라운드, autoApply=false → 버튼만 표시)
-        IsDownloading = true;
-        try
-        {
-            await UpdateService.DownloadAndApplyAsync(info, progress: null, autoApply: false);
-            UpdateAvailable     = true;
-            UpdateReleaseNotes  = info.ReleaseNotes;
-            ShowUpdatePopup     = true;
-        }
-        catch { /* 네트워크 없으면 무시 */ }
-        finally { IsDownloading = false; }
+        // 업데이트 감지 즉시 팝업 표시 (다운로드는 '지금 업데이트' 클릭 시 진행)
+        LatestVersion      = info.Version;
+        UpdateDownloadUrl  = info.DownloadUrl;
+        UpdateReleaseNotes = info.ReleaseNotes;
+        UpdateAvailable    = true;
+        ShowUpdatePopup    = true;
     }
 
     [RelayCommand]
@@ -115,6 +110,9 @@ public partial class MainViewModel : ObservableObject
 
     [RelayCommand]
     private void DismissUpdatePopup() => ShowUpdatePopup = false;
+
+    [RelayCommand]
+    private void ReopenUpdatePopup() => ShowUpdatePopup = true;
 
     [RelayCommand]
     private void NavigateTo(object? vm)

@@ -21,6 +21,35 @@ public record ProcessDetailRow(
     string Name, int Pid, string Status, double CpuPercent, double MemoryMB,
     string UserName, string Description, string Path);
 
+/// <summary>프로세스 탭의 그룹 헤더 또는 자식 행</summary>
+public partial class ProcessGroupItem : ObservableObject
+{
+    [ObservableProperty] private bool _isExpanded;
+
+    // 공통
+    public string Name        { get; init; } = "";
+    public double CpuPercent  { get; init; }
+    public double MemoryMB    { get; init; }
+    public string Status      { get; init; } = "";
+    public string Description { get; init; } = "";
+
+    // 그룹 전용
+    public bool   IsGroup     { get; init; }
+    public int    ChildCount  { get; init; } = 1;
+    public List<ProcessGroupItem> Children { get; init; } = [];
+
+    // 자식 전용
+    public int    Pid         { get; init; }
+    public string ParentName  { get; init; } = "";
+
+    // 계산 프로퍼티
+    public bool   IsChild      => !IsGroup;
+    public bool   HasChildren  => IsGroup && ChildCount > 1;
+    public string PidDisplay   => IsChild  ? Pid.ToString()
+                                : ChildCount == 1 ? (Children.FirstOrDefault()?.Pid.ToString() ?? "-")
+                                : $"{ChildCount}개";
+}
+
 public partial class ServiceRow : ObservableObject
 {
     public string Name        { get; init; } = "";
@@ -54,7 +83,7 @@ public partial class ProcessManagerViewModel : ObservableObject
     [ObservableProperty] private string _statusText     = "";
 
     // 탭별 선택 항목 (헤더 버튼이 바인딩)
-    [ObservableProperty] private ProcessRow?       _selectedProcess;
+    [ObservableProperty] private ProcessGroupItem? _selectedGroupItem;
     [ObservableProperty] private ProcessDetailRow? _selectedDetail;
     [ObservableProperty] private ServiceRow?       _selectedService;
 
@@ -62,7 +91,11 @@ public partial class ProcessManagerViewModel : ObservableObject
     public bool ShowEndTask    => SelectedTab is 0 or 2;
     public bool ShowServiceOps => SelectedTab == 3;
 
-    public ObservableCollection<ProcessRow>       Processes   { get; } = [];
+    // 그룹화된 flat list (그룹헤더 + 확장 시 자식 행)
+    private List<ProcessGroupItem> _allGroups  = [];
+    private string _sortColumn      = "CpuPercent";
+    private bool   _sortDescending  = true;
+    public ObservableCollection<ProcessGroupItem>  FlatGroups  { get; } = [];
     public ObservableCollection<AppHistoryRow>    AppHistory  { get; } = [];
     public ObservableCollection<ProcessDetailRow> Details     { get; } = [];
     public ObservableCollection<ServiceRow>       Services    { get; } = [];
@@ -100,21 +133,114 @@ public partial class ProcessManagerViewModel : ObservableObject
         IsLoading = false;
     }
 
-    // ─── 프로세스 ────────────────────────────────────────────────────────────
+    // ─── 프로세스 (그룹화) ───────────────────────────────────────────────────
+
+    /// <summary>컬럼 헤더 클릭 시 그룹 단위 정렬</summary>
+    [RelayCommand]
+    private void SortBy(string? column)
+    {
+        if (string.IsNullOrEmpty(column)) return;
+        if (_sortColumn == column) _sortDescending = !_sortDescending;
+        else { _sortColumn = column; _sortDescending = true; }
+        ApplySort();
+        RebuildFlatList();
+    }
+
+    private void ApplySort()
+    {
+        Comparison<ProcessGroupItem> cmp = _sortColumn switch
+        {
+            "MemoryMB"   => (a, b) => _sortDescending ? b.MemoryMB.CompareTo(a.MemoryMB)   : a.MemoryMB.CompareTo(b.MemoryMB),
+            "Name"       => (a, b) => _sortDescending ? string.Compare(b.Name, a.Name, StringComparison.OrdinalIgnoreCase)
+                                                       : string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase),
+            "Status"     => (a, b) => _sortDescending ? string.Compare(b.Status, a.Status) : string.Compare(a.Status, b.Status),
+            _            => (a, b) => _sortDescending ? b.CpuPercent.CompareTo(a.CpuPercent) : a.CpuPercent.CompareTo(b.CpuPercent),
+        };
+        _allGroups.Sort(cmp);
+
+        // 그룹 내 자식도 동일 기준 정렬
+        foreach (var g in _allGroups)
+            g.Children.Sort(cmp);
+    }
+
+    [RelayCommand]
+    private void ToggleGroup(ProcessGroupItem? item)
+    {
+        if (item == null || !item.HasChildren) return;
+        item.IsExpanded = !item.IsExpanded;
+        RebuildFlatList();
+    }
+
+    private void RebuildFlatList()
+    {
+        var newItems = new List<ProcessGroupItem>();
+        foreach (var group in _allGroups)
+        {
+            newItems.Add(group);
+            if (group.IsExpanded)
+                newItems.AddRange(group.Children);
+        }
+        UpdateCollection(FlatGroups, newItems);
+    }
 
     private async Task RefreshProcessesAsync()
     {
-        var filter = ProcessFilter.Trim().ToLower();
+        var filter = ProcessFilter.Trim();
         var (rows, newCpu) = await Task.Run(() => BuildProcessRows());
         _prevCpu = newCpu;
 
-        var filtered = filter.Length > 0
-            ? rows.Where(r => r.Name.Contains(filter, StringComparison.OrdinalIgnoreCase)).ToList()
-            : rows;
+        // 현재 확장된 그룹 이름 저장
+        var expanded = _allGroups.Where(g => g.IsExpanded).Select(g => g.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        var sorted = filtered.OrderByDescending(r => r.CpuPercent).ToList();
-        UpdateCollection(Processes, sorted);
-        StatusText = $"{sorted.Count}개 프로세스";
+        // 그룹 재빌드 (확장 상태 복원)
+        var groups = BuildGroupItems(rows, expanded);
+
+        // 필터 적용
+        _allGroups = filter.Length > 0
+            ? groups.Where(g => g.Name.Contains(filter, StringComparison.OrdinalIgnoreCase)).ToList()
+            : groups;
+
+        ApplySort();
+        RebuildFlatList();
+
+        var total = _allGroups.Sum(g => g.ChildCount);
+        StatusText = $"{_allGroups.Count}개 그룹 ({total}개 프로세스)";
+    }
+
+    private static List<ProcessGroupItem> BuildGroupItems(List<ProcessRow> rows, HashSet<string>? expanded = null)
+    {
+        return rows
+            .GroupBy(r => r.Name, StringComparer.OrdinalIgnoreCase)
+            .Select(g =>
+            {
+                var children = g
+                    .OrderByDescending(r => r.CpuPercent)
+                    .Select(r => new ProcessGroupItem
+                    {
+                        Name        = r.Name,
+                        CpuPercent  = r.CpuPercent,
+                        MemoryMB    = r.MemoryMB,
+                        Status      = r.Status,
+                        Description = r.Description,
+                        Pid         = r.Pid,
+                        ParentName  = g.Key
+                    }).ToList();
+
+                return new ProcessGroupItem
+                {
+                    IsGroup     = true,
+                    Name        = g.Key,
+                    ChildCount  = children.Count,
+                    CpuPercent  = Math.Round(children.Sum(r => r.CpuPercent), 1),
+                    MemoryMB    = Math.Round(children.Sum(r => r.MemoryMB), 1),
+                    Status      = children.All(r => r.Status == "실행 중") ? "실행 중" : "혼합",
+                    Description = children.FirstOrDefault(r => !string.IsNullOrEmpty(r.Description))?.Description ?? "",
+                    Children    = children,
+                    IsExpanded  = expanded?.Contains(g.Key) ?? false
+                };
+            })
+            .OrderByDescending(g => g.CpuPercent)
+            .ToList();
     }
 
     private (List<ProcessRow> rows, Dictionary<int, (DateTime, TimeSpan)> cpuMap) BuildProcessRows()
@@ -142,7 +268,7 @@ public partial class ProcessManagerViewModel : ObservableObject
                     Name:        p.ProcessName,
                     Pid:         p.Id,
                     CpuPercent:  Math.Round(cpu, 1),
-                    MemoryMB:    Math.Round(p.WorkingSet64 / 1_048_576.0, 1),
+                    MemoryMB:    Math.Round(p.PrivateMemorySize64 / 1_048_576.0, 1),
                     Status:      p.Responding ? "실행 중" : "응답 없음",
                     Description: SafeFileDescription(p),
                     UserName:    "",   // 별도 WMI 조회 생략 (성능)
@@ -156,21 +282,51 @@ public partial class ProcessManagerViewModel : ObservableObject
     [RelayCommand]
     private void EndTask()
     {
-        // 프로세스 탭 또는 자세히 탭의 선택 항목 사용
-        var (name, pid) = SelectedTab == 2
-            ? (SelectedDetail?.Name ?? "", SelectedDetail?.Pid ?? -1)
-            : (SelectedProcess?.Name ?? "", SelectedProcess?.Pid ?? -1);
+        if (SelectedTab == 2)
+        {
+            // 자세히 탭 — 단일 프로세스 종료
+            KillSingle(SelectedDetail?.Name ?? "", SelectedDetail?.Pid ?? -1);
+        }
+        else
+        {
+            var item = SelectedGroupItem;
+            if (item == null) return;
 
+            if (item.HasChildren)
+            {
+                // 다중 인스턴스 그룹 — 전체 종료 확인
+                var r = MessageBox.Show(
+                    $"'{item.Name}' 그룹의 프로세스 {item.ChildCount}개를 모두 종료하시겠습니까?",
+                    "WinPilot — 작업 끝내기", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                if (r != MessageBoxResult.Yes) return;
+                foreach (var child in item.Children)
+                    TryKillPid(child.Pid);
+                _ = RefreshCurrentAsync();
+            }
+            else
+            {
+                // 단일 인스턴스 그룹 또는 자식 행
+                var pid = item.IsChild ? item.Pid
+                        : item.Children.FirstOrDefault()?.Pid ?? -1;
+                KillSingle(item.Name, pid);
+            }
+        }
+    }
+
+    private void KillSingle(string name, int pid)
+    {
         if (pid < 0) return;
         var r = MessageBox.Show(
             $"'{name}' (PID {pid}) 를 종료하시겠습니까?",
             "WinPilot — 작업 끝내기", MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (r != MessageBoxResult.Yes) return;
-        try
-        {
-            Process.GetProcessById(pid).Kill(entireProcessTree: true);
-            _ = RefreshCurrentAsync();
-        }
+        TryKillPid(pid);
+        _ = RefreshCurrentAsync();
+    }
+
+    private static void TryKillPid(int pid)
+    {
+        try { Process.GetProcessById(pid).Kill(entireProcessTree: true); }
         catch (Exception ex)
         {
             MessageBox.Show($"종료 실패: {ex.Message}", "WinPilot",
@@ -197,7 +353,7 @@ public partial class ProcessManagerViewModel : ObservableObject
             {
                 var key = p.ProcessName;
                 var cpu = p.TotalProcessorTime;
-                var mem = p.WorkingSet64 / 1_048_576.0;
+                var mem = p.PrivateMemorySize64 / 1_048_576.0;
                 if (groups.TryGetValue(key, out var g))
                     groups[key] = (g.cpu + cpu, Math.Max(g.mem, mem), g.count + 1);
                 else

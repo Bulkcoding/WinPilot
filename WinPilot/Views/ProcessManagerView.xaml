@@ -6,6 +6,12 @@
              mc:Ignorable="d">
     <UserControl.Resources>
 
+        <!-- 이름 컬럼 셀: 가운데 정렬 -->
+        <Style x:Key="NameCell" TargetType="TextBlock">
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment"   Value="Center"/>
+        </Style>
+
         <!-- 모든 셀: 상하만 center (좌우는 Left) -->
         <Style x:Key="CCell" TargetType="TextBlock">
             <Setter Property="HorizontalAlignment" Value="Left"/>
@@ -136,9 +142,9 @@
                              CaretBrush="{DynamicResource TextPrimaryBrush}"
                              BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
                              Padding="10,6" FontSize="12"/>
-                    <DataGrid Grid.Row="1"
-                              ItemsSource="{Binding Processes}"
-                              SelectedItem="{Binding SelectedProcess}"
+                    <DataGrid Grid.Row="1" x:Name="ProcessDataGrid"
+                              ItemsSource="{Binding FlatGroups}"
+                              SelectedItem="{Binding SelectedGroupItem}"
                               AutoGenerateColumns="False" CanUserReorderColumns="False"
                               CanUserResizeRows="False" IsReadOnly="True" SelectionMode="Single"
                               GridLinesVisibility="None" HeadersVisibility="Column" RowHeight="32"
@@ -149,14 +155,84 @@
                               ColumnHeaderStyle="{StaticResource DataGridHeaderStyle}"
                               CellStyle="{StaticResource DataGridCellStyle}"
                               RowStyle="{StaticResource DataGridRowStyle}"
-                              EnableRowVirtualization="True" VirtualizingPanel.IsVirtualizing="True">
+                              EnableRowVirtualization="True" VirtualizingPanel.IsVirtualizing="True"
+                              Sorting="ProcessDataGrid_Sorting">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="이름"       Binding="{Binding Name}"       Width="*"   ElementStyle="{StaticResource CCell}"/>
-                            <DataGridTextColumn Header="상태"       Binding="{Binding Status}"     Width="80"  ElementStyle="{StaticResource CCell}"/>
-                            <DataGridTextColumn Header="CPU %"      Binding="{Binding CpuPercent, StringFormat={}{0:F1}%}" Width="70" ElementStyle="{StaticResource CCell}"/>
-                            <DataGridTextColumn Header="메모리(MB)" Binding="{Binding MemoryMB, StringFormat={}{0:F1}}"    Width="90" ElementStyle="{StaticResource CCell}"/>
-                            <DataGridTextColumn Header="PID"        Binding="{Binding Pid}"        Width="65"  ElementStyle="{StaticResource CCell}"/>
-                            <DataGridTextColumn Header="설명"       Binding="{Binding Description}" Width="180" ElementStyle="{StaticResource DCell}"/>
+
+                            <!-- 이름 (토글 버튼 + 이름 + 카운트 뱃지) -->
+                            <DataGridTemplateColumn Width="*" SortMemberPath="Name">
+                                <DataGridTemplateColumn.HeaderStyle>
+                                    <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource DataGridHeaderStyle}">
+                                        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                    </Style>
+                                </DataGridTemplateColumn.HeaderStyle>
+                                <DataGridTemplateColumn.Header>이름</DataGridTemplateColumn.Header>
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Grid VerticalAlignment="Center" Margin="2,0">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="22"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <!-- 토글 버튼 (다중 자식 그룹만) -->
+                                            <Button Grid.Column="0"
+                                                    Background="Transparent" BorderThickness="0"
+                                                    Cursor="Hand" Padding="0"
+                                                    Command="{Binding DataContext.ToggleGroupCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                    CommandParameter="{Binding}"
+                                                    Visibility="{Binding HasChildren, Converter={StaticResource BoolToVisibility}}">
+                                                <TextBlock FontSize="9" VerticalAlignment="Center" HorizontalAlignment="Center"
+                                                           Opacity="0.6">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Text" Value="▶"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsExpanded}" Value="True">
+                                                                    <Setter Property="Text" Value="▼"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </Button>
+
+                                            <!-- 자식 행 들여쓰기 -->
+                                            <Border Grid.Column="1" Width="14"
+                                                    Visibility="{Binding IsChild, Converter={StaticResource BoolToVisibility}}"/>
+
+                                            <!-- 이름 + 카운트 뱃지 -->
+                                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <!-- Foreground 미지정 → DataGridCellStyle 상속 (선택 시 자동으로 밝은 색) -->
+                                                <TextBlock Text="{Binding Name}" VerticalAlignment="Center">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsChild}" Value="True">
+                                                                    <Setter Property="Opacity" Value="0.75"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                                <Border Margin="6,0,0,0" Padding="5,1" CornerRadius="8"
+                                                        Background="#3B82F6"
+                                                        Visibility="{Binding HasChildren, Converter={StaticResource BoolToVisibility}}"
+                                                        VerticalAlignment="Center" Opacity="0.85">
+                                                    <TextBlock Text="{Binding ChildCount}" FontSize="10" Foreground="White"/>
+                                                </Border>
+                                            </StackPanel>
+                                        </Grid>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+                            <DataGridTextColumn Header="상태"            Binding="{Binding Status}"     Width="80"  SortMemberPath="Status"     ElementStyle="{StaticResource CCell}"/>
+                            <DataGridTextColumn Header="CPU %"           Binding="{Binding CpuPercent, StringFormat={}{0:F1}%}" Width="70" SortMemberPath="CpuPercent" ElementStyle="{StaticResource CCell}"/>
+                            <DataGridTextColumn Header="전용 메모리(MB)" Binding="{Binding MemoryMB, StringFormat={}{0:F1}}"    Width="100" SortMemberPath="MemoryMB"  ElementStyle="{StaticResource CCell}"/>
+                            <DataGridTextColumn Header="PID"             Binding="{Binding PidDisplay}" Width="65"  ElementStyle="{StaticResource CCell}" CanUserSort="False"/>
+                            <DataGridTextColumn Header="설명"            Binding="{Binding Description}" Width="180" ElementStyle="{StaticResource DCell}" CanUserSort="False"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </Grid>
@@ -178,7 +254,13 @@
                           RowStyle="{StaticResource DataGridRowStyle}"
                           EnableRowVirtualization="True">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="이름"          Binding="{Binding Name}"          Width="*"   ElementStyle="{StaticResource CCell}"/>
+                        <DataGridTextColumn Header="이름" Binding="{Binding Name}" Width="*" ElementStyle="{StaticResource NameCell}">
+                            <DataGridTextColumn.HeaderStyle>
+                                <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource DataGridHeaderStyle}">
+                                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                </Style>
+                            </DataGridTextColumn.HeaderStyle>
+                        </DataGridTextColumn>
                         <DataGridTextColumn Header="CPU 시간"      Binding="{Binding CpuTimeText}"   Width="100" ElementStyle="{StaticResource CCell}"/>
                         <DataGridTextColumn Header="메모리 피크(MB)" Binding="{Binding PeakMemoryMB, StringFormat={}{0:F1}}" Width="110" ElementStyle="{StaticResource CCell}"/>
                         <DataGridTextColumn Header="인스턴스"      Binding="{Binding InstanceCount}" Width="80"  ElementStyle="{StaticResource CCell}"/>
@@ -215,11 +297,17 @@
                               RowStyle="{StaticResource DataGridRowStyle}"
                               EnableRowVirtualization="True">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="이름"       Binding="{Binding Name}"        Width="160" ElementStyle="{StaticResource CCell}"/>
+                            <DataGridTextColumn Header="이름" Binding="{Binding Name}" Width="160" ElementStyle="{StaticResource NameCell}">
+                                <DataGridTextColumn.HeaderStyle>
+                                    <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource DataGridHeaderStyle}">
+                                        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                    </Style>
+                                </DataGridTextColumn.HeaderStyle>
+                            </DataGridTextColumn>
                             <DataGridTextColumn Header="PID"        Binding="{Binding Pid}"         Width="65"  ElementStyle="{StaticResource CCell}"/>
                             <DataGridTextColumn Header="상태"       Binding="{Binding Status}"      Width="80"  ElementStyle="{StaticResource CCell}"/>
                             <DataGridTextColumn Header="CPU %"      Binding="{Binding CpuPercent, StringFormat={}{0:F1}%}" Width="70" ElementStyle="{StaticResource CCell}"/>
-                            <DataGridTextColumn Header="메모리(MB)" Binding="{Binding MemoryMB, StringFormat={}{0:F1}}"    Width="90" ElementStyle="{StaticResource CCell}"/>
+                            <DataGridTextColumn Header="전용 메모리(MB)" Binding="{Binding MemoryMB, StringFormat={}{0:F1}}"    Width="90" ElementStyle="{StaticResource CCell}"/>
                             <DataGridTextColumn Header="사용자"     Binding="{Binding UserName}"    Width="130" ElementStyle="{StaticResource CCell}"/>
                             <DataGridTextColumn Header="설명"       Binding="{Binding Description}" Width="200" ElementStyle="{StaticResource DCell}"/>
                             <DataGridTextColumn Header="경로"       Binding="{Binding Path}"        Width="*"   ElementStyle="{StaticResource DCell}"/>
@@ -257,7 +345,13 @@
                               RowStyle="{StaticResource DataGridRowStyle}"
                               EnableRowVirtualization="True">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="표시 이름" Binding="{Binding DisplayName}" Width="*"   ElementStyle="{StaticResource CCell}"/>
+                            <DataGridTextColumn Header="표시 이름" Binding="{Binding DisplayName}" Width="*" ElementStyle="{StaticResource NameCell}">
+                                <DataGridTextColumn.HeaderStyle>
+                                    <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource DataGridHeaderStyle}">
+                                        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                    </Style>
+                                </DataGridTextColumn.HeaderStyle>
+                            </DataGridTextColumn>
                             <DataGridTextColumn Header="이름"      Binding="{Binding Name}"        Width="160" ElementStyle="{StaticResource CCell}"/>
                             <DataGridTemplateColumn Header="상태"  Width="80">
                                 <DataGridTemplateColumn.CellTemplate>

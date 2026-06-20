@@ -1,6 +1,7 @@
 <Application x:Class="WinPilot.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
              xmlns:vm="clr-namespace:WinPilot.ViewModels"
              xmlns:views="clr-namespace:WinPilot.Views"
              xmlns:conv="clr-namespace:WinPilot.Converters"
@@ -38,6 +39,12 @@
             <SolidColorBrush x:Key="ConsoleBgBrush"   Color="#0D0D1A"/>
             <SolidColorBrush x:Key="ConsoleTextBrush" Color="#94A3B8"/>
 
+            <!-- Font Size Resources (DynamicResource로 런타임 변경 가능) -->
+            <sys:Double x:Key="FontSm">11</sys:Double>
+            <sys:Double x:Key="FontMd">12</sys:Double>
+            <sys:Double x:Key="FontLg">13</sys:Double>
+            <sys:Double x:Key="FontXl">14</sys:Double>
+
             <!-- Card Style -->
             <Style x:Key="CardStyle" TargetType="Border">
                 <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
@@ -47,23 +54,23 @@
 
             <!-- Typography -->
             <Style x:Key="CardTitleStyle" TargetType="TextBlock">
-                <Setter Property="FontSize" Value="14"/>
+                <Setter Property="FontSize" Value="{DynamicResource FontXl}"/>
                 <Setter Property="FontWeight" Value="SemiBold"/>
                 <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
             </Style>
             <Style x:Key="CardLabelStyle" TargetType="TextBlock">
-                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="FontSize" Value="{DynamicResource FontMd}"/>
                 <Setter Property="Foreground" Value="#94A3B8"/>
                 <Setter Property="Margin" Value="0,0,0,2"/>
             </Style>
             <Style x:Key="InfoLabelStyle" TargetType="TextBlock">
-                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="FontSize" Value="{DynamicResource FontMd}"/>
                 <Setter Property="Foreground" Value="#64748B"/>
                 <Setter Property="Margin" Value="0,4,0,14"/>
                 <Setter Property="VerticalAlignment" Value="Top"/>
             </Style>
             <Style x:Key="InfoValueStyle" TargetType="TextBlock">
-                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="FontSize" Value="{DynamicResource FontMd}"/>
                 <Setter Property="Foreground" Value="{DynamicResource TextValueBrush}"/>
                 <Setter Property="Margin" Value="0,4,0,14"/>
                 <Setter Property="VerticalAlignment" Value="Top"/>
@@ -88,7 +95,7 @@
                 <Setter Property="Background" Value="#3B82F6"/>
                 <Setter Property="Foreground" Value="White"/>
                 <Setter Property="Padding" Value="16,8"/>
-                <Setter Property="FontSize" Value="13"/>
+                <Setter Property="FontSize" Value="{DynamicResource FontLg}"/>
                 <Setter Property="FontWeight" Value="SemiBold"/>
                 <Setter Property="BorderThickness" Value="0"/>
                 <Setter Property="Cursor" Value="Hand"/>
@@ -117,7 +124,7 @@
                 <Setter Property="Background" Value="#374151"/>
                 <Setter Property="Foreground" Value="#CBD5E1"/>
                 <Setter Property="Padding" Value="12,7"/>
-                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="FontSize" Value="{DynamicResource FontMd}"/>
                 <Setter Property="BorderThickness" Value="0"/>
                 <Setter Property="Cursor" Value="Hand"/>
                 <Setter Property="Template">
@@ -550,6 +557,9 @@
             </DataTemplate>
             <DataTemplate DataType="{x:Type vm:PingViewModel}">
                 <views:PingView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:ParserViewModel}">
+                <views:ParserView/>
             </DataTemplate>
             <DataTemplate DataType="{x:Type vm:DefenderViewModel}">
                 <views:DefenderView/>
