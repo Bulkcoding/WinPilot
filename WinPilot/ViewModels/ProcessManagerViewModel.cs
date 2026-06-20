@@ -93,7 +93,7 @@ public partial class ProcessManagerViewModel : ObservableObject
 
     // 그룹화된 flat list (그룹헤더 + 확장 시 자식 행)
     private List<ProcessGroupItem> _allGroups  = [];
-    private string _sortColumn      = "CpuPercent";
+    private string _sortColumn      = "";   // "" = 무정렬(순서 보존)
     private bool   _sortDescending  = true;
     public ObservableCollection<ProcessGroupItem>  FlatGroups  { get; } = [];
     public ObservableCollection<AppHistoryRow>    AppHistory  { get; } = [];
@@ -148,6 +148,8 @@ public partial class ProcessManagerViewModel : ObservableObject
 
     private void ApplySort()
     {
+        if (string.IsNullOrEmpty(_sortColumn)) return; // 정렬 없음 → 현재 순서 유지
+
         Comparison<ProcessGroupItem> cmp = _sortColumn switch
         {
             "MemoryMB"   => (a, b) => _sortDescending ? b.MemoryMB.CompareTo(a.MemoryMB)   : a.MemoryMB.CompareTo(b.MemoryMB),
@@ -194,6 +196,20 @@ public partial class ProcessManagerViewModel : ObservableObject
 
         // 그룹 재빌드 (확장 상태 복원)
         var groups = BuildGroupItems(rows, expanded);
+
+        // 정렬이 없을 때: 이전 순서를 유지 (새 그룹은 맨 뒤에 추가)
+        if (string.IsNullOrEmpty(_sortColumn) && _allGroups.Count > 0)
+        {
+            var prevOrder = _allGroups
+                .Select((g, idx) => (g.Name, idx))
+                .ToDictionary(t => t.Name, t => t.idx, StringComparer.OrdinalIgnoreCase);
+            groups.Sort((a, b) =>
+            {
+                var ai = prevOrder.TryGetValue(a.Name, out var av) ? av : int.MaxValue;
+                var bi = prevOrder.TryGetValue(b.Name, out var bv) ? bv : int.MaxValue;
+                return ai.CompareTo(bi);
+            });
+        }
 
         // 필터 적용
         _allGroups = filter.Length > 0
