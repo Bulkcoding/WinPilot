@@ -17,6 +17,7 @@ public partial class MainViewModel : ObservableObject
     public PingViewModel         Ping            { get; } = new();
     public DefenderViewModel     Defender        { get; } = new();
     public RegistryViewModel     Registry        { get; } = new();
+    public TextCounterViewModel  TextCounter     { get; } = new();
     public SettingsViewModel     Settings        { get; } = SettingsViewModel.Current;
 
     [ObservableProperty] private object _currentPage = null!;
@@ -51,6 +52,7 @@ public partial class MainViewModel : ObservableObject
         MiniVm     = new MiniViewModel(_sysInfo);
         CurrentPage = Dashboard;
         Dashboard.StartAutoRefresh();
+        _ = SystemInfo.LoadAsync();
 
         // 시작 시 백그라운드 업데이트 체크 + 자동 다운로드
         _ = CheckAndAutoDownloadUpdateAsync();

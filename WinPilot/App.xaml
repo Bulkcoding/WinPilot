@@ -554,7 +554,10 @@
             <DataTemplate DataType="{x:Type vm:DefenderViewModel}">
                 <views:DefenderView/>
             </DataTemplate>
-<DataTemplate DataType="{x:Type vm:SettingsViewModel}">
+            <DataTemplate DataType="{x:Type vm:TextCounterViewModel}">
+                <views:TextCounterView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
                 <views:SettingsView/>
             </DataTemplate>
 

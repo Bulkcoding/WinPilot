@@ -13,7 +13,7 @@ public partial class EventViewerViewModel : ObservableObject
 
     [ObservableProperty] private ObservableCollection<LogEntry> _entries = [];
     [ObservableProperty] private DateTime _fromDate = DateTime.Today.AddDays(-1);
-    [ObservableProperty] private DateTime _toDate = DateTime.Today.AddDays(1);
+    [ObservableProperty] private DateTime _toDate = DateTime.Today;
     [ObservableProperty] private string _selectedLogFilter = "모든 로그";
     [ObservableProperty] private string _selectedLevelFilter = "경고, 오류";
     [ObservableProperty] private bool _isLoading;

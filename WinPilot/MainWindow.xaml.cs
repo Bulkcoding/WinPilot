@@ -85,6 +85,13 @@ public partial class MainWindow : Window
             ResizeMode = ResizeMode.CanResizeWithGrip;
             MinWidth = 900; MinHeight = 600;
             Width = 1100; Height = 720;
+
+            // 화면 밖으로 나가지 않도록 작업 영역 기준 보정
+            var wa = System.Windows.SystemParameters.WorkArea;
+            if (Left + Width  > wa.Right)  Left = Math.Max(wa.Left, wa.Right  - Width);
+            if (Top  + Height > wa.Bottom) Top  = Math.Max(wa.Top,  wa.Bottom - Height);
+            if (Left < wa.Left) Left = wa.Left;
+            if (Top  < wa.Top)  Top  = wa.Top;
         }
     }
 }

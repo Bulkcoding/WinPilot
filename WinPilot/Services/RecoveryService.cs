@@ -48,17 +48,20 @@ public class RecoveryService
         }
         else
         {
-            // DISM: cmd + chcp 65001 → UTF-8 강제
+            // DISM은 시스템 OEM 코드페이지(한국어: 949)로 출력함
+            // chcp 65001 + UTF-8 은 실제로 바이트 자체를 바꾸지 않으므로 OEM 인코딩으로 직접 디코딩
+            var oemEncoding = Encoding.GetEncoding(
+                System.Globalization.CultureInfo.CurrentCulture.TextInfo.OEMCodePage);
             info = new ProcessStartInfo
             {
-                FileName               = "cmd.exe",
-                Arguments              = $"/c \"chcp 65001 >nul 2>&1 & {fileName} {arguments}\"",
+                FileName               = "dism.exe",
+                Arguments              = arguments,
                 UseShellExecute        = false,
                 RedirectStandardOutput = true,
                 RedirectStandardError  = true,
                 CreateNoWindow         = true,
-                StandardOutputEncoding = Encoding.UTF8,
-                StandardErrorEncoding  = Encoding.UTF8
+                StandardOutputEncoding = oemEncoding,
+                StandardErrorEncoding  = oemEncoding
             };
         }
 
