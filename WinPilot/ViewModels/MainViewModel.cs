@@ -19,6 +19,7 @@ public partial class MainViewModel : ObservableObject
     public ParserViewModel       Parser          { get; } = new();
     public RegistryViewModel     Registry        { get; } = new();
     public TextCounterViewModel  TextCounter     { get; } = new();
+    public OcrViewModel          Ocr             { get; } = new();
     public SettingsViewModel     Settings        { get; } = SettingsViewModel.Current;
 
     [ObservableProperty] private object _currentPage = null!;

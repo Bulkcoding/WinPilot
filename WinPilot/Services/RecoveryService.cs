@@ -87,4 +87,43 @@ public class RecoveryService
             return null;
         }
     }
+
+    /// <summary>
+    /// SFC처럼 stdout을 버퍼링하는 프로세스용: 종료 후 전체 출력을 행 단위로 반환.
+    /// stdoutOnly=true 시 stderr를 읽되 버리므로 SFC처럼 두 스트림에 중복 출력하는 프로세스에 사용.
+    /// </summary>
+    public async Task<(int ExitCode, List<string> Lines)> RunAndCaptureAsync(
+        string fileName, string arguments, bool stdoutOnly = false)
+    {
+        var info = new ProcessStartInfo
+        {
+            FileName               = fileName,
+            Arguments              = arguments,
+            UseShellExecute        = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError  = true,
+            CreateNoWindow         = true,
+            StandardOutputEncoding = Encoding.Unicode,
+            StandardErrorEncoding  = Encoding.Unicode
+        };
+
+        using var p = new Process { StartInfo = info };
+        p.Start();
+
+        var outTask = p.StandardOutput.ReadToEndAsync();
+        var errTask = p.StandardError.ReadToEndAsync(); // 버퍼 블로킹 방지용 항상 읽음
+        await p.WaitForExitAsync();
+
+        var stdout = await outTask;
+        var stderr = await errTask;
+        var text = stdoutOnly ? stdout : stdout + (stderr.Length > 0 ? "\n" + stderr : "");
+
+        var lines = text
+            .Split('\n')
+            .Select(l => l.TrimEnd('\r'))
+            .Where(l => l.Length > 0)
+            .ToList();
+
+        return (p.ExitCode, lines);
+    }
 }

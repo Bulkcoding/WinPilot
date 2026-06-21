@@ -567,6 +567,9 @@
             <DataTemplate DataType="{x:Type vm:TextCounterViewModel}">
                 <views:TextCounterView/>
             </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:OcrViewModel}">
+                <views:OcrView/>
+            </DataTemplate>
             <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
                 <views:SettingsView/>
             </DataTemplate>
