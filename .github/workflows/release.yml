@@ -30,6 +30,26 @@ jobs:
           $version = $tag.TrimStart('v')
           echo "VERSION=$version" >> $env:GITHUB_OUTPUT
 
+      # 배포용 DeepSeek 기본 키를 Secret에서 주입 (소스/히스토리에 키가 남지 않음)
+      - name: Inject DeepSeek API key
+        shell: pwsh
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        run: |
+          $key = $env:DEEPSEEK_API_KEY
+          if ([string]::IsNullOrWhiteSpace($key)) {
+            Write-Host "DEEPSEEK_API_KEY secret 미설정 — 기본 키 없이 빌드합니다."
+          } else {
+            $file = "WinPilot/ViewModels/SettingsViewModel.cs"
+            $content = Get-Content $file -Raw
+            $from = 'private const string DefaultDeepSeekKey = "";'
+            $to   = 'private const string DefaultDeepSeekKey = "' + $key + '";'
+            if (-not $content.Contains($from)) { throw "DefaultDeepSeekKey 플레이스홀더를 찾지 못했습니다." }
+            $content = $content.Replace($from, $to)
+            Set-Content $file -Value $content -NoNewline -Encoding utf8
+            Write-Host "DeepSeek 기본 키를 주입했습니다."
+          }
+
       # ① 포터블 단일 EXE (GitHub Release 직접 다운로드용)
       - name: Publish portable EXE
         shell: pwsh

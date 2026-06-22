@@ -271,7 +271,7 @@
                         <DockPanel>
                             <TextBlock Text="&#xE80F;" FontFamily="Segoe MDL2 Assets" FontSize="16"
                                        Foreground="#94A3B8" Width="24" TextAlignment="Center" VerticalAlignment="Center"/>
-                            <TextBlock Text="대시보드" FontSize="13" Foreground="#CBD5E1" Margin="10,0,0,0"
+                            <TextBlock Text="홈" FontSize="13" Foreground="#CBD5E1" Margin="10,0,0,0"
                                        VerticalAlignment="Center"
                                        Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/>
                         </DockPanel>
@@ -427,7 +427,7 @@
                         <DockPanel>
                             <TextBlock Text="&#xE968;" FontFamily="Segoe MDL2 Assets" FontSize="16"
                                        Foreground="#94A3B8" Width="24" TextAlignment="Center" VerticalAlignment="Center"/>
-                            <TextBlock Text="Ping 테스트" FontSize="13" Foreground="#CBD5E1" Margin="10,0,0,0"
+                            <TextBlock Text="Ping Test" FontSize="13" Foreground="#CBD5E1" Margin="10,0,0,0"
                                        VerticalAlignment="Center"
                                        Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/>
                         </DockPanel>
@@ -453,7 +453,7 @@
                         <DockPanel>
                             <TextBlock Text="&#xE8F1;" FontFamily="Segoe MDL2 Assets" FontSize="16"
                                        Foreground="#94A3B8" Width="24" TextAlignment="Center" VerticalAlignment="Center"/>
-                            <TextBlock Text="파서" FontSize="13" Foreground="#CBD5E1" Margin="10,0,0,0"
+                            <TextBlock Text="Converter" FontSize="13" Foreground="#CBD5E1" Margin="10,0,0,0"
                                        VerticalAlignment="Center"
                                        Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/>
                         </DockPanel>
@@ -531,7 +531,7 @@
                         <DockPanel>
                             <TextBlock Text="&#xE7B3;" FontFamily="Segoe MDL2 Assets" FontSize="16"
                                        Foreground="#94A3B8" Width="24" TextAlignment="Center" VerticalAlignment="Center"/>
-                            <TextBlock Text="이미지 텍스트" FontSize="13" Foreground="#CBD5E1" Margin="10,0,0,0"
+                            <TextBlock Text="텍스트 추출" FontSize="13" Foreground="#CBD5E1" Margin="10,0,0,0"
                                        VerticalAlignment="Center"
                                        Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/>
                         </DockPanel>

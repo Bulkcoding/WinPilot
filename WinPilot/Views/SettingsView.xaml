@@ -78,6 +78,65 @@
                 </StackPanel>
             </Border>
 
+            <!-- DeepSeek API 키 (이미지 텍스트 추출 AI 교정) -->
+            <Border Style="{StaticResource CardStyle}" Margin="0,16,0,0">
+                <StackPanel>
+                    <TextBlock Text="DeepSeek API 키" Style="{StaticResource CardTitleStyle}" Margin="0,0,0,8"/>
+                    <TextBlock Text="이미지 텍스트 추출 탭에서 OCR 후 AI 교정에 사용됩니다. 키를 설정하면 추출 후 자동으로 교정이 실행됩니다.&#x0a;※ 관리자만 수정 가능 — 저장/삭제 시 관리자 비밀번호가 필요합니다."
+                               Foreground="#64748B" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,12"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- 상태 점 -->
+                        <Ellipse Grid.Column="0" Width="7" Height="7" VerticalAlignment="Center" Margin="0,0,10,0">
+                            <Ellipse.Style>
+                                <Style TargetType="Ellipse">
+                                    <Setter Property="Fill" Value="{DynamicResource TextSecondaryBrush}"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDeepSeekKeySet}" Value="True">
+                                            <Setter Property="Fill" Value="{DynamicResource SuccessBrush}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Ellipse.Style>
+                        </Ellipse>
+
+                        <Border Grid.Column="1" Background="{DynamicResource SurfaceBrush}"
+                                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                                CornerRadius="6" Padding="10,6" Margin="0,0,8,0">
+                            <!-- 보안상 키는 항상 ●●● 로 마스킹 표시 (PasswordBox).
+                                 바인딩 불가하므로 코드비하인드에서 VM과 동기화. -->
+                            <PasswordBox x:Name="DeepSeekPwdBox"
+                                         PasswordChanged="OnDeepSeekPasswordChanged"
+                                         FontSize="12" FontFamily="Consolas"
+                                         Background="Transparent" BorderThickness="0"
+                                         Foreground="{DynamicResource TextPrimaryBrush}"
+                                         CaretBrush="{DynamicResource TextPrimaryBrush}"
+                                         VerticalAlignment="Center"/>
+                        </Border>
+
+                        <Button Grid.Column="2" Content="저장"
+                                Command="{Binding SaveDeepSeekKeyCommand}"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Padding="14,6" FontSize="12" Margin="0,0,6,0"/>
+
+                        <Button Grid.Column="3" Content="삭제"
+                                Command="{Binding DeleteDeepSeekKeyCommand}"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Padding="14,6" FontSize="12"
+                                IsEnabled="{Binding IsDeepSeekKeySet}"
+                                ToolTip="저장된 DeepSeek API 키를 폐기합니다"/>
+                    </Grid>
+                    <TextBlock Text="{Binding DeepSeekStatus}" Foreground="{DynamicResource SuccessBrush}"
+                               FontSize="11" Margin="0,8,0,0"/>
+                </StackPanel>
+            </Border>
+
             <!-- 미니 모드 -->
             <Border Style="{StaticResource CardStyle}" Margin="0,16,0,0">
                 <StackPanel>

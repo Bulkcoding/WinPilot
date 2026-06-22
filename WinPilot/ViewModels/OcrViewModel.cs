@@ -2,6 +2,8 @@ using System.IO;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Windows.Graphics.Imaging;
@@ -13,10 +15,6 @@ namespace WinPilot.ViewModels;
 public partial class OcrViewModel : ObservableObject
 {
     private static readonly HttpClient _http = new();
-
-    private static readonly string _apiKeyPath = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        "WinPilot", "claude_api_key.txt");
 
     private static readonly Dictionary<string, string> _langCodes = new()
     {
@@ -38,126 +36,121 @@ public partial class OcrViewModel : ObservableObject
     [ObservableProperty] private bool   _isProcessing;
     [ObservableProperty] private bool   _isCorrecting;
     [ObservableProperty] private string _selectedLanguage = "한국어";
-    [ObservableProperty] private string _claudeApiKey    = "";
-
-    public bool IsApiKeySet => !string.IsNullOrWhiteSpace(ClaudeApiKey);
-
-    partial void OnClaudeApiKeyChanged(string value) => OnPropertyChanged(nameof(IsApiKeySet));
-
-    public OcrViewModel()
-    {
-        _claudeApiKey = LoadApiKey();
-    }
 
     // ─── OCR ─────────────────────────────────────────────
-    public async Task ExtractTextAsync(System.Windows.Media.Imaging.BitmapSource bitmap)
+    public async Task ExtractTextAsync(BitmapSource bitmap)
     {
-        IsProcessing = true;
-        StatusText   = "텍스트 인식 중...";
+        IsProcessing   = true;
+        StatusText     = "텍스트 인식 중...";
         ExtractedText  = "";
         TranslatedText = "";
 
         try
         {
-            var pngBytes  = ToPngBytes(bitmap);
-            var korEngine = OcrEngine.TryCreateFromLanguage(new Windows.Globalization.Language("ko-KR"));
-            var engEngine = OcrEngine.TryCreateFromLanguage(new Windows.Globalization.Language("en-US"));
+            // 전처리(업스케일 + 그레이스케일)로 작은 글씨 인식률 향상
+            var pngBytes = PreprocessToPngBytes(bitmap);
+            await ExtractWithWindowsAsync(pngBytes);
 
-            if (korEngine == null && engEngine == null)
-            {
-                var fallback = OcrEngine.TryCreateFromUserProfileLanguages();
-                if (fallback == null) { StatusText = "OCR 엔진을 초기화할 수 없습니다. 언어 팩을 확인하세요."; return; }
-                var r = await RunOcrAsync(fallback, pngBytes);
-                ExtractedText = r != null ? ReconstructSpatialText(r.Lines) : "";
-                StatusText    = string.IsNullOrWhiteSpace(ExtractedText) ? "텍스트를 인식하지 못했습니다." : $"인식 완료  ·  {r!.Lines.Count}줄";
-                return;
-            }
-
-            var korTask = korEngine != null ? RunOcrAsync(korEngine, pngBytes) : Task.FromResult<OcrResult?>(null);
-            var engTask = engEngine != null ? RunOcrAsync(engEngine, pngBytes) : Task.FromResult<OcrResult?>(null);
-            await Task.WhenAll(korTask, engTask);
-
-            var korResult = korTask.Result;
-            var engResult = engTask.Result;
-            string text; int lineCount;
-
-            if (korResult != null && engResult != null)
-            {
-                var korLines = ReconstructSpatialText(korResult.Lines).Split('\n').ToList();
-                var engLines = ReconstructSpatialText(engResult.Lines).Split('\n').ToList();
-                var merged   = MergeOcrLines(korLines, engLines);
-                text = string.Join("\n", merged);
-                lineCount = merged.Count(l => !string.IsNullOrWhiteSpace(l));
-            }
-            else
-            {
-                var result = (korResult ?? engResult)!;
-                text = ReconstructSpatialText(result.Lines);
-                lineCount = result.Lines.Count;
-            }
-
-            ExtractedText = text;
-            StatusText    = string.IsNullOrWhiteSpace(text) ? "텍스트를 인식하지 못했습니다." : $"인식 완료  ·  {lineCount}줄";
+            // OCR 후 자동 교정 (규칙 → DeepSeek)
+            await AutoCorrectAsync();
         }
         catch (Exception ex) { StatusText = $"오류: {ex.Message}"; }
         finally { IsProcessing = false; }
     }
 
-    // ─── 교정 (규칙 → Claude API) ─────────────────────────
-    [RelayCommand(CanExecute = nameof(CanCorrect))]
-    private async Task CorrectTextAsync()
+    private async Task ExtractWithWindowsAsync(byte[] pngBytes)
     {
-        IsCorrecting = true;
+        var korEngine = OcrEngine.TryCreateFromLanguage(new Windows.Globalization.Language("ko-KR"));
+        var engEngine = OcrEngine.TryCreateFromLanguage(new Windows.Globalization.Language("en-US"));
+
+        if (korEngine == null && engEngine == null)
+        {
+            var fallback = OcrEngine.TryCreateFromUserProfileLanguages();
+            if (fallback == null) { StatusText = "OCR 엔진을 초기화할 수 없습니다. 언어 팩을 확인하세요."; return; }
+            var r = await RunOcrAsync(fallback, pngBytes);
+            ExtractedText = r != null ? ReconstructSpatialText(r.Lines) : "";
+            StatusText    = string.IsNullOrWhiteSpace(ExtractedText) ? "텍스트를 인식하지 못했습니다." : $"인식 완료  ·  {r!.Lines.Count}줄";
+            return;
+        }
+
+        var korTask = korEngine != null ? RunOcrAsync(korEngine, pngBytes) : Task.FromResult<OcrResult?>(null);
+        var engTask = engEngine != null ? RunOcrAsync(engEngine, pngBytes) : Task.FromResult<OcrResult?>(null);
+        await Task.WhenAll(korTask, engTask);
+
+        var korResult = korTask.Result;
+        var engResult = engTask.Result;
+        string text; int lineCount;
+
+        if (korResult != null && engResult != null)
+        {
+            var korLines = ReconstructSpatialText(korResult.Lines).Split('\n').ToList();
+            var engLines = ReconstructSpatialText(engResult.Lines).Split('\n').ToList();
+            var merged   = MergeOcrLines(korLines, engLines);
+            text = string.Join("\n", merged);
+            lineCount = merged.Count(l => !string.IsNullOrWhiteSpace(l));
+        }
+        else
+        {
+            var result = (korResult ?? engResult)!;
+            text = ReconstructSpatialText(result.Lines);
+            lineCount = result.Lines.Count;
+        }
+
+        ExtractedText = text;
+        StatusText    = string.IsNullOrWhiteSpace(text) ? "텍스트를 인식하지 못했습니다." : $"인식 완료  ·  {lineCount}줄";
+    }
+
+    // ─── 이미지 전처리 ────────────────────────────────────
+    private static byte[] PreprocessToPngBytes(BitmapSource source)
+    {
+        BitmapSource img = source;
+
+        // 1. 업스케일: 작은 이미지는 최대 3배(최대 변 1600px 목표)까지 확대
+        double maxDim = Math.Max(img.PixelWidth, img.PixelHeight);
+        if (maxDim > 0 && maxDim < 1600)
+        {
+            double scale = Math.Min(3.0, 1600.0 / maxDim);
+            img = new TransformedBitmap(img, new ScaleTransform(scale, scale));
+        }
+
+        // 2. 그레이스케일 변환 (배경 노이즈 감소)
+        var gray = new FormatConvertedBitmap(img, PixelFormats.Gray8, null, 0);
+
+        using var ms = new MemoryStream();
+        var enc = new PngBitmapEncoder();
+        enc.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(gray));
+        enc.Save(ms);
+        return ms.ToArray();
+    }
+
+    // ─── 자동 교정 (규칙 → DeepSeek) ─────────────────────
+    private async Task AutoCorrectAsync()
+    {
+        if (string.IsNullOrWhiteSpace(ExtractedText)) return;
+
+        // Step 1: 규칙 기반 교정 (즉시)
+        var ruleFixed = ApplyRuleBasedCorrections(ExtractedText);
+        ExtractedText = ruleFixed;
+
+        // Step 2: DeepSeek API 교정 (설정 탭에서 키가 설정된 경우)
+        var apiKey = SettingsViewModel.Current.DeepSeekApiKey?.Trim();
+        if (string.IsNullOrWhiteSpace(apiKey)) return;
 
         try
         {
-            // Step 1: 규칙 기반 교정 (즉시)
-            var ruleFixed = ApplyRuleBasedCorrections(ExtractedText);
-
-            // Step 2: Claude API 교정 (키가 있을 때)
-            if (IsApiKeySet)
-            {
-                StatusText = "AI 교정 중...";
-                var aiFixed = await CallClaudeApiAsync(ruleFixed);
-                ExtractedText = aiFixed;
-                StatusText = "AI 교정 완료";
-            }
-            else
-            {
-                ExtractedText = ruleFixed;
-                StatusText = "규칙 교정 완료  (API 키 미설정 — AI 교정 생략)";
-            }
+            IsCorrecting = true;
+            StatusText   = "AI 교정 중...";
+            var aiFixed  = await CallDeepSeekApiAsync(ruleFixed, apiKey);
+            if (!string.IsNullOrWhiteSpace(aiFixed))
+                ExtractedText = aiFixed.Trim();
+            StatusText = "AI 교정 완료";
         }
         catch (Exception ex) { StatusText = $"교정 오류: {ex.Message}"; }
         finally { IsCorrecting = false; }
     }
 
-    private bool CanCorrect() => !IsProcessing && !IsCorrecting && !string.IsNullOrWhiteSpace(ExtractedText);
-
-    partial void OnExtractedTextChanged(string value)
-    {
-        TranslateCommand.NotifyCanExecuteChanged();
-        CorrectTextCommand.NotifyCanExecuteChanged();
-    }
-    partial void OnIsProcessingChanged(bool value)
-    {
-        TranslateCommand.NotifyCanExecuteChanged();
-        CorrectTextCommand.NotifyCanExecuteChanged();
-    }
-    partial void OnIsCorrectingChanged(bool value) => CorrectTextCommand.NotifyCanExecuteChanged();
-
-    // ─── Claude API 저장 ──────────────────────────────────
-    [RelayCommand]
-    private void SaveApiKey()
-    {
-        try
-        {
-            Directory.CreateDirectory(Path.GetDirectoryName(_apiKeyPath)!);
-            File.WriteAllText(_apiKeyPath, ClaudeApiKey.Trim());
-            StatusText = "API 키가 저장되었습니다.";
-        }
-        catch (Exception ex) { StatusText = $"저장 실패: {ex.Message}"; }
-    }
+    partial void OnExtractedTextChanged(string value) => TranslateCommand.NotifyCanExecuteChanged();
+    partial void OnIsProcessingChanged(bool value)    => TranslateCommand.NotifyCanExecuteChanged();
 
     // ─── 번역 ─────────────────────────────────────────────
     [RelayCommand(CanExecute = nameof(CanTranslate))]
@@ -250,37 +243,32 @@ public partial class OcrViewModel : ObservableObject
         return sb.ToString();
     }
 
-    // ─── Claude API 호출 ──────────────────────────────────
-    private async Task<string> CallClaudeApiAsync(string text)
+    // ─── DeepSeek API 호출 (OpenAI 호환) ─────────────────
+    private async Task<string> CallDeepSeekApiAsync(string text, string apiKey)
     {
         var body = JsonSerializer.Serialize(new
         {
-            model      = "claude-haiku-4-5-20251001",
-            max_tokens = 4096,
-            messages   = new[]
+            model  = "deepseek-chat",
+            stream = false,
+            messages = new[]
             {
                 new
                 {
+                    role    = "system",
+                    content = "당신은 OCR 텍스트 교정기입니다. 입력 텍스트의 오인식 문자만 교정하고, "
+                            + "원문의 언어·구조(줄바꿈/들여쓰기)·의미를 그대로 유지합니다. "
+                            + "내용을 추가하거나 삭제하지 않으며, 설명이나 마크다운 코드블록 없이 교정된 텍스트만 출력합니다."
+                },
+                new
+                {
                     role    = "user",
-                    content = $"""
-                        다음은 OCR로 추출한 텍스트입니다. 문맥을 보고 오인식 문자를 교정해 주세요.
-
-                        규칙:
-                        - 원문의 언어, 구조(줄바꿈, 들여쓰기), 의미를 유지하세요
-                        - fi→fi, fl→fl 리가처 오인식, 한글⟷라틴 혼동 같은 OCR 특유 오류만 수정하세요
-                        - 내용을 추가하거나 삭제하지 마세요
-                        - 교정된 텍스트만 그대로 반환하세요 (설명, 마크다운 코드블록 없이)
-
-                        OCR 텍스트:
-                        {text}
-                        """
+                    content = $"다음 OCR 텍스트를 교정해줘:\n\n{text}"
                 }
             }
         });
 
-        var req = new HttpRequestMessage(HttpMethod.Post, "https://api.anthropic.com/v1/messages");
-        req.Headers.Add("x-api-key", ClaudeApiKey.Trim());
-        req.Headers.Add("anthropic-version", "2023-06-01");
+        var req = new HttpRequestMessage(HttpMethod.Post, "https://api.deepseek.com/chat/completions");
+        req.Headers.Add("Authorization", $"Bearer {apiKey}");
         req.Content = new StringContent(body, Encoding.UTF8, "application/json");
 
         var resp = await _http.SendAsync(req);
@@ -288,8 +276,9 @@ public partial class OcrViewModel : ObservableObject
 
         using var doc = JsonDocument.Parse(await resp.Content.ReadAsStringAsync());
         return doc.RootElement
-            .GetProperty("content")[0]
-            .GetProperty("text")
+            .GetProperty("choices")[0]
+            .GetProperty("message")
+            .GetProperty("content")
             .GetString() ?? text;
     }
 
@@ -372,29 +361,14 @@ public partial class OcrViewModel : ObservableObject
         return kor;
     }
 
-    private static byte[] ToPngBytes(System.Windows.Media.Imaging.BitmapSource source)
-    {
-        using var ms = new System.IO.MemoryStream();
-        var enc = new System.Windows.Media.Imaging.PngBitmapEncoder();
-        enc.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(source));
-        enc.Save(ms);
-        return ms.ToArray();
-    }
-
     private static async Task<OcrResult?> RunOcrAsync(OcrEngine engine, byte[] pngBytes)
     {
         using var ras    = new InMemoryRandomAccessStream();
         using var writer = new DataWriter(ras.GetOutputStreamAt(0));
         writer.WriteBytes(pngBytes);
         await writer.StoreAsync();
-        var decoder = await BitmapDecoder.CreateAsync(ras);
+        var decoder = await Windows.Graphics.Imaging.BitmapDecoder.CreateAsync(ras);
         using var softBitmap = await decoder.GetSoftwareBitmapAsync();
         return await engine.RecognizeAsync(softBitmap);
-    }
-
-    private static string LoadApiKey()
-    {
-        try { return File.Exists(_apiKeyPath) ? File.ReadAllText(_apiKeyPath).Trim() : ""; }
-        catch { return ""; }
     }
 }
