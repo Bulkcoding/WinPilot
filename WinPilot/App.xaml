@@ -570,6 +570,12 @@
             <DataTemplate DataType="{x:Type vm:OcrViewModel}">
                 <views:OcrView/>
             </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:UtilesViewModel}">
+                <views:UtilesView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:RegexViewModel}">
+                <views:RegexView/>
+            </DataTemplate>
             <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
                 <views:SettingsView/>
             </DataTemplate>

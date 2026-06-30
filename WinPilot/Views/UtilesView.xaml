@@ -1,0 +1,83 @@
+<UserControl x:Class="WinPilot.Views.UtilesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <!-- 서브탭 스타일 (ParserView와 동일한 밑줄 강조형) -->
+        <Style x:Key="UtilTabStyle" TargetType="TabItem">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="16,8"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabItem">
+                        <Border x:Name="Bd" Padding="{TemplateBinding Padding}"
+                                BorderThickness="0,0,0,2" BorderBrush="Transparent">
+                            <TextBlock x:Name="Tb" Text="{TemplateBinding Header}"
+                                       Foreground="{TemplateBinding Foreground}"
+                                       FontSize="{TemplateBinding FontSize}"
+                                       FontWeight="SemiBold"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="#3B82F6"/>
+                                <Setter TargetName="Tb" Property="Foreground"   Value="#3B82F6"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Tb" Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Background="{DynamicResource BgBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- 헤더 -->
+        <DockPanel Grid.Row="0" Margin="24,20,24,0">
+            <TextBlock Text="Utiles" FontSize="22" FontWeight="SemiBold"
+                       Foreground="{DynamicResource TextPrimaryBrush}"/>
+        </DockPanel>
+
+        <!-- 서브탭 -->
+        <TabControl Grid.Row="1" Margin="24,12,24,24"
+                    Background="Transparent" BorderThickness="0" Padding="0">
+            <TabControl.Resources>
+                <Style TargetType="TabPanel">
+                    <Setter Property="Background" Value="Transparent"/>
+                </Style>
+            </TabControl.Resources>
+            <TabControl.Template>
+                <ControlTemplate TargetType="TabControl">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <TabPanel Grid.Row="0" IsItemsHost="True" Background="Transparent"/>
+                        <Rectangle Grid.Row="1" Height="1"
+                                   Fill="{DynamicResource BorderBrush}" Margin="0,0,0,16"/>
+                        <ContentPresenter Grid.Row="2" ContentSource="SelectedContent"/>
+                    </Grid>
+                </ControlTemplate>
+            </TabControl.Template>
+
+            <!-- ═══ 정규식 ═══ -->
+            <TabItem Header="정규식" Style="{StaticResource UtilTabStyle}">
+                <ContentControl Content="{Binding Regex}"/>
+            </TabItem>
+
+        </TabControl>
+    </Grid>
+</UserControl>
