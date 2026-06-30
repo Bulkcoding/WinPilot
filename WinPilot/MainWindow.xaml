@@ -154,22 +154,45 @@
         </Grid>
 
         <!-- ===== 기본 모드 ===== -->
-        <Grid Grid.Row="1" Visibility="{Binding IsNormalMode, Converter={StaticResource BoolToVisibility}}">
+        <!-- NormalHost: 전환 중 Visibility=Hidden으로 점선(Adorner)까지 숨기는 래퍼 -->
+        <Grid x:Name="NormalHost" Grid.Row="1">
+        <Grid Visibility="{Binding IsNormalMode, Converter={StaticResource BoolToVisibility}}">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
         <!-- 사이드바 -->
-        <Border Grid.Column="0" Background="{DynamicResource SidebarBrush}">
+        <Border Grid.Column="0" Background="{DynamicResource SidebarBrush}" Width="220">
             <Border.Style>
                 <Style TargetType="Border">
                     <Style.Triggers>
+                        <!-- 펼침/접힘 시 Width를 부드럽게 애니메이션 -->
                         <DataTrigger Binding="{Binding IsSidebarExpanded}" Value="True">
-                            <Setter Property="Width" Value="220"/>
-                        </DataTrigger>
-                        <DataTrigger Binding="{Binding IsSidebarExpanded}" Value="False">
-                            <Setter Property="Width" Value="60"/>
+                            <DataTrigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetProperty="Width" To="220"
+                                                         Duration="0:0:0.38">
+                                            <DoubleAnimation.EasingFunction>
+                                                <QuinticEase EasingMode="EaseInOut"/>
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </DataTrigger.EnterActions>
+                            <DataTrigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetProperty="Width" To="60"
+                                                         Duration="0:0:0.38">
+                                            <DoubleAnimation.EasingFunction>
+                                                <QuinticEase EasingMode="EaseInOut"/>
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </DataTrigger.ExitActions>
                         </DataTrigger>
                     </Style.Triggers>
                 </Style>
@@ -537,8 +560,9 @@
                         </DockPanel>
                     </Button>
 
-                    <!-- Utiles -->
-                    <Button Command="{Binding NavigateToCommand}" CommandParameter="{Binding Utiles}">
+                    <!-- Utiles (개발 중 — 준비되면 Visibility 제거) -->
+                    <Button Command="{Binding NavigateToCommand}" CommandParameter="{Binding Utiles}"
+                            Visibility="Collapsed">
                         <Button.Style>
                             <Style BasedOn="{StaticResource NavBtnStyle}" TargetType="Button">
                                 <Style.Triggers>
@@ -594,9 +618,11 @@
         </Border>
 
         <!-- 콘텐츠 영역 -->
-        <ContentControl Grid.Column="1" Content="{Binding CurrentPage}"/>
+        <ContentControl Grid.Column="1" Content="{Binding CurrentPage}"
+                        Focusable="False" IsTabStop="False"/>
 
         </Grid>
+        </Grid><!-- /NormalHost -->
 
         <!-- ===== 업데이트 모달 팝업 ===== -->
         <Grid Grid.RowSpan="2" Panel.ZIndex="100"
@@ -705,7 +731,9 @@
         </Grid>
 
         <!-- ===== 미니 모드 ===== -->
-        <Border Grid.Row="1"
+        <!-- MiniHost: 전환 중 Visibility=Hidden으로 점선(Adorner)까지 숨기는 래퍼 -->
+        <Grid x:Name="MiniHost" Grid.Row="1">
+        <Border x:Name="MiniPanel"
                 Visibility="{Binding IsMiniMode, Converter={StaticResource BoolToVisibility}}"
                 Background="{DynamicResource SurfaceBrush}" VerticalAlignment="Top">
             <StackPanel Margin="16,14,16,16" DataContext="{Binding MiniVm}">
@@ -825,6 +853,7 @@
 
             </StackPanel>
         </Border>
+        </Grid><!-- /MiniHost -->
 
     </Grid>
 </Window>

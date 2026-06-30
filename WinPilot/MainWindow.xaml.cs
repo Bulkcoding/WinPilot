@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using WinPilot.Models;
 using WinPilot.Services;
@@ -16,6 +17,14 @@ public partial class MainWindow : Window
 {
     [DllImport("dwmapi.dll")]
     private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int value, int size);
+
+    [DllImport("user32.dll")]
+    private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter,
+        int X, int Y, int cx, int cy, uint uFlags);
+
+    private const uint SWP_NOZORDER    = 0x0004;
+    private const uint SWP_NOACTIVATE  = 0x0010;
+    private const uint SWP_NOCOPYBITS  = 0x0100;   // 리사이즈 시 기존 비트맵 복사 안 함 → 잔상 제거
 
     private readonly GlobalHotkeyService _hotkeyService = new();
 
@@ -43,15 +52,24 @@ public partial class MainWindow : Window
                 {
                     Dispatcher.Invoke(() => vm.ToggleMiniModeCommand.Execute(null));
                 };
-                _hotkeyService.Start();
+
+                if (settings.IsHotkeyEnabled)
+                    _hotkeyService.Start();
 
                 settings.HotkeyChanged += (key1, key2) =>
                 {
                     _hotkeyService.SetFromSetting(new HotkeySetting
                     {
+                        IsEnabled = settings.IsHotkeyEnabled,
                         Key1 = KeyInterop.VirtualKeyFromKey(key1),
                         Key2 = KeyInterop.VirtualKeyFromKey(key2)
                     });
+                };
+
+                settings.HotkeyEnabledChanged += enabled =>
+                {
+                    if (enabled) _hotkeyService.Start();
+                    else _hotkeyService.Stop();
                 };
             }
         };
@@ -97,22 +115,43 @@ public partial class MainWindow : Window
     private void OnVmPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName != nameof(MainViewModel.IsMiniMode)) return;
-        var isMini = ((MainViewModel)sender!).IsMiniMode;
-        if (isMini)
-        {
-            MinWidth = 0; MinHeight = 0;
-            SizeToContent = SizeToContent.Height;
-            Width = 320;
-            ResizeMode = ResizeMode.CanMinimize;
-            Topmost = true;
-        }
+        if (((MainViewModel)sender!).IsMiniMode)
+            AnimateToMini();
         else
+            AnimateToNormal();
+    }
+
+    private const double MiniWidth   = 320;
+    private const double NormalWidth = 1100;
+    private const double NormalHeight = 720;
+    private const double TitleBarHeight = 34;   // MainWindow.xaml RowDefinitions[0]
+
+    private void AnimateToMini()
+    {
+        // 애니메이션 중 320 너비가 막히지 않도록 최소 크기·모드 먼저 해제
+        MinWidth = 0; MinHeight = 0;
+        ResizeMode = ResizeMode.CanMinimize;
+        Topmost = true;
+        SizeToContent = SizeToContent.Manual;   // 높이를 직접 애니메이션할 수 있도록
+
+        // 미니 콘텐츠 자연 높이 측정: 타이틀바(34px) + 미니 패널 콘텐츠
+        MiniPanel.Measure(new Size(MiniWidth, double.PositiveInfinity));
+        double targetHeight = TitleBarHeight + MiniPanel.DesiredSize.Height;
+
+        AnimateWindow(MiniWidth, targetHeight);
+    }
+
+    private void AnimateToNormal()
+    {
+        Topmost = false;
+        ResizeMode = ResizeMode.CanResizeWithGrip;
+        SizeToContent = SizeToContent.Manual;
+        Height = ActualHeight;   // 현재 높이를 명시적으로 고정(이전 SizeToContent 흔적 제거)
+        // MinWidth/MinHeight는 애니메이션이 끝난 뒤 적용 (지금 적용하면 즉시 스냅됨)
+
+        AnimateWindow(NormalWidth, NormalHeight, onDone: () =>
         {
-            Topmost = false;
-            SizeToContent = SizeToContent.Manual;
-            ResizeMode = ResizeMode.CanResizeWithGrip;
             MinWidth = 900; MinHeight = 600;
-            Width = 1100; Height = 720;
 
             // 화면 밖으로 나가지 않도록 작업 영역 기준 보정
             var wa = System.Windows.SystemParameters.WorkArea;
@@ -120,6 +159,95 @@ public partial class MainWindow : Window
             if (Top  + Height > wa.Bottom) Top  = Math.Max(wa.Top,  wa.Bottom - Height);
             if (Left < wa.Left) Left = wa.Left;
             if (Top  < wa.Top)  Top  = wa.Top;
-        }
+        });
     }
+
+    private const double ResizeDurationMs = 360;
+    private EventHandler? _resizeTick;
+
+    /// <summary>
+    /// Win32 SetWindowPos로 매 프레임 위치+크기를 한 번에 변경한다.
+    /// WPF Width/Height 속성은 각각 별도 리사이즈로 처리되어 가로/세로가 계단식으로 보이는 반면,
+    /// SetWindowPos는 cx·cy를 atomic하게 적용 → 우하단 모서리가 직선(대각선) 경로로 이동.
+    /// </summary>
+    private void AnimateWindow(double toWidth, double toHeight, Action? onDone = null)
+    {
+        if (_resizeTick != null)   // 진행 중 애니메이션 정리
+        {
+            CompositionTarget.Rendering -= _resizeTick;
+            _resizeTick = null;
+        }
+
+        // 리사이즈 중에는 콘텐츠를 숨긴다 → 창 단색 배경(BgBrush)만 대각선으로 변함.
+        // WPF 렌더가 빠른 SetWindowPos 리사이즈를 못 따라가 생기는 잔상을 원천 차단.
+        HideContent();
+
+        // 바뀐 콘텐츠(Visibility)의 레이아웃을 애니메이션 시작 전에 미리 완료(숨긴 채로)
+        UpdateLayout();
+
+        var hwnd = new System.Windows.Interop.WindowInteropHelper(this).Handle;
+        var dpi  = VisualTreeHelper.GetDpi(this);
+        double sx = dpi.DpiScaleX, sy = dpi.DpiScaleY;
+
+        double fromW = ActualWidth, fromH = ActualHeight;
+        double left  = Left,        top   = Top;   // 좌상단 고정 → 우하단 모서리만 대각선 이동
+        int px = (int)Math.Round(left * sx);
+        int py = (int)Math.Round(top  * sy);
+
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+
+        _resizeTick = (_, _) =>
+        {
+            double t = Math.Min(1.0, sw.Elapsed.TotalMilliseconds / ResizeDurationMs);
+            double e = EaseInOut(t);
+            double w = fromW + (toWidth  - fromW) * e;
+            double h = fromH + (toHeight - fromH) * e;
+
+            // 위치+크기를 단일 호출로 동시 적용 (NOCOPYBITS로 낡은 비트맵 잔상 방지)
+            SetWindowPos(hwnd, IntPtr.Zero, px, py,
+                (int)Math.Round(w * sx), (int)Math.Round(h * sy),
+                SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOCOPYBITS);
+
+            if (t >= 1.0)
+            {
+                CompositionTarget.Rendering -= _resizeTick;
+                _resizeTick = null;
+                // WPF 속성을 실제 크기와 동기화 → 이후 레이아웃·수동 리사이즈 정상
+                Width  = toWidth;
+                Height = toHeight;
+                onDone?.Invoke();
+                FadeInContent();   // 크기 확정 후 콘텐츠를 부드럽게 표시
+            }
+        };
+        CompositionTarget.Rendering += _resizeTick;
+    }
+
+    // 리사이즈 중 콘텐츠 숨김.
+    // Visibility=Hidden은 요소를 안 그리므로 그 위 Adorner(점선/FocusVisual)까지 사라진다.
+    // (Opacity=0은 Adorner를 못 숨겨 빈 화면 위에 점선이 떠 보였음)
+    private void HideContent()
+    {
+        Keyboard.ClearFocus();
+        NormalHost.BeginAnimation(OpacityProperty, null);
+        MiniHost.BeginAnimation(OpacityProperty, null);
+        NormalHost.Opacity = 0;
+        MiniHost.Opacity   = 0;
+        NormalHost.Visibility = Visibility.Hidden;
+        MiniHost.Visibility   = Visibility.Hidden;
+    }
+
+    // 크기 조정 완료 후 콘텐츠 페이드 인 (안쪽 패널 중 현재 모드 것만 실제로 보임)
+    private void FadeInContent()
+    {
+        NormalHost.Visibility = Visibility.Visible;
+        MiniHost.Visibility   = Visibility.Visible;
+
+        var anim = new DoubleAnimation(0, 1, new Duration(TimeSpan.FromMilliseconds(200)));
+        NormalHost.BeginAnimation(OpacityProperty, anim);
+        MiniHost.BeginAnimation(OpacityProperty, anim);
+    }
+
+    // 퀸틱 ease-in-out (0~1) — 양 끝이 더 완만해 부드럽게 가속/정착
+    private static double EaseInOut(double t) =>
+        t < 0.5 ? 16 * t * t * t * t * t : 1 - Math.Pow(-2 * t + 2, 5) / 2;
 }

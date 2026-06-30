@@ -38,9 +38,18 @@ public partial class SettingsViewModel : ObservableObject
     partial void OnDeepSeekApiKeyChanged(string value) => OnPropertyChanged(nameof(IsDeepSeekKeySet));
 
     // ── 미니 모드 전환 단축키 ──
+    [ObservableProperty] private bool _isHotkeyEnabled = true;
     [ObservableProperty] private Key _hotkeyKey1 = Key.Space;
     [ObservableProperty] private Key _hotkeyKey2 = Key.Tab;
     [ObservableProperty] private bool _isCapturingHotkey;
+
+    partial void OnIsHotkeyEnabledChanged(bool value)
+    {
+        PersistHotkey();
+        HotkeyEnabledChanged?.Invoke(value);
+    }
+
+    public event Action<bool>? HotkeyEnabledChanged;
 
     public string HotkeyDisplayText => GetFriendlyKeyName(HotkeyKey1) + " + " + GetFriendlyKeyName(HotkeyKey2);
 
@@ -92,6 +101,7 @@ public partial class SettingsViewModel : ObservableObject
     {
         var setting = new HotkeySetting
         {
+            IsEnabled = IsHotkeyEnabled,
             Key1 = KeyInterop.VirtualKeyFromKey(HotkeyKey1),
             Key2 = KeyInterop.VirtualKeyFromKey(HotkeyKey2)
         };
@@ -111,6 +121,7 @@ public partial class SettingsViewModel : ObservableObject
     private void LoadHotkeySetting()
     {
         var setting = HotkeySetting.Load();
+        IsHotkeyEnabled = setting.IsEnabled;
         HotkeyKey1 = KeyInterop.KeyFromVirtualKey(setting.Key1);
         HotkeyKey2 = KeyInterop.KeyFromVirtualKey(setting.Key2);
     }

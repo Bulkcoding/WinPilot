@@ -13,6 +13,7 @@ public class HotkeySetting
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
         "WinPilot", "hotkey.json");
 
+    public bool IsEnabled { get; set; } = true;
     /// <summary>First key virtual-key code (default: VK_SPACE = 0x20)</summary>
     public int Key1 { get; set; } = 32;
     /// <summary>Second key virtual-key code (default: VK_TAB = 0x09)</summary>

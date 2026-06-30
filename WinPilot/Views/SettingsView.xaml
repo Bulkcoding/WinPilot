@@ -4,6 +4,31 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              mc:Ignorable="d">
+    <UserControl.Resources>
+        <Style x:Key="ToggleSwitch" TargetType="CheckBox">
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CheckBox">
+                        <Border x:Name="Track" Width="42" Height="24" CornerRadius="12"
+                                Background="{DynamicResource BorderBrush}">
+                            <Border x:Name="Thumb" Width="18" Height="18" CornerRadius="9"
+                                    Background="White" HorizontalAlignment="Left"
+                                    VerticalAlignment="Center" Margin="3,0,0,0"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Track" Property="Background" Value="#3B82F6"/>
+                                <Setter TargetName="Thumb" Property="HorizontalAlignment" Value="Right"/>
+                                <Setter TargetName="Thumb" Property="Margin" Value="0,0,3,0"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
     <ScrollViewer Background="{DynamicResource BgBrush}" VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="24,20,24,24">
             <TextBlock Text="설정" FontSize="22" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,20"/>
@@ -167,37 +192,63 @@
             <!-- 미니 모드 전환 단축키 -->
             <Border Style="{StaticResource CardStyle}" Margin="0,16,0,0">
                 <StackPanel>
-                    <TextBlock Text="미니 모드 전환 단축키" Style="{StaticResource CardTitleStyle}" Margin="0,0,0,8"/>
-                    <TextBlock Text="앱이 백그라운드에 있어도 단축키로 미니 모드를 켜고 끌 수 있습니다."
-                               Foreground="#64748B" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,12"/>
-
-                    <!-- 일반 표시 (클릭하면 캡처 모드로) -->
-                    <Border Background="{DynamicResource ControlBrush}" CornerRadius="6" Padding="12,6"
-                            Cursor="Hand"
-                            PreviewMouseDown="OnStartCaptureHotkey"
-                            Visibility="{Binding IsCapturingHotkey, Converter={StaticResource InverseBoolConverter}}">
-                        <TextBlock Text="{Binding HotkeyDisplayText}"
-                                   FontSize="14" FontWeight="Bold"
-                                   Foreground="{DynamicResource TextPrimaryBrush}"
-                                   FontFamily="Consolas" VerticalAlignment="Center"/>
-                    </Border>
-
-                    <!-- 캡처 모드 -->
-                    <Border x:Name="CaptureBorder"
-                            Background="{DynamicResource ControlBrush}"
-                            BorderBrush="{DynamicResource AccentBrush}"
-                            BorderThickness="2" CornerRadius="6" Padding="16,10"
-                            Focusable="True"
-                            PreviewKeyDown="OnCapturePreviewKeyDown"
-                            Visibility="{Binding IsCapturingHotkey, Converter={StaticResource BoolToVisibility}}">
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                            <TextBlock Text="⏺" FontSize="14" Foreground="{DynamicResource AccentBrush}"
-                                       VerticalAlignment="Center" Margin="0,0,8,0"/>
-                            <TextBlock Text="원하는 단축키를 누르세요 (두 키 동시에)…"
-                                       FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}"
-                                       VerticalAlignment="Center"/>
+                    <!-- 타이틀 + 토글 -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Margin="0,0,16,0">
+                            <TextBlock Text="미니 모드 전환 단축키" Style="{StaticResource CardTitleStyle}"/>
+                            <TextBlock Text="앱이 백그라운드에 있어도 단축키로 미니 모드를 켜고 끌 수 있습니다."
+                                       Foreground="#64748B" FontSize="12" TextWrapping="Wrap" Margin="0,4,0,0"/>
                         </StackPanel>
-                    </Border>
+                        <CheckBox Grid.Column="1" IsChecked="{Binding IsHotkeyEnabled}"
+                                  Style="{StaticResource ToggleSwitch}" VerticalAlignment="Center"/>
+                    </Grid>
+
+                    <!-- 단축키 조합 (활성화 시) -->
+                    <StackPanel Margin="0,14,0,0"
+                                Visibility="{Binding IsHotkeyEnabled, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock Text="단축키 조합" Foreground="{DynamicResource TextSecondaryBrush}"
+                                   FontSize="12" Margin="0,0,0,8"/>
+
+                        <!-- 단축키 버튼 (캡처 여부에 따라 텍스트/테두리만 변경) -->
+                        <Border x:Name="CaptureBorder"
+                                Background="{DynamicResource ControlBrush}" CornerRadius="6"
+                                Padding="20,9" Cursor="Hand"
+                                HorizontalAlignment="Left" MinWidth="160"
+                                Focusable="True"
+                                PreviewMouseDown="OnStartCaptureHotkey"
+                                PreviewKeyDown="OnCapturePreviewKeyDown">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="BorderThickness" Value="0"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsCapturingHotkey}" Value="True">
+                                            <Setter Property="BorderBrush" Value="#3B82F6"/>
+                                            <Setter Property="BorderThickness" Value="1.5"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <TextBlock FontSize="13" FontWeight="SemiBold" FontFamily="Consolas"
+                                       HorizontalAlignment="Center">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="{Binding HotkeyDisplayText}"/>
+                                        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsCapturingHotkey}" Value="True">
+                                                <Setter Property="Text" Value="키를 누르세요..."/>
+                                                <Setter Property="Foreground" Value="#3B82F6"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Border>
+                    </StackPanel>
                 </StackPanel>
             </Border>
         </StackPanel>
