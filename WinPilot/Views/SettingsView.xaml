@@ -163,6 +163,43 @@
                     </Button>
                 </StackPanel>
             </Border>
+
+            <!-- 미니 모드 전환 단축키 -->
+            <Border Style="{StaticResource CardStyle}" Margin="0,16,0,0">
+                <StackPanel>
+                    <TextBlock Text="미니 모드 전환 단축키" Style="{StaticResource CardTitleStyle}" Margin="0,0,0,8"/>
+                    <TextBlock Text="앱이 백그라운드에 있어도 단축키로 미니 모드를 켜고 끌 수 있습니다."
+                               Foreground="#64748B" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,12"/>
+
+                    <!-- 일반 표시 (클릭하면 캡처 모드로) -->
+                    <Border Background="{DynamicResource ControlBrush}" CornerRadius="6" Padding="12,6"
+                            Cursor="Hand"
+                            PreviewMouseDown="OnStartCaptureHotkey"
+                            Visibility="{Binding IsCapturingHotkey, Converter={StaticResource InverseBoolConverter}}">
+                        <TextBlock Text="{Binding HotkeyDisplayText}"
+                                   FontSize="14" FontWeight="Bold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   FontFamily="Consolas" VerticalAlignment="Center"/>
+                    </Border>
+
+                    <!-- 캡처 모드 -->
+                    <Border x:Name="CaptureBorder"
+                            Background="{DynamicResource ControlBrush}"
+                            BorderBrush="{DynamicResource AccentBrush}"
+                            BorderThickness="2" CornerRadius="6" Padding="16,10"
+                            Focusable="True"
+                            PreviewKeyDown="OnCapturePreviewKeyDown"
+                            Visibility="{Binding IsCapturingHotkey, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <TextBlock Text="⏺" FontSize="14" Foreground="{DynamicResource AccentBrush}"
+                                       VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBlock Text="원하는 단축키를 누르세요 (두 키 동시에)…"
+                                       FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Border>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

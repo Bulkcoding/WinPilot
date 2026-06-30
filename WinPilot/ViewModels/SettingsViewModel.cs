@@ -2,9 +2,11 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using System.Windows;
+using System.Windows.Input;
 using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using WinPilot.Models;
 using WinPilot.Services;
 
 namespace WinPilot.ViewModels;
@@ -35,13 +37,82 @@ public partial class SettingsViewModel : ObservableObject
 
     partial void OnDeepSeekApiKeyChanged(string value) => OnPropertyChanged(nameof(IsDeepSeekKeySet));
 
+    // ── 미니 모드 전환 단축키 ──
+    [ObservableProperty] private Key _hotkeyKey1 = Key.Space;
+    [ObservableProperty] private Key _hotkeyKey2 = Key.Tab;
+    [ObservableProperty] private bool _isCapturingHotkey;
+
+    public string HotkeyDisplayText => GetFriendlyKeyName(HotkeyKey1) + " + " + GetFriendlyKeyName(HotkeyKey2);
+
+    partial void OnHotkeyKey1Changed(Key value) => OnPropertyChanged(nameof(HotkeyDisplayText));
+    partial void OnHotkeyKey2Changed(Key value) => OnPropertyChanged(nameof(HotkeyDisplayText));
+
+    private static string GetFriendlyKeyName(Key key)
+    {
+        return key switch
+        {
+            Key.Return   => "Enter",
+            Key.Tab      => "Tab",
+            Key.Space    => "Space",
+            Key.Escape   => "Esc",
+            Key.Back     => "Backspace",
+            Key.LeftShift or Key.RightShift => "Shift",
+            Key.LeftCtrl or Key.RightCtrl   => "Ctrl",
+            Key.LeftAlt  or Key.RightAlt    => "Alt",
+            Key.LWin     or Key.RWin        => "Win",
+            Key.PageUp   => "PgUp",
+            Key.PageDown => "PgDn",
+            Key.Capital  => "CapsLock",
+            Key.OemMinus => "-",
+            Key.OemPlus  => "+",
+            Key.OemPeriod => ".",
+            Key.OemComma => ",",
+            Key.Divide   => "/",
+            Key.Multiply => "*",
+            Key.Subtract => "-",
+            Key.Add      => "+",
+            Key.Decimal  => ".",
+            _ => key.ToString()
+        };
+    }
+
+    /// <summary>Call from code-behind after capturing two keys via keyboard events.</summary>
+    public void SetHotkey(Key key1, Key key2)
+    {
+        HotkeyKey1 = key1;
+        HotkeyKey2 = key2;
+        PersistHotkey();
+        HotkeyChanged?.Invoke(HotkeyKey1, HotkeyKey2);
+    }
+
+    /// <summary>Fired when the user changes the hotkey. (Key1 vkCode, Key2 vkCode)</summary>
+    public event Action<Key, Key>? HotkeyChanged;
+
+    private void PersistHotkey()
+    {
+        var setting = new HotkeySetting
+        {
+            Key1 = KeyInterop.VirtualKeyFromKey(HotkeyKey1),
+            Key2 = KeyInterop.VirtualKeyFromKey(HotkeyKey2)
+        };
+        setting.Save();
+    }
+
     public string CurrentVersionText => UpdateService.CurrentVersionText;
 
     private SettingsViewModel()
     {
         _deepSeekApiKey = LoadDeepSeekKey();
+        LoadHotkeySetting();
         ApplyTheme(_isDarkTheme);
         ApplyFontSize(_isFontLarge);
+    }
+
+    private void LoadHotkeySetting()
+    {
+        var setting = HotkeySetting.Load();
+        HotkeyKey1 = KeyInterop.KeyFromVirtualKey(setting.Key1);
+        HotkeyKey2 = KeyInterop.KeyFromVirtualKey(setting.Key2);
     }
 
     partial void OnIsDarkThemeChanged(bool value)  => ApplyTheme(value);

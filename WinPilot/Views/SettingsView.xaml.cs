@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using WinPilot.ViewModels;
 
 namespace WinPilot.Views;
@@ -52,5 +53,53 @@ public partial class SettingsView : UserControl
         _syncing = true;
         DeepSeekPwdBox.Password = value ?? "";
         _syncing = false;
+    }
+
+    // ── 단축키 캡처 ──
+
+    private readonly List<Key> _captureBuffer = new();
+
+    private void OnStartCaptureHotkey(object sender, MouseButtonEventArgs e)
+    {
+        if (DataContext is not SettingsViewModel vm || vm.IsCapturingHotkey) return;
+        _captureBuffer.Clear();
+        vm.IsCapturingHotkey = true;
+        // Focus the capture border so it receives keyboard events
+        CaptureBorder.Focusable = true;
+        Keyboard.Focus(CaptureBorder);
+        CaptureBorder.Focus();
+        e.Handled = true;
+    }
+
+    private void OnCapturePreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (DataContext is not SettingsViewModel vm || !vm.IsCapturingHotkey) return;
+
+        e.Handled = true;
+
+        var key = e.Key == Key.System ? e.SystemKey : e.Key;
+
+        // Skip modifier-only keys
+        if (key is Key.LeftCtrl or Key.RightCtrl or Key.LeftAlt or Key.RightAlt
+                or Key.LeftShift or Key.RightShift or Key.LWin or Key.RWin)
+            return;
+
+        // Esc to cancel
+        if (key == Key.Escape)
+        {
+            _captureBuffer.Clear();
+            vm.IsCapturingHotkey = false;
+            return;
+        }
+
+        if (!_captureBuffer.Contains(key))
+            _captureBuffer.Add(key);
+
+        if (_captureBuffer.Count >= 2)
+        {
+            vm.SetHotkey(_captureBuffer[0], _captureBuffer[1]);
+            _captureBuffer.Clear();
+            vm.IsCapturingHotkey = false;
+        }
     }
 }

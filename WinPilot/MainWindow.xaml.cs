@@ -2,9 +2,12 @@ using System.ComponentModel;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using WinPilot.Models;
+using WinPilot.Services;
 using WinPilot.ViewModels;
 
 namespace WinPilot;
@@ -13,6 +16,8 @@ public partial class MainWindow : Window
 {
     [DllImport("dwmapi.dll")]
     private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int value, int size);
+
+    private readonly GlobalHotkeyService _hotkeyService = new();
 
     public MainWindow()
     {
@@ -27,8 +32,31 @@ public partial class MainWindow : Window
             DwmSetWindowAttribute(hwnd, 33, ref round, sizeof(int));
 
             if (DataContext is MainViewModel vm)
+            {
                 vm.PropertyChanged += OnVmPropertyChanged;
+
+                // 글로벌 단축키 초기화
+                var settings = vm.Settings;
+                var setting = HotkeySetting.Load();
+                _hotkeyService.SetFromSetting(setting);
+                _hotkeyService.HotkeyTriggered += () =>
+                {
+                    Dispatcher.Invoke(() => vm.ToggleMiniModeCommand.Execute(null));
+                };
+                _hotkeyService.Start();
+
+                settings.HotkeyChanged += (key1, key2) =>
+                {
+                    _hotkeyService.SetFromSetting(new HotkeySetting
+                    {
+                        Key1 = KeyInterop.VirtualKeyFromKey(key1),
+                        Key2 = KeyInterop.VirtualKeyFromKey(key2)
+                    });
+                };
+            }
         };
+
+        Closed += (_, _) => _hotkeyService.Dispose();
     }
 
     // 창 컨트롤 버튼
