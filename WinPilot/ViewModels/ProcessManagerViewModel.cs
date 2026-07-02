@@ -39,6 +39,7 @@ public partial class ProcessGroupItem : ObservableObject
 
     // 그룹 전용
     public bool   IsGroup     { get; init; }
+    public int    GroupKey    { get; init; }   // 그룹 식별자 = 앱 트리 루트 PID (이름 대신 사용)
     public int    ChildCount  { get; init; } = 1;
     public List<ProcessGroupItem> Children { get; init; } = [];
 
@@ -195,25 +196,29 @@ public partial class ProcessManagerViewModel : ObservableObject
     private async Task RefreshProcessesAsync()
     {
         var filter = ProcessFilter.Trim();
-        var (rows, newCpu) = await Task.Run(() => BuildProcessRows());
+        var (rows, newCpu, rootOf) = await Task.Run(() =>
+        {
+            var (r, cpu) = BuildProcessRows();
+            return (r, cpu, QueryTreeRoots());
+        });
         _prevCpu = newCpu;
 
-        // 현재 확장된 그룹 이름 저장
-        var expanded = _allGroups.Where(g => g.IsExpanded).Select(g => g.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        // 현재 확장된 그룹 저장 (그룹 식별자 = 루트 PID)
+        var expanded = _allGroups.Where(g => g.IsExpanded).Select(g => g.GroupKey).ToHashSet();
 
         // 그룹 재빌드 (확장 상태 복원)
-        var groups = BuildGroupItems(rows, expanded);
+        var groups = BuildGroupItems(rows, rootOf, expanded);
 
         // 정렬이 없을 때: 이전 순서를 유지 (새 그룹은 맨 뒤에 추가)
         if (string.IsNullOrEmpty(_sortColumn) && _allGroups.Count > 0)
         {
             var prevOrder = _allGroups
-                .Select((g, idx) => (g.Name, idx))
-                .ToDictionary(t => t.Name, t => t.idx, StringComparer.OrdinalIgnoreCase);
+                .Select((g, idx) => (g.GroupKey, idx))
+                .ToDictionary(t => t.GroupKey, t => t.idx);
             groups.Sort((a, b) =>
             {
-                var ai = prevOrder.TryGetValue(a.Name, out var av) ? av : int.MaxValue;
-                var bi = prevOrder.TryGetValue(b.Name, out var bv) ? bv : int.MaxValue;
+                var ai = prevOrder.TryGetValue(a.GroupKey, out var av) ? av : int.MaxValue;
+                var bi = prevOrder.TryGetValue(b.GroupKey, out var bv) ? bv : int.MaxValue;
                 return ai.CompareTo(bi);
             });
         }
@@ -230,13 +235,17 @@ public partial class ProcessManagerViewModel : ObservableObject
         StatusText = $"{_allGroups.Count}개 그룹 ({total}개 프로세스)";
     }
 
-    private static List<ProcessGroupItem> BuildGroupItems(List<ProcessRow> rows, HashSet<string>? expanded = null)
+    private static List<ProcessGroupItem> BuildGroupItems(
+        List<ProcessRow> rows, Dictionary<int, int> rootOf, HashSet<int>? expanded = null)
     {
         return rows
-            .GroupBy(r => r.Name, StringComparer.OrdinalIgnoreCase)
+            // 작업관리자처럼 앱 트리(루트 PID) 단위로 묶는다. 같은 이름이라도 별도 트리면 다른 그룹.
+            .GroupBy(r => rootOf.TryGetValue(r.Pid, out var root) ? root : r.Pid)
             .Select(g =>
             {
-                var firstExe = g.FirstOrDefault()?.ExePath ?? "";
+                // 그룹 대표는 트리 루트 프로세스(없으면 CPU 최상위)
+                var rootRow  = g.FirstOrDefault(r => r.Pid == g.Key) ?? g.First();
+                var groupName = rootRow.Name;
 
                 var children = g
                     .OrderByDescending(r => r.CpuPercent)
@@ -248,14 +257,15 @@ public partial class ProcessManagerViewModel : ObservableObject
                         Status      = r.Status,
                         Description = r.Description,
                         Pid         = r.Pid,
-                        ParentName  = g.Key,
+                        ParentName  = groupName,
                         IconSource  = GetIconForPath(r.ExePath)
                     }).ToList();
 
                 return new ProcessGroupItem
                 {
                     IsGroup     = true,
-                    Name        = g.Key,
+                    Name        = groupName,
+                    GroupKey    = g.Key,
                     ChildCount  = children.Count,
                     CpuPercent  = Math.Round(children.Sum(r => r.CpuPercent), 1),
                     MemoryMB    = Math.Round(children.Sum(r => r.MemoryMB), 1),
@@ -263,7 +273,7 @@ public partial class ProcessManagerViewModel : ObservableObject
                     Description = children.FirstOrDefault(r => !string.IsNullOrEmpty(r.Description))?.Description ?? "",
                     Children    = children,
                     IsExpanded  = expanded?.Contains(g.Key) ?? false,
-                    IconSource  = GetIconForPath(firstExe)
+                    IconSource  = GetIconForPath(rootRow.ExePath)
                 };
             })
             .OrderByDescending(g => g.CpuPercent)
@@ -295,6 +305,50 @@ public partial class ProcessManagerViewModel : ObservableObject
         }
         catch { /* WMI 조회 실패 시 빈 맵 → 호출부에서 WorkingSet64 로 폴백 */ }
         return map;
+    }
+
+    /// <summary>
+    /// 각 프로세스를 "앱 트리 루트" PID 로 매핑한다 (PID → 루트 PID).
+    /// 작업관리자가 애플리케이션(프로세스 트리) 단위로 묶는 것과 맞추기 위함.
+    /// 부모가 같은 이름이면 계속 위로 올라가고, 부모 이름이 달라지는 지점이 루트다.
+    /// (예: claude→claude→claude 는 한 트리, 부모가 터미널/탐색기면 거기서 끊겨 별도 트리가 됨)
+    /// </summary>
+    private static Dictionary<int, int> QueryTreeRoots()
+    {
+        var parent = new Dictionary<int, int>();
+        var name   = new Dictionary<int, string>();
+        try
+        {
+            using var searcher = new ManagementObjectSearcher(
+                "SELECT ProcessId, ParentProcessId, Name FROM Win32_Process");
+            foreach (ManagementObject mo in searcher.Get())
+            {
+                try
+                {
+                    int pid = Convert.ToInt32(mo["ProcessId"]);
+                    parent[pid] = Convert.ToInt32(mo["ParentProcessId"]);
+                    name[pid]   = (mo["Name"] as string) ?? "";
+                }
+                catch { /* 개별 항목 무시 */ }
+            }
+        }
+        catch { /* WMI 실패 → 빈 맵, 호출부에서 PID 그대로 사용 */ }
+
+        var rootOf = new Dictionary<int, int>();
+        foreach (var pid in name.Keys)
+        {
+            int cur  = pid;
+            var seen = new HashSet<int>();   // PID 재사용으로 인한 순환 방지
+            while (seen.Add(cur)
+                   && parent.TryGetValue(cur, out var par)
+                   && name.TryGetValue(par, out var pn)
+                   && string.Equals(pn, name[pid], StringComparison.OrdinalIgnoreCase))
+            {
+                cur = par;
+            }
+            rootOf[pid] = cur;
+        }
+        return rootOf;
     }
 
     private (List<ProcessRow> rows, Dictionary<int, (DateTime, TimeSpan)> cpuMap) BuildProcessRows()
