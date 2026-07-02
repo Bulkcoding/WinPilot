@@ -157,6 +157,32 @@
                               RowStyle="{StaticResource DataGridRowStyle}"
                               EnableRowVirtualization="True" VirtualizingPanel.IsVirtualizing="True"
                               Sorting="ProcessDataGrid_Sorting">
+                        <DataGrid.Resources>
+                            <!-- 이 그리드는 SelectionUnit 기본값(FullRow)이라 선택 시 DataGridRow 기본
+                                 템플릿이 SystemColors 를 직접 참조한다. 안 바꾸면 선택 배경이 거의
+                                 검정으로 보여 선택 행이 안 보임. 선택 느낌만 주도록 연한 회색으로
+                                 오버라이드한다. (CLAUDE.md DataGrid 규칙) -->
+                            <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}"     Color="#3A3A48"/>
+                            <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="White"/>
+                            <SolidColorBrush x:Key="{x:Static SystemColors.ControlBrushKey}"        Color="#3A3A48"/>
+                            <SolidColorBrush x:Key="{x:Static SystemColors.ControlTextBrushKey}"    Color="White"/>
+                        </DataGrid.Resources>
+
+                        <!-- 앱 / 백그라운드 프로세스 섹션 헤더 (작업관리자 스타일) -->
+                        <DataGrid.GroupStyle>
+                            <GroupStyle HidesIfEmpty="True">
+                                <GroupStyle.HeaderTemplate>
+                                    <DataTemplate>
+                                        <Border Background="{DynamicResource AltRowBrush}" Padding="12,7"
+                                                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="12"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                        </Border>
+                                    </DataTemplate>
+                                </GroupStyle.HeaderTemplate>
+                            </GroupStyle>
+                        </DataGrid.GroupStyle>
+
                         <DataGrid.Columns>
 
                             <!-- 이름 (토글 버튼 + 이름 + 카운트 뱃지) -->
@@ -232,7 +258,7 @@
 
                             <DataGridTextColumn Header="상태"            Binding="{Binding Status}"     Width="80"  SortMemberPath="Status"     ElementStyle="{StaticResource CCell}"/>
                             <DataGridTextColumn Header="CPU %"           Binding="{Binding CpuPercent, StringFormat={}{0:F1}%}" Width="70" SortMemberPath="CpuPercent" ElementStyle="{StaticResource CCell}"/>
-                            <DataGridTextColumn Header="전용 메모리(MB)" Binding="{Binding MemoryMB, StringFormat={}{0:F1}}"    Width="100" SortMemberPath="MemoryMB"  ElementStyle="{StaticResource CCell}"/>
+                            <DataGridTextColumn Header="메모리(MB)" Binding="{Binding MemoryMB, StringFormat={}{0:F1}}"    Width="100" SortMemberPath="MemoryMB"  ElementStyle="{StaticResource CCell}"/>
                             <DataGridTextColumn Header="PID"             Binding="{Binding PidDisplay}" Width="65"  ElementStyle="{StaticResource CCell}" CanUserSort="False"/>
                             <DataGridTextColumn Header="설명"            Binding="{Binding Description}" Width="180" ElementStyle="{StaticResource DCell}" CanUserSort="False"/>
                         </DataGrid.Columns>
@@ -326,7 +352,7 @@
                             <DataGridTextColumn Header="PID"        Binding="{Binding Pid}"         Width="65"  ElementStyle="{StaticResource CCell}"/>
                             <DataGridTextColumn Header="상태"       Binding="{Binding Status}"      Width="80"  ElementStyle="{StaticResource CCell}"/>
                             <DataGridTextColumn Header="CPU %"      Binding="{Binding CpuPercent, StringFormat={}{0:F1}%}" Width="70" ElementStyle="{StaticResource CCell}"/>
-                            <DataGridTextColumn Header="전용 메모리(MB)" Binding="{Binding MemoryMB, StringFormat={}{0:F1}}"    Width="90" ElementStyle="{StaticResource CCell}"/>
+                            <DataGridTextColumn Header="메모리(MB)" Binding="{Binding MemoryMB, StringFormat={}{0:F1}}"    Width="90" ElementStyle="{StaticResource CCell}"/>
                             <DataGridTextColumn Header="사용자"     Binding="{Binding UserName}"    Width="130" ElementStyle="{StaticResource CCell}"/>
                             <DataGridTextColumn Header="설명"       Binding="{Binding Description}" Width="200" ElementStyle="{StaticResource DCell}"/>
                             <DataGridTextColumn Header="경로"       Binding="{Binding Path}"        Width="*"   ElementStyle="{StaticResource DCell}"/>

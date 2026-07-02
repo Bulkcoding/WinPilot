@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Management;
 using System.Windows;
+using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
@@ -16,7 +17,8 @@ namespace WinPilot.ViewModels;
 
 public record ProcessRow(
     string Name, int Pid, double CpuPercent, double MemoryMB,
-    string Status, string Description, string UserName, string WindowTitle, string ExePath);
+    string Status, string Description, string UserName, string WindowTitle, string ExePath,
+    bool HasWindow = false);
 
 public record AppHistoryRow(
     string Name, string CpuTimeText, double PeakMemoryMB, int InstanceCount, ImageSource? IconSource = null);
@@ -41,6 +43,8 @@ public partial class ProcessGroupItem : ObservableObject
     public bool   IsGroup     { get; init; }
     public int    GroupKey    { get; init; }   // 그룹 식별자 = 앱 트리 루트 PID (이름 대신 사용)
     public int    ChildCount  { get; init; } = 1;
+    public bool   IsApp       { get; init; }   // 창 있는 앱이면 true → "앱" 섹션, 아니면 "백그라운드"
+    public string Section     { get; init; } = "";   // 그룹핑 키 ("앱" / "백그라운드 프로세스")
     public List<ProcessGroupItem> Children { get; init; } = [];
 
     // 자식 전용
@@ -110,6 +114,10 @@ public partial class ProcessManagerViewModel : ObservableObject
 
     public ProcessManagerViewModel()
     {
+        // 프로세스 목록을 "앱 / 백그라운드 프로세스" 섹션으로 그룹핑 (작업관리자 스타일)
+        var view = CollectionViewSource.GetDefaultView(FlatGroups);
+        view.GroupDescriptions.Add(new PropertyGroupDescription(nameof(ProcessGroupItem.Section)));
+
         _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
         _timer.Tick += async (_, _) => await RefreshCurrentAsync();
         _ = RefreshCurrentAsync();
@@ -183,6 +191,9 @@ public partial class ProcessManagerViewModel : ObservableObject
 
     private void RebuildFlatList()
     {
+        // "앱" 섹션이 항상 위에 오도록 앱 우선으로 안정 정렬 (섹션 내 정렬 순서는 유지)
+        _allGroups = _allGroups.OrderByDescending(g => g.IsApp).ToList();
+
         var newItems = new List<ProcessGroupItem>();
         foreach (var group in _allGroups)
         {
@@ -202,6 +213,12 @@ public partial class ProcessManagerViewModel : ObservableObject
             return (r, cpu, QueryTreeRoots());
         });
         _prevCpu = newCpu;
+
+        // 자동 새로고침 후에도 선택을 유지하기 위해 현재 선택 식별자 저장
+        // (그룹은 GroupKey=루트 PID, 자식 행은 Pid 로 식별)
+        var selKey = SelectedGroupItem is { } sel
+            ? ((bool isGroup, int id)?)(sel.IsGroup, sel.IsGroup ? sel.GroupKey : sel.Pid)
+            : null;
 
         // 현재 확장된 그룹 저장 (그룹 식별자 = 루트 PID)
         var expanded = _allGroups.Where(g => g.IsExpanded).Select(g => g.GroupKey).ToHashSet();
@@ -229,7 +246,15 @@ public partial class ProcessManagerViewModel : ObservableObject
             : groups;
 
         ApplySort();
-        RebuildFlatList();
+        RebuildFlatList();   // 내부에서 앱 우선 정렬 후 flat list 재구성
+
+        // 선택 복원: 컬렉션이 새 인스턴스로 교체됐어도 같은 그룹/프로세스를 다시 선택
+        if (selKey is { } key)
+        {
+            var match = FlatGroups.FirstOrDefault(g =>
+                g.IsGroup == key.isGroup && (key.isGroup ? g.GroupKey : g.Pid) == key.id);
+            if (match != null) SelectedGroupItem = match;
+        }
 
         var total = _allGroups.Sum(g => g.ChildCount);
         StatusText = $"{_allGroups.Count}개 그룹 ({total}개 프로세스)";
@@ -247,6 +272,10 @@ public partial class ProcessManagerViewModel : ObservableObject
                 var rootRow  = g.FirstOrDefault(r => r.Pid == g.Key) ?? g.First();
                 var groupName = rootRow.Name;
 
+                // 트리 내 하나라도 창이 있으면 "앱", 아니면 "백그라운드 프로세스" (작업관리자 분류)
+                bool   isApp   = g.Any(r => r.HasWindow);
+                string section = isApp ? "앱" : "백그라운드 프로세스";
+
                 var children = g
                     .OrderByDescending(r => r.CpuPercent)
                     .Select(r => new ProcessGroupItem
@@ -258,6 +287,7 @@ public partial class ProcessManagerViewModel : ObservableObject
                         Description = r.Description,
                         Pid         = r.Pid,
                         ParentName  = groupName,
+                        Section     = section,   // 자식도 부모와 같은 섹션에 속해야 함께 묶임
                         IconSource  = GetIconForPath(r.ExePath)
                     }).ToList();
 
@@ -267,6 +297,8 @@ public partial class ProcessManagerViewModel : ObservableObject
                     Name        = groupName,
                     GroupKey    = g.Key,
                     ChildCount  = children.Count,
+                    IsApp       = isApp,
+                    Section     = section,
                     CpuPercent  = Math.Round(children.Sum(r => r.CpuPercent), 1),
                     MemoryMB    = Math.Round(children.Sum(r => r.MemoryMB), 1),
                     Status      = children.All(r => r.Status == "실행 중") ? "실행 중" : "혼합",
@@ -376,6 +408,9 @@ public partial class ProcessManagerViewModel : ObservableObject
                 string? exePath = null;
                 try { exePath = p.MainModule?.FileName; } catch { }
 
+                bool hasWindow = false;
+                try { hasWindow = p.MainWindowHandle != IntPtr.Zero; } catch { }
+
                 rows.Add(new ProcessRow(
                     Name:        p.ProcessName,
                     Pid:         p.Id,
@@ -386,7 +421,8 @@ public partial class ProcessManagerViewModel : ObservableObject
                     Description: SafeFileDescription(p),
                     UserName:    "",   // 별도 WMI 조회 생략 (성능)
                     WindowTitle: p.MainWindowTitle,
-                    ExePath:     exePath ?? ""));
+                    ExePath:     exePath ?? "",
+                    HasWindow:   hasWindow));
             }
             catch { /* 접근 거부 or 프로세스 종료 */ }
         }
