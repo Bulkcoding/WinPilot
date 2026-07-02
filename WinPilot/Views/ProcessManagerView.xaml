@@ -114,7 +114,7 @@
                                 </Border>
                                 <ControlTemplate.Triggers>
                                     <Trigger Property="IsSelected" Value="True">
-                                        <Setter TargetName="Bd" Property="BorderBrush" Value="#3B82F6"/>
+                                        <Setter TargetName="Bd" Property="BorderBrush" Value="#F97316"/>
                                         <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
                                         <Setter Property="FontWeight" Value="SemiBold"/>
                                     </Trigger>
@@ -147,10 +147,10 @@
                               SelectedItem="{Binding SelectedGroupItem}"
                               AutoGenerateColumns="False" CanUserReorderColumns="False"
                               CanUserResizeRows="False" IsReadOnly="True" SelectionMode="Single"
-                              GridLinesVisibility="None" HeadersVisibility="Column" RowHeight="32"
+                              GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{DynamicResource BorderBrush}"
+                              HeadersVisibility="Column"
                               Background="{DynamicResource SurfaceBrush}"
                               RowBackground="{DynamicResource SurfaceBrush}"
-                              AlternatingRowBackground="{DynamicResource AltRowBrush}"
                               BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}"
                               ColumnHeaderStyle="{StaticResource DataGridHeaderStyle}"
                               CellStyle="{StaticResource DataGridCellStyle}"
@@ -217,7 +217,7 @@
                                                     </TextBlock.Style>
                                                 </TextBlock>
                                                 <Border Margin="6,0,0,0" Padding="5,1" CornerRadius="8"
-                                                        Background="#3B82F6"
+                                                        Background="#F97316"
                                                         Visibility="{Binding HasChildren, Converter={StaticResource BoolToVisibility}}"
                                                         VerticalAlignment="Center" Opacity="0.85">
                                                     <TextBlock Text="{Binding ChildCount}" FontSize="10" Foreground="White"/>
@@ -243,11 +243,10 @@
                 <DataGrid ItemsSource="{Binding AppHistory}"
                           AutoGenerateColumns="False" CanUserReorderColumns="False"
                           CanUserResizeRows="False" IsReadOnly="True" SelectionMode="Single"
-                          GridLinesVisibility="None" HeadersVisibility="Column"
-                          RowHeight="32" Margin="0,8,0,0"
+                          GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{DynamicResource BorderBrush}"
+                          HeadersVisibility="Column" Margin="0,8,0,0"
                           Background="{DynamicResource SurfaceBrush}"
                           RowBackground="{DynamicResource SurfaceBrush}"
-                          AlternatingRowBackground="{DynamicResource AltRowBrush}"
                           BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}"
                           ColumnHeaderStyle="{StaticResource DataGridHeaderStyle}"
                           CellStyle="{StaticResource DataGridCellStyle}"
@@ -287,10 +286,10 @@
                               SelectedItem="{Binding SelectedDetail}"
                               AutoGenerateColumns="False" CanUserReorderColumns="False"
                               CanUserResizeRows="False" IsReadOnly="True" SelectionMode="Single"
-                              GridLinesVisibility="None" HeadersVisibility="Column" RowHeight="32"
+                              GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{DynamicResource BorderBrush}"
+                              HeadersVisibility="Column"
                               Background="{DynamicResource SurfaceBrush}"
                               RowBackground="{DynamicResource SurfaceBrush}"
-                              AlternatingRowBackground="{DynamicResource AltRowBrush}"
                               BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}"
                               ColumnHeaderStyle="{StaticResource DataGridHeaderStyle}"
                               CellStyle="{StaticResource DataGridCellStyle}"
@@ -335,10 +334,10 @@
                               SelectedItem="{Binding SelectedService}"
                               AutoGenerateColumns="False" CanUserReorderColumns="False"
                               CanUserResizeRows="False" IsReadOnly="True" SelectionMode="Single"
-                              GridLinesVisibility="None" HeadersVisibility="Column" RowHeight="32"
+                              GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{DynamicResource BorderBrush}"
+                              HeadersVisibility="Column"
                               Background="{DynamicResource SurfaceBrush}"
                               RowBackground="{DynamicResource SurfaceBrush}"
-                              AlternatingRowBackground="{DynamicResource AltRowBrush}"
                               BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}"
                               ColumnHeaderStyle="{StaticResource DataGridHeaderStyle}"
                               CellStyle="{StaticResource DataGridCellStyle}"

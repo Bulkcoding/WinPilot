@@ -21,7 +21,7 @@
                         </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="Track" Property="Background" Value="#3B82F6"/>
+                                <Setter TargetName="Track" Property="Background" Value="#F97316"/>
                                 <Setter TargetName="Thumb" Property="HorizontalAlignment" Value="Right"/>
                                 <Setter TargetName="Thumb" Property="Margin" Value="0,0,3,0"/>
                             </Trigger>
@@ -92,7 +92,7 @@
                                        FontSize="13" FontWeight="SemiBold"/>
                             <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
                                 <ProgressBar Width="60" Height="3" IsIndeterminate="True"
-                                             Foreground="#3B82F6" Margin="0,0,8,0" VerticalAlignment="Center"
+                                             Foreground="#F97316" Margin="0,0,8,0" VerticalAlignment="Center"
                                              Visibility="{Binding DeliveryOptApplying, Converter={StaticResource BoolToVisibility}}"/>
                                 <TextBlock Text="{Binding DeliveryOptStatus}"
                                            Foreground="{DynamicResource TextSecondaryBrush}"

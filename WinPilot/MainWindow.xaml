@@ -9,7 +9,7 @@
         Title="WinPilot" Height="720" Width="1100"
         MinHeight="600" MinWidth="900"
         Background="{DynamicResource BgBrush}"
-        FontFamily="Segoe UI"
+        FontFamily="Pretendard, 맑은 고딕, Segoe UI"
         WindowStyle="None"
         AllowsTransparency="False">
     <WindowChrome.WindowChrome>
@@ -114,8 +114,8 @@
                 <Border Width="22" Height="22" CornerRadius="5" VerticalAlignment="Center">
                     <Border.Background>
                         <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                            <GradientStop Color="#3B82F6" Offset="0"/>
-                            <GradientStop Color="#1D4ED8" Offset="1"/>
+                            <GradientStop Color="#F97316" Offset="0"/>
+                            <GradientStop Color="#C2410C" Offset="1"/>
                         </LinearGradientBrush>
                     </Border.Background>
                     <TextBlock Text="W" FontSize="12" FontWeight="Black" Foreground="White"
@@ -192,7 +192,7 @@
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
                                     Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}">
                             <TextBlock Text="W" FontSize="22" FontWeight="Black"
-                                       Foreground="#3B82F6" VerticalAlignment="Bottom"/>
+                                       Foreground="#F97316" VerticalAlignment="Bottom"/>
                             <TextBlock Text="inPilot" FontSize="14" FontWeight="SemiBold"
                                        Foreground="#E2E8F0" VerticalAlignment="Bottom"
                                        Margin="0,0,0,2"/>
@@ -223,13 +223,13 @@
                         <Button.Template>
                             <ControlTemplate TargetType="Button">
                                 <Border x:Name="Bd" CornerRadius="8" Padding="10,8"
-                                        Background="#0F2744" BorderBrush="#2563EB" BorderThickness="1">
+                                        Background="#0F2744" BorderBrush="#EA580C" BorderThickness="1">
                                     <DockPanel>
                                         <TextBlock DockPanel.Dock="Right"
                                                    Text="&#xE74B;" FontFamily="Segoe MDL2 Assets" FontSize="11"
-                                                   Foreground="#3B82F6" VerticalAlignment="Center"/>
+                                                   Foreground="#F97316" VerticalAlignment="Center"/>
                                         <StackPanel>
-                                            <TextBlock FontSize="11" FontWeight="SemiBold" Foreground="#3B82F6">
+                                            <TextBlock FontSize="11" FontWeight="SemiBold" Foreground="#F97316">
                                                 <Run Text="업데이트 "/>
                                                 <Run Text="{Binding LatestVersion}"/>
                                             </TextBlock>
@@ -240,7 +240,7 @@
                                 </Border>
                                 <ControlTemplate.Triggers>
                                     <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter TargetName="Bd" Property="Background" Value="#1E3A5F"/>
+                                        <Setter TargetName="Bd" Property="Background" Value="#23232E"/>
                                     </Trigger>
                                 </ControlTemplate.Triggers>
                             </ControlTemplate>
@@ -263,15 +263,16 @@
                                                 <Binding Path="Dashboard"/>
                                             </MultiBinding>
                                         </DataTrigger.Binding>
-                                        <Setter Property="Background" Value="#1E3A5F"/>
+                                        <Setter Property="Background" Value="#23232E"/>
+                                        <Setter Property="Foreground" Value="#F97316"/>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </Button.Style>
                         <DockPanel>
                             <TextBlock Text="&#xE80F;" FontFamily="Segoe MDL2 Assets" FontSize="16"
-                                       Foreground="#94A3B8" Width="24" TextAlignment="Center" VerticalAlignment="Center"/>
-                            <TextBlock Text="대시보드" FontSize="13" Foreground="#CBD5E1" Margin="10,0,0,0"
+                                       Width="24" TextAlignment="Center" VerticalAlignment="Center"/>
+                            <TextBlock Text="대시보드" FontSize="13" Margin="10,0,0,0"
                                        VerticalAlignment="Center"
                                        Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/>
                         </DockPanel>
@@ -289,15 +290,16 @@
                                                 <Binding Path="SystemInfo"/>
                                             </MultiBinding>
                                         </DataTrigger.Binding>
-                                        <Setter Property="Background" Value="#1E3A5F"/>
+                                        <Setter Property="Background" Value="#23232E"/>
+                                        <Setter Property="Foreground" Value="#F97316"/>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </Button.Style>
                         <DockPanel>
                             <TextBlock Text="&#xE7F4;" FontFamily="Segoe MDL2 Assets" FontSize="16"
-                                       Foreground="#94A3B8" Width="24" TextAlignment="Center" VerticalAlignment="Center"/>
-                            <TextBlock Text="시스템 정보" FontSize="13" Foreground="#CBD5E1" Margin="10,0,0,0"
+                                       Width="24" TextAlignment="Center" VerticalAlignment="Center"/>
+                            <TextBlock Text="시스템 정보" FontSize="13" Margin="10,0,0,0"
                                        VerticalAlignment="Center"
                                        Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/>
                         </DockPanel>
@@ -315,15 +317,16 @@
                                                 <Binding Path="EventViewer"/>
                                             </MultiBinding>
                                         </DataTrigger.Binding>
-                                        <Setter Property="Background" Value="#1E3A5F"/>
+                                        <Setter Property="Background" Value="#23232E"/>
+                                        <Setter Property="Foreground" Value="#F97316"/>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </Button.Style>
                         <DockPanel>
                             <TextBlock Text="&#xE7C3;" FontFamily="Segoe MDL2 Assets" FontSize="16"
-                                       Foreground="#94A3B8" Width="24" TextAlignment="Center" VerticalAlignment="Center"/>
-                            <TextBlock Text="이벤트 뷰어" FontSize="13" Foreground="#CBD5E1" Margin="10,0,0,0"
+                                       Width="24" TextAlignment="Center" VerticalAlignment="Center"/>
+                            <TextBlock Text="이벤트 뷰어" FontSize="13" Margin="10,0,0,0"
                                        VerticalAlignment="Center"
                                        Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/>
                         </DockPanel>
@@ -341,15 +344,16 @@
                                                 <Binding Path="ProcessManager"/>
                                             </MultiBinding>
                                         </DataTrigger.Binding>
-                                        <Setter Property="Background" Value="#1E3A5F"/>
+                                        <Setter Property="Background" Value="#23232E"/>
+                                        <Setter Property="Foreground" Value="#F97316"/>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </Button.Style>
                         <DockPanel>
                             <TextBlock Text="&#xE7F8;" FontFamily="Segoe MDL2 Assets" FontSize="16"
-                                       Foreground="#94A3B8" Width="24" TextAlignment="Center" VerticalAlignment="Center"/>
-                            <TextBlock Text="작업 관리자" FontSize="13" Foreground="#CBD5E1" Margin="10,0,0,0"
+                                       Width="24" TextAlignment="Center" VerticalAlignment="Center"/>
+                            <TextBlock Text="작업 관리자" FontSize="13" Margin="10,0,0,0"
                                        VerticalAlignment="Center"
                                        Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/>
                         </DockPanel>
@@ -367,15 +371,16 @@
                                                 <Binding Path="Recovery"/>
                                             </MultiBinding>
                                         </DataTrigger.Binding>
-                                        <Setter Property="Background" Value="#1E3A5F"/>
+                                        <Setter Property="Background" Value="#23232E"/>
+                                        <Setter Property="Foreground" Value="#F97316"/>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </Button.Style>
                         <DockPanel>
                             <TextBlock Text="&#xE90F;" FontFamily="Segoe MDL2 Assets" FontSize="16"
-                                       Foreground="#94A3B8" Width="24" TextAlignment="Center" VerticalAlignment="Center"/>
-                            <TextBlock Text="복구 도구" FontSize="13" Foreground="#CBD5E1" Margin="10,0,0,0"
+                                       Width="24" TextAlignment="Center" VerticalAlignment="Center"/>
+                            <TextBlock Text="복구 도구" FontSize="13" Margin="10,0,0,0"
                                        VerticalAlignment="Center"
                                        Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/>
                         </DockPanel>
@@ -393,15 +398,16 @@
                                                 <Binding Path="Registry"/>
                                             </MultiBinding>
                                         </DataTrigger.Binding>
-                                        <Setter Property="Background" Value="#1E3A5F"/>
+                                        <Setter Property="Background" Value="#23232E"/>
+                                        <Setter Property="Foreground" Value="#F97316"/>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </Button.Style>
                         <DockPanel>
                             <TextBlock Text="&#xE8D7;" FontFamily="Segoe MDL2 Assets" FontSize="16"
-                                       Foreground="#94A3B8" Width="24" TextAlignment="Center" VerticalAlignment="Center"/>
-                            <TextBlock Text="레지스트리" FontSize="13" Foreground="#CBD5E1" Margin="10,0,0,0"
+                                       Width="24" TextAlignment="Center" VerticalAlignment="Center"/>
+                            <TextBlock Text="레지스트리" FontSize="13" Margin="10,0,0,0"
                                        VerticalAlignment="Center"
                                        Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/>
                         </DockPanel>
@@ -419,15 +425,16 @@
                                                 <Binding Path="Ping"/>
                                             </MultiBinding>
                                         </DataTrigger.Binding>
-                                        <Setter Property="Background" Value="#1E3A5F"/>
+                                        <Setter Property="Background" Value="#23232E"/>
+                                        <Setter Property="Foreground" Value="#F97316"/>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </Button.Style>
                         <DockPanel>
                             <TextBlock Text="&#xE968;" FontFamily="Segoe MDL2 Assets" FontSize="16"
-                                       Foreground="#94A3B8" Width="24" TextAlignment="Center" VerticalAlignment="Center"/>
-                            <TextBlock Text="Ping 테스트" FontSize="13" Foreground="#CBD5E1" Margin="10,0,0,0"
+                                       Width="24" TextAlignment="Center" VerticalAlignment="Center"/>
+                            <TextBlock Text="Ping 테스트" FontSize="13" Margin="10,0,0,0"
                                        VerticalAlignment="Center"
                                        Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/>
                         </DockPanel>
@@ -445,15 +452,43 @@
                                                 <Binding Path="Parser"/>
                                             </MultiBinding>
                                         </DataTrigger.Binding>
-                                        <Setter Property="Background" Value="#1E3A5F"/>
+                                        <Setter Property="Background" Value="#23232E"/>
+                                        <Setter Property="Foreground" Value="#F97316"/>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </Button.Style>
                         <DockPanel>
                             <TextBlock Text="&#xE8F1;" FontFamily="Segoe MDL2 Assets" FontSize="16"
-                                       Foreground="#94A3B8" Width="24" TextAlignment="Center" VerticalAlignment="Center"/>
-                            <TextBlock Text="파서" FontSize="13" Foreground="#CBD5E1" Margin="10,0,0,0"
+                                       Width="24" TextAlignment="Center" VerticalAlignment="Center"/>
+                            <TextBlock Text="파서" FontSize="13" Margin="10,0,0,0"
+                                       VerticalAlignment="Center"
+                                       Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/>
+                        </DockPanel>
+                    </Button>
+
+                    <!-- Uties -->
+                    <Button Command="{Binding NavigateToCommand}" CommandParameter="{Binding Utilities}">
+                        <Button.Style>
+                            <Style BasedOn="{StaticResource NavBtnStyle}" TargetType="Button">
+                                <Style.Triggers>
+                                    <DataTrigger Value="True">
+                                        <DataTrigger.Binding>
+                                            <MultiBinding Converter="{StaticResource IsCurrentPage}">
+                                                <Binding Path="CurrentPage"/>
+                                                <Binding Path="Utilities"/>
+                                            </MultiBinding>
+                                        </DataTrigger.Binding>
+                                        <Setter Property="Background" Value="#23232E"/>
+                                        <Setter Property="Foreground" Value="#F97316"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                        <DockPanel>
+                            <TextBlock Text="&#xEC7A;" FontFamily="Segoe MDL2 Assets" FontSize="16"
+                                       Width="24" TextAlignment="Center" VerticalAlignment="Center"/>
+                            <TextBlock Text="Uties" FontSize="13" Margin="10,0,0,0"
                                        VerticalAlignment="Center"
                                        Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/>
                         </DockPanel>
@@ -471,15 +506,16 @@
                                                 <Binding Path="Defender"/>
                                             </MultiBinding>
                                         </DataTrigger.Binding>
-                                        <Setter Property="Background" Value="#1E3A5F"/>
+                                        <Setter Property="Background" Value="#23232E"/>
+                                        <Setter Property="Foreground" Value="#F97316"/>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </Button.Style>
                         <DockPanel>
                             <TextBlock Text="&#xEA18;" FontFamily="Segoe MDL2 Assets" FontSize="16"
-                                       Foreground="#94A3B8" Width="24" TextAlignment="Center" VerticalAlignment="Center"/>
-                            <TextBlock Text="Defender 제외" FontSize="13" Foreground="#CBD5E1" Margin="10,0,0,0"
+                                       Width="24" TextAlignment="Center" VerticalAlignment="Center"/>
+                            <TextBlock Text="Defender 제외" FontSize="13" Margin="10,0,0,0"
                                        VerticalAlignment="Center"
                                        Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/>
                         </DockPanel>
@@ -497,15 +533,16 @@
                                                 <Binding Path="Settings"/>
                                             </MultiBinding>
                                         </DataTrigger.Binding>
-                                        <Setter Property="Background" Value="#1E3A5F"/>
+                                        <Setter Property="Background" Value="#23232E"/>
+                                        <Setter Property="Foreground" Value="#F97316"/>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </Button.Style>
                         <DockPanel>
                             <TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets" FontSize="16"
-                                       Foreground="#94A3B8" Width="24" TextAlignment="Center" VerticalAlignment="Center"/>
-                            <TextBlock Text="설정" FontSize="13" Foreground="#CBD5E1" Margin="10,0,0,0"
+                                       Width="24" TextAlignment="Center" VerticalAlignment="Center"/>
+                            <TextBlock Text="설정" FontSize="13" Margin="10,0,0,0"
                                        VerticalAlignment="Center"
                                        Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/>
                         </DockPanel>
@@ -556,7 +593,7 @@
                         </Button>
                         <TextBlock VerticalAlignment="Center" FontSize="17" FontWeight="SemiBold">
                             <Run Text="업데이트 " Foreground="{DynamicResource TextPrimaryBrush}"/>
-                            <Run Text="{Binding LatestVersion}" Foreground="#3B82F6"/>
+                            <Run Text="{Binding LatestVersion}" Foreground="#F97316"/>
                         </TextBlock>
                     </DockPanel>
 
@@ -569,7 +606,7 @@
                             <DataTemplate>
                                 <DockPanel Margin="0,0,0,10">
                                     <Ellipse DockPanel.Dock="Left" Width="5" Height="5"
-                                             Fill="#3B82F6" VerticalAlignment="Top" Margin="2,5,10,0"/>
+                                             Fill="#F97316" VerticalAlignment="Top" Margin="2,5,10,0"/>
                                     <TextBlock Text="{Binding}" TextWrapping="Wrap" FontSize="13"
                                                Foreground="{DynamicResource TextPrimaryBrush}" LineHeight="20"/>
                                 </DockPanel>
@@ -597,7 +634,7 @@
                     <StackPanel Margin="0,8,0,16"
                                 Visibility="{Binding IsDownloading, Converter={StaticResource BoolToVisibility}}">
                         <ProgressBar Value="{Binding DownloadProgress}" Maximum="100"
-                                     Height="4" Foreground="#3B82F6" Margin="0,0,0,6"/>
+                                     Height="4" Foreground="#F97316" Margin="0,0,0,6"/>
                         <TextBlock Text="다운로드 중..." FontSize="11"
                                    Foreground="{DynamicResource TextSecondaryBrush}"/>
                     </StackPanel>

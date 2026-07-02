@@ -19,25 +19,25 @@
             <conv:ZeroToVisibilityConverter x:Key="ZeroToVisibilityConverter"/>
 
             <!-- Color Brushes -->
-            <SolidColorBrush x:Key="BgBrush"          Color="#1E1E2E"/>
-            <SolidColorBrush x:Key="SurfaceBrush"     Color="#2A2A3E"/>
-            <SolidColorBrush x:Key="SidebarBrush"     Color="#16162A"/>
-            <SolidColorBrush x:Key="AccentBrush"      Color="#3B82F6"/>
+            <SolidColorBrush x:Key="BgBrush"          Color="#121218"/>
+            <SolidColorBrush x:Key="SurfaceBrush"     Color="#1A1A22"/>
+            <SolidColorBrush x:Key="SidebarBrush"     Color="#0C0C10"/>
+            <SolidColorBrush x:Key="AccentBrush"      Color="#F97316"/>
             <SolidColorBrush x:Key="SuccessBrush"     Color="#22C55E"/>
             <SolidColorBrush x:Key="WarningBrush"     Color="#F59E0B"/>
             <SolidColorBrush x:Key="ErrorBrush"       Color="#EF4444"/>
-            <SolidColorBrush x:Key="TextPrimaryBrush" Color="#E2E8F0"/>
+            <SolidColorBrush x:Key="TextPrimaryBrush" Color="#F3F4F6"/>
             <SolidColorBrush x:Key="TextValueBrush"   Color="#CBD5E1"/>
-            <SolidColorBrush x:Key="TextSecondaryBrush" Color="#94A3B8"/>
-            <SolidColorBrush x:Key="BorderBrush"      Color="#374151"/>
-            <SolidColorBrush x:Key="NavActiveBrush"   Color="#1E3A5F"/>
-            <SolidColorBrush x:Key="NavHoverBrush"    Color="#252545"/>
-            <SolidColorBrush x:Key="ItemRowBrush"     Color="#1A1A2A"/>
-            <SolidColorBrush x:Key="AltRowBrush"      Color="#252535"/>
-            <SolidColorBrush x:Key="ControlBrush"     Color="#374151"/>
+            <SolidColorBrush x:Key="TextSecondaryBrush" Color="#9CA3AF"/>
+            <SolidColorBrush x:Key="BorderBrush"      Color="#2A2A35"/>
+            <SolidColorBrush x:Key="NavActiveBrush"   Color="#23232E"/>
+            <SolidColorBrush x:Key="NavHoverBrush"    Color="#1D1D26"/>
+            <SolidColorBrush x:Key="ItemRowBrush"     Color="#17171E"/>
+            <SolidColorBrush x:Key="AltRowBrush"      Color="#1F1F29"/>
+            <SolidColorBrush x:Key="ControlBrush"     Color="#2E2E3A"/>
             <SolidColorBrush x:Key="WarningBgBrush"   Color="#3A2010"/>
-            <SolidColorBrush x:Key="ConsoleBgBrush"   Color="#0D0D1A"/>
-            <SolidColorBrush x:Key="ConsoleTextBrush" Color="#94A3B8"/>
+            <SolidColorBrush x:Key="ConsoleBgBrush"   Color="#0A0A0E"/>
+            <SolidColorBrush x:Key="ConsoleTextBrush" Color="#9CA3AF"/>
 
             <!-- Font Size Resources (DynamicResource로 런타임 변경 가능) -->
             <sys:Double x:Key="FontSm">11</sys:Double>
@@ -48,6 +48,8 @@
             <!-- Card Style -->
             <Style x:Key="CardStyle" TargetType="Border">
                 <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
                 <Setter Property="CornerRadius" Value="10"/>
                 <Setter Property="Padding" Value="20"/>
             </Style>
@@ -79,20 +81,20 @@
             <!-- ProgressBar Styles -->
             <Style x:Key="MetricProgressStyle" TargetType="ProgressBar">
                 <Setter Property="Height" Value="4"/>
-                <Setter Property="Foreground" Value="#3B82F6"/>
-                <Setter Property="Background" Value="#374151"/>
+                <Setter Property="Foreground" Value="#F97316"/>
+                <Setter Property="Background" Value="#2A2A35"/>
                 <Setter Property="BorderThickness" Value="0"/>
             </Style>
             <Style x:Key="DiskProgressStyle" TargetType="ProgressBar">
                 <Setter Property="Height" Value="6"/>
-                <Setter Property="Foreground" Value="#3B82F6"/>
-                <Setter Property="Background" Value="#374151"/>
+                <Setter Property="Foreground" Value="#F97316"/>
+                <Setter Property="Background" Value="#2A2A35"/>
                 <Setter Property="BorderThickness" Value="0"/>
             </Style>
 
             <!-- Button Styles -->
             <Style x:Key="PrimaryButtonStyle" TargetType="Button">
-                <Setter Property="Background" Value="#3B82F6"/>
+                <Setter Property="Background" Value="#F97316"/>
                 <Setter Property="Foreground" Value="White"/>
                 <Setter Property="Padding" Value="16,8"/>
                 <Setter Property="FontSize" Value="{DynamicResource FontLg}"/>
@@ -108,10 +110,10 @@
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="Background" Value="#2563EB"/>
+                                    <Setter Property="Background" Value="#EA580C"/>
                                 </Trigger>
                                 <Trigger Property="IsEnabled" Value="False">
-                                    <Setter Property="Background" Value="#374151"/>
+                                    <Setter Property="Background" Value="#2A2A35"/>
                                     <Setter Property="Foreground" Value="#64748B"/>
                                 </Trigger>
                             </ControlTemplate.Triggers>
@@ -121,7 +123,7 @@
             </Style>
 
             <Style x:Key="SecondaryButtonStyle" TargetType="Button">
-                <Setter Property="Background" Value="#374151"/>
+                <Setter Property="Background" Value="#2A2A35"/>
                 <Setter Property="Foreground" Value="#CBD5E1"/>
                 <Setter Property="Padding" Value="12,7"/>
                 <Setter Property="FontSize" Value="{DynamicResource FontMd}"/>
@@ -237,7 +239,7 @@
                                     <Setter TargetName="Bd" Property="Background" Value="{DynamicResource ControlBrush}"/>
                                 </Trigger>
                                 <Trigger Property="IsSelected" Value="True">
-                                    <Setter TargetName="Bd" Property="Background" Value="#1E3A5F"/>
+                                    <Setter TargetName="Bd" Property="Background" Value="#23232E"/>
                                     <Setter Property="Foreground" Value="#E2E8F0"/>
                                 </Trigger>
                             </ControlTemplate.Triggers>
@@ -309,10 +311,10 @@
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="Bd" Property="BorderBrush" Value="#60A5FA"/>
+                                    <Setter TargetName="Bd" Property="BorderBrush" Value="#FB923C"/>
                                 </Trigger>
                                 <Trigger Property="IsDropDownOpen" Value="True">
-                                    <Setter TargetName="Bd" Property="BorderBrush" Value="#60A5FA"/>
+                                    <Setter TargetName="Bd" Property="BorderBrush" Value="#FB923C"/>
                                     <Setter TargetName="Bd" Property="CornerRadius" Value="4,4,0,0"/>
                                 </Trigger>
                             </ControlTemplate.Triggers>
@@ -328,7 +330,7 @@
                         <Setter Property="Background" Value="Transparent"/>
                         <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
                         <Setter Property="CaretBrush" Value="{DynamicResource TextPrimaryBrush}"/>
-                        <Setter Property="SelectionBrush" Value="#3B82F6"/>
+                        <Setter Property="SelectionBrush" Value="#F97316"/>
                         <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
                         <Setter Property="BorderThickness" Value="0"/>
                         <Setter Property="Padding" Value="0"/>
@@ -394,7 +396,7 @@
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="Bd" Property="BorderBrush" Value="#60A5FA"/>
+                                    <Setter TargetName="Bd" Property="BorderBrush" Value="#FB923C"/>
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
@@ -402,32 +404,33 @@
                 </Setter>
             </Style>
 
-            <!-- DataGrid Styles -->
+            <!-- DataGrid Styles (앱 전체 공용 그리드 스타일 — 상세 규칙은 CLAUDE.md 참고) -->
             <Style x:Key="DataGridHeaderStyle" TargetType="DataGridColumnHeader">
                 <Setter Property="Background" Value="{DynamicResource AltRowBrush}"/>
                 <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
-                <Setter Property="Padding" Value="12,8"/>
-                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="Padding" Value="10,10"/>
+                <Setter Property="FontSize" Value="13"/>
                 <Setter Property="FontWeight" Value="SemiBold"/>
                 <Setter Property="BorderThickness" Value="0,0,0,1"/>
-                <Setter Property="BorderBrush" Value="#374151"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
             </Style>
             <Style x:Key="DataGridRowStyle" TargetType="DataGridRow">
                 <Setter Property="Foreground" Value="{DynamicResource TextValueBrush}"/>
-                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="FontSize" Value="13"/>
+                <Setter Property="MinHeight" Value="38"/>
                 <Setter Property="BorderThickness" Value="0"/>
             </Style>
             <Style x:Key="DataGridCellStyle" TargetType="DataGridCell">
-                <Setter Property="Padding" Value="12,0"/>
+                <Setter Property="Padding" Value="10,0"/>
                 <Setter Property="BorderThickness" Value="0"/>
                 <Setter Property="Background" Value="Transparent"/>
                 <Setter Property="Foreground" Value="{DynamicResource TextValueBrush}"/>
-                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="FontSize" Value="13"/>
                 <Setter Property="VerticalContentAlignment" Value="Center"/>
                 <Style.Triggers>
                     <Trigger Property="IsSelected" Value="True">
-                        <Setter Property="Background" Value="#1E3A5F"/>
-                        <Setter Property="Foreground" Value="#E2E8F0"/>
+                        <Setter Property="Background" Value="{DynamicResource NavActiveBrush}"/>
+                        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
                     </Trigger>
                 </Style.Triggers>
             </Style>
@@ -461,7 +464,7 @@
                                                             <Setter TargetName="ThumbBd" Property="Background" Value="#6B7280"/>
                                                         </Trigger>
                                                         <Trigger Property="IsDragging" Value="True">
-                                                            <Setter TargetName="ThumbBd" Property="Background" Value="#60A5FA"/>
+                                                            <Setter TargetName="ThumbBd" Property="Background" Value="#FB923C"/>
                                                         </Trigger>
                                                     </ControlTemplate.Triggers>
                                                 </ControlTemplate>
@@ -511,7 +514,7 @@
                                                                     <Setter TargetName="ThumbBd" Property="Background" Value="#6B7280"/>
                                                                 </Trigger>
                                                                 <Trigger Property="IsDragging" Value="True">
-                                                                    <Setter TargetName="ThumbBd" Property="Background" Value="#60A5FA"/>
+                                                                    <Setter TargetName="ThumbBd" Property="Background" Value="#FB923C"/>
                                                                 </Trigger>
                                                             </ControlTemplate.Triggers>
                                                         </ControlTemplate>
@@ -566,6 +569,9 @@
             </DataTemplate>
 <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
                 <views:SettingsView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:UtilitiesViewModel}">
+                <views:UtilitiesView/>
             </DataTemplate>
 
         </ResourceDictionary>

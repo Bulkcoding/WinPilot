@@ -11,7 +11,7 @@
 
                     <!-- 로고 -->
                     <TextBlock Text="WinPilot" FontSize="40" FontWeight="Bold"
-                               Foreground="#3B82F6" HorizontalAlignment="Center"/>
+                               Foreground="#F97316" HorizontalAlignment="Center"/>
                     <TextBlock Text="{Binding Version}" FontSize="14" Foreground="#64748B"
                                HorizontalAlignment="Center" Margin="0,4,0,0"/>
 

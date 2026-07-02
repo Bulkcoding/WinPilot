@@ -45,8 +45,8 @@
                                     Visibility="{Binding DataContext.UpdateAvailable, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVisibility}}">
                             <TextBlock Text="최신 버전" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="13" Width="80"/>
                             <TextBlock Text="{Binding DataContext.LatestVersion, RelativeSource={RelativeSource AncestorType=Window}}"
-                                       Foreground="#3B82F6" FontSize="13" FontWeight="SemiBold" FontFamily="Consolas"/>
-                            <TextBlock Text=" · 업데이트 있음" Foreground="#3B82F6" FontSize="12" VerticalAlignment="Center"/>
+                                       Foreground="#F97316" FontSize="13" FontWeight="SemiBold" FontFamily="Consolas"/>
+                            <TextBlock Text=" · 업데이트 있음" Foreground="#F97316" FontSize="12" VerticalAlignment="Center"/>
                         </StackPanel>
                     </StackPanel>
                     <!-- 업데이트 버튼 -->

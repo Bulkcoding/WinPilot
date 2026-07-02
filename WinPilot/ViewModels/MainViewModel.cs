@@ -17,6 +17,7 @@ public partial class MainViewModel : ObservableObject
     public PingViewModel         Ping            { get; } = new();
     public DefenderViewModel     Defender        { get; } = new();
     public ParserViewModel       Parser          { get; } = new();
+    public UtilitiesViewModel    Utilities       { get; } = new();
     public RegistryViewModel     Registry        { get; } = new();
     public SettingsViewModel     Settings        { get; } = SettingsViewModel.Current;
 

@@ -24,8 +24,8 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="Bd" Property="BorderBrush" Value="#3B82F6"/>
-                                <Setter TargetName="Tb" Property="Foreground"   Value="#3B82F6"/>
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="#F97316"/>
+                                <Setter TargetName="Tb" Property="Foreground"   Value="#F97316"/>
                             </Trigger>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="Tb" Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>

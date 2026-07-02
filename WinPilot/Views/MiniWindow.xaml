@@ -8,7 +8,7 @@
         Topmost="True"
         WindowStartupLocation="CenterScreen"
         Background="{DynamicResource SurfaceBrush}"
-        FontFamily="Segoe UI">
+        FontFamily="Pretendard, 맑은 고딕, Segoe UI">
 
     <StackPanel Margin="16,14,16,16">
 

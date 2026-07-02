@@ -29,6 +29,15 @@ public partial class App : Application
         }
 
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        DispatcherUnhandledException += (_, ex) =>
+        {
+            System.IO.File.WriteAllText(
+                System.IO.Path.Combine(System.IO.Path.GetTempPath(), "WinPilot_crash.log"),
+                ex.Exception.ToString());
+            MessageBox.Show(ex.Exception.ToString(), "WinPilot 오류",
+                MessageBoxButton.OK, MessageBoxImage.Error);
+            ex.Handled = true;
+        };
         base.OnStartup(e);
     }
 

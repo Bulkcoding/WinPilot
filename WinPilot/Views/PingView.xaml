@@ -76,7 +76,7 @@
                 <ProgressBar DockPanel.Dock="Right" Width="80" Height="4"
                              IsIndeterminate="{Binding IsRunning}"
                              Visibility="{Binding IsRunning, Converter={StaticResource BoolToVisibility}}"
-                             Foreground="#3B82F6" VerticalAlignment="Center"/>
+                             Foreground="#F97316" VerticalAlignment="Center"/>
                 <TextBlock Text="{Binding Summary}"
                            Foreground="{DynamicResource TextSecondaryBrush}"
                            FontSize="13" FontFamily="Consolas" VerticalAlignment="Center"/>
