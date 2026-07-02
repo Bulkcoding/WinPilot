@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Management;
 using System.Windows;
-using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
@@ -44,8 +43,11 @@ public partial class ProcessGroupItem : ObservableObject
     public int    GroupKey    { get; init; }   // 그룹 식별자 = 앱 트리 루트 PID (이름 대신 사용)
     public int    ChildCount  { get; init; } = 1;
     public bool   IsApp       { get; init; }   // 창 있는 앱이면 true → "앱" 섹션, 아니면 "백그라운드"
-    public string Section     { get; init; } = "";   // 그룹핑 키 ("앱" / "백그라운드 프로세스")
     public List<ProcessGroupItem> Children { get; init; } = [];
+
+    // 섹션 헤더 전용 (앱 / 백그라운드 프로세스 구분 배너 행)
+    public bool   IsSectionHeader { get; init; }
+    public string SectionTitle    { get; init; } = "";
 
     // 자식 전용
     public int    Pid         { get; init; }
@@ -114,10 +116,6 @@ public partial class ProcessManagerViewModel : ObservableObject
 
     public ProcessManagerViewModel()
     {
-        // 프로세스 목록을 "앱 / 백그라운드 프로세스" 섹션으로 그룹핑 (작업관리자 스타일)
-        var view = CollectionViewSource.GetDefaultView(FlatGroups);
-        view.GroupDescriptions.Add(new PropertyGroupDescription(nameof(ProcessGroupItem.Section)));
-
         _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
         _timer.Tick += async (_, _) => await RefreshCurrentAsync();
         _ = RefreshCurrentAsync();
@@ -195,8 +193,15 @@ public partial class ProcessManagerViewModel : ObservableObject
         _allGroups = _allGroups.OrderByDescending(g => g.IsApp).ToList();
 
         var newItems = new List<ProcessGroupItem>();
+        bool addedApp = false, addedBg = false;
         foreach (var group in _allGroups)
         {
+            // 각 섹션 첫 그룹 앞에 헤더 배너 행 삽입 (작업관리자 스타일)
+            if (group.IsApp && !addedApp)
+            { newItems.Add(new ProcessGroupItem { IsSectionHeader = true, SectionTitle = "앱" }); addedApp = true; }
+            else if (!group.IsApp && !addedBg)
+            { newItems.Add(new ProcessGroupItem { IsSectionHeader = true, SectionTitle = "백그라운드 프로세스" }); addedBg = true; }
+
             newItems.Add(group);
             if (group.IsExpanded)
                 newItems.AddRange(group.Children);
@@ -273,8 +278,7 @@ public partial class ProcessManagerViewModel : ObservableObject
                 var groupName = rootRow.Name;
 
                 // 트리 내 하나라도 창이 있으면 "앱", 아니면 "백그라운드 프로세스" (작업관리자 분류)
-                bool   isApp   = g.Any(r => r.HasWindow);
-                string section = isApp ? "앱" : "백그라운드 프로세스";
+                bool isApp = g.Any(r => r.HasWindow);
 
                 var children = g
                     .OrderByDescending(r => r.CpuPercent)
@@ -287,7 +291,6 @@ public partial class ProcessManagerViewModel : ObservableObject
                         Description = r.Description,
                         Pid         = r.Pid,
                         ParentName  = groupName,
-                        Section     = section,   // 자식도 부모와 같은 섹션에 속해야 함께 묶임
                         IconSource  = GetIconForPath(r.ExePath)
                     }).ToList();
 
@@ -298,7 +301,6 @@ public partial class ProcessManagerViewModel : ObservableObject
                     GroupKey    = g.Key,
                     ChildCount  = children.Count,
                     IsApp       = isApp,
-                    Section     = section,
                     CpuPercent  = Math.Round(children.Sum(r => r.CpuPercent), 1),
                     MemoryMB    = Math.Round(children.Sum(r => r.MemoryMB), 1),
                     Status      = children.All(r => r.Status == "실행 중") ? "실행 중" : "혼합",

@@ -25,6 +25,28 @@
             <Setter Property="TextTrimming"        Value="CharacterEllipsis"/>
         </Style>
 
+        <!-- 프로세스 그리드 행: 섹션 헤더(앱/백그라운드) 행은 전체폭 배너로 템플릿 교체.
+             일반 행은 공용 DataGridRowStyle 그대로 → 컬럼 정렬 유지. -->
+        <Style x:Key="ProcRowStyle" TargetType="DataGridRow" BasedOn="{StaticResource DataGridRowStyle}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsSectionHeader}" Value="True">
+                    <Setter Property="IsHitTestVisible" Value="False"/>
+                    <Setter Property="Focusable" Value="False"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="DataGridRow">
+                                <Border Background="{DynamicResource AltRowBrush}" Padding="12,7"
+                                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                                    <TextBlock Text="{Binding SectionTitle}" FontWeight="SemiBold" FontSize="12"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                </Border>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
         <!-- 서비스 상태 색상 -->
         <Style x:Key="StateCell" TargetType="TextBlock">
             <Setter Property="HorizontalAlignment" Value="Left"/>
@@ -154,7 +176,7 @@
                               BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}"
                               ColumnHeaderStyle="{StaticResource DataGridHeaderStyle}"
                               CellStyle="{StaticResource DataGridCellStyle}"
-                              RowStyle="{StaticResource DataGridRowStyle}"
+                              RowStyle="{StaticResource ProcRowStyle}"
                               EnableRowVirtualization="True" VirtualizingPanel.IsVirtualizing="True"
                               Sorting="ProcessDataGrid_Sorting">
                         <DataGrid.Resources>
@@ -167,21 +189,6 @@
                             <SolidColorBrush x:Key="{x:Static SystemColors.ControlBrushKey}"        Color="#3A3A48"/>
                             <SolidColorBrush x:Key="{x:Static SystemColors.ControlTextBrushKey}"    Color="White"/>
                         </DataGrid.Resources>
-
-                        <!-- 앱 / 백그라운드 프로세스 섹션 헤더 (작업관리자 스타일) -->
-                        <DataGrid.GroupStyle>
-                            <GroupStyle HidesIfEmpty="True">
-                                <GroupStyle.HeaderTemplate>
-                                    <DataTemplate>
-                                        <Border Background="{DynamicResource AltRowBrush}" Padding="12,7"
-                                                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
-                                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="12"
-                                                       Foreground="{DynamicResource TextPrimaryBrush}"/>
-                                        </Border>
-                                    </DataTemplate>
-                                </GroupStyle.HeaderTemplate>
-                            </GroupStyle>
-                        </DataGrid.GroupStyle>
 
                         <DataGrid.Columns>
 
