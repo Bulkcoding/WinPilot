@@ -1,7 +1,11 @@
+using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.IO;
 using System.Management;
 using System.Windows;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -12,14 +16,14 @@ namespace WinPilot.ViewModels;
 
 public record ProcessRow(
     string Name, int Pid, double CpuPercent, double MemoryMB,
-    string Status, string Description, string UserName, string WindowTitle);
+    string Status, string Description, string UserName, string WindowTitle, string ExePath);
 
 public record AppHistoryRow(
-    string Name, string CpuTimeText, double PeakMemoryMB, int InstanceCount);
+    string Name, string CpuTimeText, double PeakMemoryMB, int InstanceCount, ImageSource? IconSource = null);
 
 public record ProcessDetailRow(
     string Name, int Pid, string Status, double CpuPercent, double MemoryMB,
-    string UserName, string Description, string Path);
+    string UserName, string Description, string Path, ImageSource? IconSource = null);
 
 /// <summary>프로세스 탭의 그룹 헤더 또는 자식 행</summary>
 public partial class ProcessGroupItem : ObservableObject
@@ -42,6 +46,8 @@ public partial class ProcessGroupItem : ObservableObject
     public int    Pid         { get; init; }
     public string ParentName  { get; init; } = "";
 
+    public ImageSource? IconSource { get; init; }
+
     // 계산 프로퍼티
     public bool   IsChild      => !IsGroup;
     public bool   HasChildren  => IsGroup && ChildCount > 1;
@@ -52,9 +58,10 @@ public partial class ProcessGroupItem : ObservableObject
 
 public partial class ServiceRow : ObservableObject
 {
-    public string Name        { get; init; } = "";
-    public string DisplayName { get; init; } = "";
-    public string Description { get; init; } = "";
+    public string        Name        { get; init; } = "";
+    public string        DisplayName { get; init; } = "";
+    public string        Description { get; init; } = "";
+    public ImageSource?  IconSource  { get; init; }
     [ObservableProperty] private string _state = "";
     public string StartMode   { get; init; } = "";
     public int    Pid         { get; init; }
@@ -229,6 +236,8 @@ public partial class ProcessManagerViewModel : ObservableObject
             .GroupBy(r => r.Name, StringComparer.OrdinalIgnoreCase)
             .Select(g =>
             {
+                var firstExe = g.FirstOrDefault()?.ExePath ?? "";
+
                 var children = g
                     .OrderByDescending(r => r.CpuPercent)
                     .Select(r => new ProcessGroupItem
@@ -239,7 +248,8 @@ public partial class ProcessManagerViewModel : ObservableObject
                         Status      = r.Status,
                         Description = r.Description,
                         Pid         = r.Pid,
-                        ParentName  = g.Key
+                        ParentName  = g.Key,
+                        IconSource  = GetIconForPath(r.ExePath)
                     }).ToList();
 
                 return new ProcessGroupItem
@@ -252,11 +262,39 @@ public partial class ProcessManagerViewModel : ObservableObject
                     Status      = children.All(r => r.Status == "실행 중") ? "실행 중" : "혼합",
                     Description = children.FirstOrDefault(r => !string.IsNullOrEmpty(r.Description))?.Description ?? "",
                     Children    = children,
-                    IsExpanded  = expanded?.Contains(g.Key) ?? false
+                    IsExpanded  = expanded?.Contains(g.Key) ?? false,
+                    IconSource  = GetIconForPath(firstExe)
                 };
             })
             .OrderByDescending(g => g.CpuPercent)
             .ToList();
+    }
+
+    /// <summary>
+    /// 작업관리자 "메모리" 열과 동일한 값(활성 개인 작업 집합, Active Private Working Set)을
+    /// PID → MB 로 한 번에 조회한다. .NET 의 PrivateMemorySize64(Private Bytes) 나
+    /// WorkingSet64(공유 포함 워킹셋) 는 작업관리자와 다른 값이라 WMI 성능 카운터를 쓴다.
+    /// </summary>
+    private static Dictionary<int, double> QueryPrivateWorkingSet()
+    {
+        var map = new Dictionary<int, double>();
+        try
+        {
+            using var searcher = new ManagementObjectSearcher(
+                "SELECT IDProcess, WorkingSetPrivate FROM Win32_PerfRawData_PerfProc_Process");
+            foreach (ManagementObject mo in searcher.Get())
+            {
+                try
+                {
+                    int    pid   = Convert.ToInt32(mo["IDProcess"]);
+                    double bytes = Convert.ToDouble(mo["WorkingSetPrivate"]);
+                    map[pid] = bytes / 1_048_576.0;
+                }
+                catch { /* 개별 항목 파싱 실패 무시 */ }
+            }
+        }
+        catch { /* WMI 조회 실패 시 빈 맵 → 호출부에서 WorkingSet64 로 폴백 */ }
+        return map;
     }
 
     private (List<ProcessRow> rows, Dictionary<int, (DateTime, TimeSpan)> cpuMap) BuildProcessRows()
@@ -264,6 +302,7 @@ public partial class ProcessManagerViewModel : ObservableObject
         var now     = DateTime.UtcNow;
         var cpuMap  = new Dictionary<int, (DateTime, TimeSpan)>();
         var rows    = new List<ProcessRow>();
+        var privWs  = QueryPrivateWorkingSet();
 
         foreach (var p in Process.GetProcesses())
         {
@@ -280,15 +319,20 @@ public partial class ProcessManagerViewModel : ObservableObject
                         cpu = Math.Clamp((cpuTime - prev.cpuTime).TotalSeconds / (elapsed * CpuCount) * 100, 0, 100);
                 }
 
+                string? exePath = null;
+                try { exePath = p.MainModule?.FileName; } catch { }
+
                 rows.Add(new ProcessRow(
                     Name:        p.ProcessName,
                     Pid:         p.Id,
                     CpuPercent:  Math.Round(cpu, 1),
-                    MemoryMB:    Math.Round(p.PrivateMemorySize64 / 1_048_576.0, 1),
+                    MemoryMB:    Math.Round(
+                                     privWs.TryGetValue(p.Id, out var wsp) ? wsp : p.WorkingSet64 / 1_048_576.0, 1),
                     Status:      p.Responding ? "실행 중" : "응답 없음",
                     Description: SafeFileDescription(p),
                     UserName:    "",   // 별도 WMI 조회 생략 (성능)
-                    WindowTitle: p.MainWindowTitle));
+                    WindowTitle: p.MainWindowTitle,
+                    ExePath:     exePath ?? ""));
             }
             catch { /* 접근 거부 or 프로세스 종료 */ }
         }
@@ -363,13 +407,19 @@ public partial class ProcessManagerViewModel : ObservableObject
     private static List<AppHistoryRow> BuildAppHistoryRows()
     {
         var groups = new Dictionary<string, (TimeSpan cpu, double mem, int count)>(StringComparer.OrdinalIgnoreCase);
+        var pathMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var privWs = QueryPrivateWorkingSet();
         foreach (var p in Process.GetProcesses())
         {
             try
             {
                 var key = p.ProcessName;
+                if (!pathMap.ContainsKey(key))
+                {
+                    try { pathMap[key] = p.MainModule?.FileName ?? ""; } catch { }
+                }
                 var cpu = p.TotalProcessorTime;
-                var mem = p.PrivateMemorySize64 / 1_048_576.0;
+                var mem = privWs.TryGetValue(p.Id, out var wsp) ? wsp : p.WorkingSet64 / 1_048_576.0;
                 if (groups.TryGetValue(key, out var g))
                     groups[key] = (g.cpu + cpu, Math.Max(g.mem, mem), g.count + 1);
                 else
@@ -379,10 +429,11 @@ public partial class ProcessManagerViewModel : ObservableObject
         }
         return groups
             .Select(kv => new AppHistoryRow(
-                Name:         kv.Key,
-                CpuTimeText:  $"{(int)kv.Value.cpu.TotalHours:D2}:{kv.Value.cpu.Minutes:D2}:{kv.Value.cpu.Seconds:D2}",
-                PeakMemoryMB: Math.Round(kv.Value.mem, 1),
-                InstanceCount: kv.Value.count))
+                Name:          kv.Key,
+                CpuTimeText:   $"{(int)kv.Value.cpu.TotalHours:D2}:{kv.Value.cpu.Minutes:D2}:{kv.Value.cpu.Seconds:D2}",
+                PeakMemoryMB:  Math.Round(kv.Value.mem, 1),
+                InstanceCount: kv.Value.count,
+                IconSource:    pathMap.TryGetValue(kv.Key, out var p) ? GetIconForPath(p) : null))
             .ToList();
     }
 
@@ -402,14 +453,15 @@ public partial class ProcessManagerViewModel : ObservableObject
                         r.Name.Contains(filter, StringComparison.OrdinalIgnoreCase) ||
                         r.Pid.ToString().Contains(filter))
             .Select(r => new ProcessDetailRow(
-                Name:        r.Name,
-                Pid:         r.Pid,
-                Status:      r.Status,
-                CpuPercent:  r.CpuPercent,
-                MemoryMB:    r.MemoryMB,
-                UserName:    userMap.GetValueOrDefault(r.Pid, ""),
-                Description: r.Description,
-                Path:        SafeProcessPath(r.Pid)))
+                    Name:        r.Name,
+                    Pid:         r.Pid,
+                    Status:      r.Status,
+                    CpuPercent:  r.CpuPercent,
+                    MemoryMB:    r.MemoryMB,
+                    UserName:    userMap.GetValueOrDefault(r.Pid, ""),
+                    Description: r.Description,
+                    Path:        r.ExePath,
+                    IconSource:  GetIconForPath(r.ExePath)))
             .OrderBy(r => r.Name)
             .ToList();
 
@@ -464,9 +516,10 @@ public partial class ProcessManagerViewModel : ObservableObject
         try
         {
             using var searcher = new ManagementObjectSearcher(
-                "SELECT Name,DisplayName,Description,State,StartMode,ProcessId FROM Win32_Service");
+                "SELECT Name,DisplayName,Description,State,StartMode,ProcessId,PathName FROM Win32_Service");
             foreach (ManagementObject obj in searcher.Get())
             {
+                var exePath = ParseExePath(obj["PathName"]?.ToString() ?? "");
                 rows.Add(new ServiceRow
                 {
                     Name        = obj["Name"]?.ToString()        ?? "",
@@ -474,12 +527,30 @@ public partial class ProcessManagerViewModel : ObservableObject
                     Description = obj["Description"]?.ToString() ?? "",
                     State       = obj["State"]?.ToString()       ?? "",
                     StartMode   = obj["StartMode"]?.ToString()   ?? "",
-                    Pid         = obj["ProcessId"] is uint pid ? (int)pid : 0
+                    Pid         = obj["ProcessId"] is uint pid ? (int)pid : 0,
+                    IconSource  = GetIconForPath(exePath)
                 });
             }
         }
         catch { }
         return rows;
+    }
+
+    private static string ParseExePath(string servicePath)
+    {
+        if (string.IsNullOrEmpty(servicePath)) return "";
+        servicePath = servicePath.Trim();
+        if (servicePath.StartsWith('"'))
+        {
+            var end = servicePath.IndexOf('"', 1);
+            if (end > 0) return servicePath[1..end];
+        }
+        else
+        {
+            var space = servicePath.IndexOf(' ');
+            return space > 0 ? servicePath[..space] : servicePath;
+        }
+        return servicePath;
     }
 
     [RelayCommand]
@@ -524,6 +595,34 @@ public partial class ProcessManagerViewModel : ObservableObject
     });
 
     // ─── 유틸 ────────────────────────────────────────────────────────────────
+
+    private static readonly ConcurrentDictionary<string, ImageSource?> IconCache = new(StringComparer.OrdinalIgnoreCase);
+
+    private static ImageSource? GetIconForPath(string exePath)
+    {
+        if (string.IsNullOrEmpty(exePath)) return null;
+        return IconCache.GetOrAdd(exePath, path =>
+        {
+            try
+            {
+                using var icon = System.Drawing.Icon.ExtractAssociatedIcon(path);
+                if (icon == null) return null;
+                using var bitmap = icon.ToBitmap();
+                using var ms = new MemoryStream();
+                bitmap.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
+                ms.Position = 0;
+                var image = new BitmapImage();
+                image.BeginInit();
+                image.StreamSource = ms;
+                image.CacheOption = BitmapCacheOption.OnLoad;
+                image.DecodePixelWidth = 16;
+                image.EndInit();
+                image.Freeze();
+                return image;
+            }
+            catch { return null; }
+        });
+    }
 
     private static string SafeFileDescription(Process p)
     {
