@@ -47,6 +47,18 @@
             </Style.Triggers>
         </Style>
 
+        <!-- 프로세스 그리드 셀: 선택 시 테마 반응 색(SelectionBrush) 사용.
+             공용 DataGridCellStyle 은 선택 시 NavActiveBrush(테마 미반응 다크)를 칠해
+             라이트 테마에서 선택 행이 어둡게 보였음 → 여기서 오버라이드. -->
+        <Style x:Key="ProcCellStyle" TargetType="DataGridCell" BasedOn="{StaticResource DataGridCellStyle}">
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource SelectionBrush}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource SelectionTextBrush}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
         <!-- 서비스 상태 색상 -->
         <Style x:Key="StateCell" TargetType="TextBlock">
             <Setter Property="HorizontalAlignment" Value="Left"/>
@@ -175,21 +187,12 @@
                               RowBackground="{DynamicResource SurfaceBrush}"
                               BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}"
                               ColumnHeaderStyle="{StaticResource DataGridHeaderStyle}"
-                              CellStyle="{StaticResource DataGridCellStyle}"
+                              CellStyle="{StaticResource ProcCellStyle}"
                               RowStyle="{StaticResource ProcRowStyle}"
                               EnableRowVirtualization="True" VirtualizingPanel.IsVirtualizing="True"
                               Sorting="ProcessDataGrid_Sorting">
-                        <DataGrid.Resources>
-                            <!-- 이 그리드는 SelectionUnit 기본값(FullRow)이라 선택 시 DataGridRow 기본
-                                 템플릿이 SystemColors 를 직접 참조한다. 안 바꾸면 선택 배경이 거의
-                                 검정으로 보여 선택 행이 안 보임. 선택 느낌만 주도록 연한 회색으로
-                                 오버라이드한다. (CLAUDE.md DataGrid 규칙) -->
-                            <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}"     Color="#3A3A48"/>
-                            <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="White"/>
-                            <SolidColorBrush x:Key="{x:Static SystemColors.ControlBrushKey}"        Color="#3A3A48"/>
-                            <SolidColorBrush x:Key="{x:Static SystemColors.ControlTextBrushKey}"    Color="White"/>
-                        </DataGrid.Resources>
-
+                        <!-- FullRow 선택색은 App 리소스의 SystemColors 오버라이드로 테마별 지정됨
+                             (SettingsViewModel.ApplyTheme: 다크 #52525E / 라이트 #C7C4C1). -->
                         <DataGrid.Columns>
 
                             <!-- 이름 (토글 버튼 + 이름 + 카운트 뱃지) -->
@@ -217,7 +220,7 @@
                                                     CommandParameter="{Binding}"
                                                     Visibility="{Binding HasChildren, Converter={StaticResource BoolToVisibility}}">
                                                 <TextBlock FontSize="9" VerticalAlignment="Center" HorizontalAlignment="Center"
-                                                           Opacity="0.6">
+                                                           Foreground="{DynamicResource TextSecondaryBrush}">
                                                     <TextBlock.Style>
                                                         <Style TargetType="TextBlock">
                                                             <Setter Property="Text" Value="▶"/>

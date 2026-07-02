@@ -35,6 +35,9 @@
             <SolidColorBrush x:Key="BorderBrush"      Color="#2A2A35"/>
             <SolidColorBrush x:Key="NavActiveBrush"   Color="#23232E"/>
             <SolidColorBrush x:Key="NavHoverBrush"    Color="#1D1D26"/>
+            <!-- 그리드 행 선택색 (오렌지 액센트 계열, ApplyTheme 에서도 동일 지정) -->
+            <SolidColorBrush x:Key="SelectionBrush"     Color="#F5A35F"/>
+            <SolidColorBrush x:Key="SelectionTextBrush" Color="#1E293B"/>
             <SolidColorBrush x:Key="ItemRowBrush"     Color="#17171E"/>
             <SolidColorBrush x:Key="AltRowBrush"      Color="#1F1F29"/>
             <SolidColorBrush x:Key="ControlBrush"     Color="#2E2E3A"/>

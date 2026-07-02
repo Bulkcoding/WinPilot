@@ -229,6 +229,13 @@ public partial class SettingsViewModel : ObservableObject
             res["WarningBgBrush"]     = new SolidColorBrush(Color.FromRgb(0x3A, 0x20, 0x10));
             res["ConsoleBgBrush"]     = new SolidColorBrush(Color.FromRgb(0x0D, 0x0D, 0x1A));
             res["ConsoleTextBrush"]   = new SolidColorBrush(Color.FromRgb(0x94, 0xA3, 0xB8));
+            // 선택(FullRow) 하이라이트 — 오렌지 액센트 계열 + 어두운 글자 (다크/라이트 공통)
+            res["SelectionBrush"]     = new SolidColorBrush(Color.FromRgb(0xF5, 0xA3, 0x5F));
+            res["SelectionTextBrush"] = new SolidColorBrush(Color.FromRgb(0x1E, 0x29, 0x3B));
+            res[System.Windows.SystemColors.HighlightBrushKey]     = new SolidColorBrush(Color.FromRgb(0xF5, 0xA3, 0x5F));
+            res[System.Windows.SystemColors.HighlightTextBrushKey] = new SolidColorBrush(Color.FromRgb(0x1E, 0x29, 0x3B));
+            res[System.Windows.SystemColors.ControlBrushKey]       = new SolidColorBrush(Color.FromRgb(0xF5, 0xA3, 0x5F));
+            res[System.Windows.SystemColors.ControlTextBrushKey]   = new SolidColorBrush(Color.FromRgb(0x1E, 0x29, 0x3B));
         }
         else
         {
@@ -245,6 +252,13 @@ public partial class SettingsViewModel : ObservableObject
             res["WarningBgBrush"]     = new SolidColorBrush(Color.FromRgb(0xFE, 0xF3, 0xC7));
             res["ConsoleBgBrush"]     = new SolidColorBrush(Color.FromRgb(0xF8, 0xFA, 0xFC));
             res["ConsoleTextBrush"]   = new SolidColorBrush(Color.FromRgb(0x47, 0x55, 0x69));
+            // 선택(FullRow) 하이라이트 — 오렌지 액센트 계열 + 어두운 글자 (다크/라이트 공통)
+            res["SelectionBrush"]     = new SolidColorBrush(Color.FromRgb(0xF5, 0xA3, 0x5F));
+            res["SelectionTextBrush"] = new SolidColorBrush(Color.FromRgb(0x1E, 0x29, 0x3B));
+            res[System.Windows.SystemColors.HighlightBrushKey]     = new SolidColorBrush(Color.FromRgb(0xF5, 0xA3, 0x5F));
+            res[System.Windows.SystemColors.HighlightTextBrushKey] = new SolidColorBrush(Color.FromRgb(0x1E, 0x29, 0x3B));
+            res[System.Windows.SystemColors.ControlBrushKey]       = new SolidColorBrush(Color.FromRgb(0xF5, 0xA3, 0x5F));
+            res[System.Windows.SystemColors.ControlTextBrushKey]   = new SolidColorBrush(Color.FromRgb(0x1E, 0x29, 0x3B));
         }
     }
 }
