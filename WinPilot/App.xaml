@@ -9,6 +9,9 @@
     <Application.Resources>
         <ResourceDictionary>
 
+            <!-- 키보드 포커스 점선(FocusVisual) 전역 비활성화 -->
+            <Style x:Key="{x:Static SystemParameters.FocusVisualStyleKey}" TargetType="{x:Type Control}"/>
+
             <!-- Converters -->
             <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
             <conv:InverseBoolConverter x:Key="InverseBoolConverter"/>
@@ -567,7 +570,19 @@
             <DataTemplate DataType="{x:Type vm:DefenderViewModel}">
                 <views:DefenderView/>
             </DataTemplate>
-<DataTemplate DataType="{x:Type vm:SettingsViewModel}">
+            <DataTemplate DataType="{x:Type vm:TextCounterViewModel}">
+                <views:TextCounterView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:OcrViewModel}">
+                <views:OcrView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:UtilesViewModel}">
+                <views:UtilesView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:RegexViewModel}">
+                <views:RegexView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
                 <views:SettingsView/>
             </DataTemplate>
             <DataTemplate DataType="{x:Type vm:UtilitiesViewModel}">

@@ -34,14 +34,12 @@ public partial class RecoveryStep : ObservableObject
 public partial class RecoveryViewModel : ObservableObject
 {
     private readonly RecoveryService _service = new();
-    // 진행률 줄 패턴
-    // DISM: "[====55.5%====]"
-    // SFC:  "          1"  또는 "          1%"  (앞에 공백이 많은 숫자)
+    // DISM 진행률: "[====55.5%====]"
     private static readonly Regex ProgressLineRx = new(
-        @"(^\[=+\s*\d+\.?\d*\s*%)|(^\s{2,}\d+\.?\d*\s*%?\s*$)",
+        @"(^\[=+\s*\d+\.?\d*\s*%)|(^\s{2,}\d+\.?\d*\s*%)",
         RegexOptions.Compiled);
 
-    [ObservableProperty] private bool _isAdmin;
+[ObservableProperty] private bool _isAdmin;
     [ObservableProperty] private bool _isRunning;
     public bool IsNotAdmin => !IsAdmin;
     [ObservableProperty] private bool _isProgressUpdate;
@@ -109,6 +107,14 @@ public partial class RecoveryViewModel : ObservableObject
         outputAll.AppendLine($"{'=',50}");
         CurrentOutput = outputAll.ToString();
 
+        // SFC는 완료 전까지 stdout을 버퍼링 → 별도 경로로 처리
+        bool isSfc = step.FileName.Equals("sfc", StringComparison.OrdinalIgnoreCase);
+        if (isSfc)
+        {
+            await RunSfcStepAsync(step, outputAll);
+            return;
+        }
+
         var tcs = new TaskCompletionSource<int>();
         var stepLines = new List<string>();
         int lastProgressIdx = -1;
@@ -161,6 +167,56 @@ public partial class RecoveryViewModel : ObservableObject
         if (finalOutput.Length > 0)
             outputAll.AppendLine(finalOutput);
         outputAll.AppendLine($"\n→ 종료 코드: {exitCode}  ({step.StatusText})\n");
+        CurrentOutput = outputAll.ToString();
+    }
+
+    private async Task RunSfcStepAsync(RecoveryStep step, StringBuilder outputAll)
+    {
+        using var cts = new System.Threading.CancellationTokenSource();
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+
+        var timerTask = Task.Run(async () =>
+        {
+            while (!cts.Token.IsCancellationRequested)
+            {
+                var e = sw.Elapsed;
+                await Application.Current.Dispatcher.InvokeAsync(() =>
+                    CurrentOutput = outputAll +
+                        $"SFC 검사 실행 중...\n경과: {(int)e.TotalMinutes:D2}:{e.Seconds:D2}\n(완료 후 결과가 표시됩니다.)");
+                try { await Task.Delay(1000, cts.Token); }
+                catch (OperationCanceledException) { break; }
+            }
+        });
+
+        int exitCode;
+        List<string> lines;
+        try
+        {
+            (exitCode, lines) = await _service.RunAndCaptureAsync(step.FileName, step.Arguments, stdoutOnly: true);
+        }
+        catch
+        {
+            cts.Cancel();
+            await timerTask;
+            step.Status = StepStatus.Failed;
+            outputAll.AppendLine("[오류] 프로세스를 시작할 수 없습니다.\n");
+            CurrentOutput = outputAll.ToString();
+            return;
+        }
+
+        cts.Cancel();
+        await timerTask;
+        sw.Stop();
+
+        // 한글/영어 Windows 모두 대응 — 핵심 결과 줄만 파싱
+        var verdict = lines.FirstOrDefault(l =>
+            l.Contains("리소스 보호") || l.Contains("Resource Protection")) ?? "(결과 없음)";
+
+        var elapsed = sw.Elapsed;
+        step.Status = exitCode == 0 ? StepStatus.Completed : StepStatus.Failed;
+        outputAll.AppendLine($"소요 시간: {(int)elapsed.TotalMinutes:D2}:{elapsed.Seconds:D2}");
+        outputAll.AppendLine($"→ {verdict.Trim()}");
+        outputAll.AppendLine($"→ 종료 코드: {exitCode}  ({step.StatusText})\n");
         CurrentOutput = outputAll.ToString();
     }
 

@@ -1,0 +1,144 @@
+<UserControl x:Class="WinPilot.Views.TextCounterView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- 헤더 -->
+        <DockPanel Grid.Row="0" Margin="0,0,0,16">
+            <TextBlock Text="글자수 세기" FontSize="20" FontWeight="Bold"
+                       Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                <TextBlock Text="{Binding CopyStatusText}" FontSize="11"
+                           Foreground="{DynamicResource SuccessBrush}" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                <Button Content="통계 복사" Command="{Binding CopyStatsCommand}"
+                        Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,8,0"/>
+                <Button Content="지우기" Command="{Binding ClearCommand}"
+                        Style="{StaticResource SecondaryButtonStyle}"/>
+            </StackPanel>
+        </DockPanel>
+
+        <!-- 텍스트 입력 + 통계 (2열) -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="16"/>
+                <ColumnDefinition Width="220"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- 텍스트 입력 영역 -->
+            <Border Grid.Column="0" Style="{StaticResource CardStyle}" Padding="0">
+                <TextBox Text="{Binding InputText, UpdateSourceTrigger=PropertyChanged}"
+                         AcceptsReturn="True" AcceptsTab="True"
+                         TextWrapping="Wrap"
+                         VerticalScrollBarVisibility="Auto"
+                         HorizontalScrollBarVisibility="Auto"
+                         Background="{DynamicResource SurfaceBrush}"
+                         Foreground="{DynamicResource TextPrimaryBrush}"
+                         CaretBrush="{DynamicResource TextPrimaryBrush}"
+                         BorderThickness="0"
+                         FontSize="13"
+                         FontFamily="Consolas"
+                         Padding="16"
+                         VerticalContentAlignment="Top"/>
+            </Border>
+
+            <!-- 통계 카드 -->
+            <StackPanel Grid.Column="2">
+
+                <Border Style="{StaticResource CardStyle}" Margin="0,0,0,10">
+                    <StackPanel>
+                        <TextBlock Text="글자" Style="{StaticResource CardTitleStyle}" Margin="0,0,0,12"/>
+
+                        <!-- 전체 글자 -->
+                        <DockPanel Margin="0,0,0,10">
+                            <TextBlock Text="전체 글자" FontSize="12"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding TotalChars, StringFormat={}{0:N0}}"
+                                       FontSize="18" FontWeight="Bold"
+                                       Foreground="{DynamicResource AccentBrush}"
+                                       HorizontalAlignment="Right"/>
+                        </DockPanel>
+                        <Rectangle Height="1" Fill="{DynamicResource BorderBrush}" Margin="0,0,0,10"/>
+
+                        <!-- 공백 제외 -->
+                        <DockPanel Margin="0,0,0,8">
+                            <TextBlock Text="공백 제외" FontSize="12"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding CharsNoSpace, StringFormat={}{0:N0}}"
+                                       FontSize="15" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                       HorizontalAlignment="Right"/>
+                        </DockPanel>
+
+                        <!-- 단어 수 -->
+                        <DockPanel Margin="0,0,0,8">
+                            <TextBlock Text="단어 수" FontSize="12"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding WordCount, StringFormat={}{0:N0}}"
+                                       FontSize="15" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                       HorizontalAlignment="Right"/>
+                        </DockPanel>
+
+                        <!-- 줄 수 -->
+                        <DockPanel>
+                            <TextBlock Text="줄 수" FontSize="12"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding LineCount, StringFormat={}{0:N0}}"
+                                       FontSize="15" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                       HorizontalAlignment="Right"/>
+                        </DockPanel>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <TextBlock Text="바이트 크기" Style="{StaticResource CardTitleStyle}" Margin="0,0,0,12"/>
+
+                        <DockPanel Margin="0,0,0,8">
+                            <TextBlock Text="UTF-8" FontSize="12"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                            <StackPanel HorizontalAlignment="Right">
+                                <TextBlock Text="{Binding BytesUtf8, StringFormat={}{0:N0}}"
+                                           FontSize="13" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                           HorizontalAlignment="Right"/>
+                                <TextBlock Text="bytes" FontSize="10"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           HorizontalAlignment="Right"/>
+                            </StackPanel>
+                        </DockPanel>
+
+                        <DockPanel>
+                            <TextBlock Text="UTF-16" FontSize="12"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                            <StackPanel HorizontalAlignment="Right">
+                                <TextBlock Text="{Binding BytesUtf16, StringFormat={}{0:N0}}"
+                                           FontSize="13" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                           HorizontalAlignment="Right"/>
+                                <TextBlock Text="bytes" FontSize="10"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           HorizontalAlignment="Right"/>
+                            </StackPanel>
+                        </DockPanel>
+                    </StackPanel>
+                </Border>
+
+            </StackPanel>
+        </Grid>
+
+        <!-- 하단 힌트 -->
+        <TextBlock Grid.Row="2"
+                   Text="텍스트를 붙여넣거나 직접 입력하면 실시간으로 글자수가 집계됩니다."
+                   FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}"
+                   Margin="0,10,0,0"/>
+    </Grid>
+</UserControl>

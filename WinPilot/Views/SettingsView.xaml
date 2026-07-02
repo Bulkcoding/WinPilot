@@ -4,6 +4,31 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              mc:Ignorable="d">
+    <UserControl.Resources>
+        <Style x:Key="ToggleSwitch" TargetType="CheckBox">
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CheckBox">
+                        <Border x:Name="Track" Width="42" Height="24" CornerRadius="12"
+                                Background="{DynamicResource BorderBrush}">
+                            <Border x:Name="Thumb" Width="18" Height="18" CornerRadius="9"
+                                    Background="White" HorizontalAlignment="Left"
+                                    VerticalAlignment="Center" Margin="3,0,0,0"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Track" Property="Background" Value="#3B82F6"/>
+                                <Setter TargetName="Thumb" Property="HorizontalAlignment" Value="Right"/>
+                                <Setter TargetName="Thumb" Property="Margin" Value="0,0,3,0"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
     <ScrollViewer Background="{DynamicResource BgBrush}" VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="24,20,24,24">
             <TextBlock Text="설정" FontSize="22" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,20"/>
@@ -78,6 +103,65 @@
                 </StackPanel>
             </Border>
 
+            <!-- DeepSeek API 키 (이미지 텍스트 추출 AI 교정) -->
+            <Border Style="{StaticResource CardStyle}" Margin="0,16,0,0">
+                <StackPanel>
+                    <TextBlock Text="DeepSeek API 키" Style="{StaticResource CardTitleStyle}" Margin="0,0,0,8"/>
+                    <TextBlock Text="이미지 텍스트 추출 탭에서 OCR 후 AI 교정에 사용됩니다. 키를 설정하면 추출 후 자동으로 교정이 실행됩니다.&#x0a;※ 관리자만 수정 가능 — 저장/삭제 시 관리자 비밀번호가 필요합니다."
+                               Foreground="#64748B" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,12"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- 상태 점 -->
+                        <Ellipse Grid.Column="0" Width="7" Height="7" VerticalAlignment="Center" Margin="0,0,10,0">
+                            <Ellipse.Style>
+                                <Style TargetType="Ellipse">
+                                    <Setter Property="Fill" Value="{DynamicResource TextSecondaryBrush}"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDeepSeekKeySet}" Value="True">
+                                            <Setter Property="Fill" Value="{DynamicResource SuccessBrush}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Ellipse.Style>
+                        </Ellipse>
+
+                        <Border Grid.Column="1" Background="{DynamicResource SurfaceBrush}"
+                                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                                CornerRadius="6" Padding="10,6" Margin="0,0,8,0">
+                            <!-- 보안상 키는 항상 ●●● 로 마스킹 표시 (PasswordBox).
+                                 바인딩 불가하므로 코드비하인드에서 VM과 동기화. -->
+                            <PasswordBox x:Name="DeepSeekPwdBox"
+                                         PasswordChanged="OnDeepSeekPasswordChanged"
+                                         FontSize="12" FontFamily="Consolas"
+                                         Background="Transparent" BorderThickness="0"
+                                         Foreground="{DynamicResource TextPrimaryBrush}"
+                                         CaretBrush="{DynamicResource TextPrimaryBrush}"
+                                         VerticalAlignment="Center"/>
+                        </Border>
+
+                        <Button Grid.Column="2" Content="저장"
+                                Command="{Binding SaveDeepSeekKeyCommand}"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Padding="14,6" FontSize="12" Margin="0,0,6,0"/>
+
+                        <Button Grid.Column="3" Content="삭제"
+                                Command="{Binding DeleteDeepSeekKeyCommand}"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Padding="14,6" FontSize="12"
+                                IsEnabled="{Binding IsDeepSeekKeySet}"
+                                ToolTip="저장된 DeepSeek API 키를 폐기합니다"/>
+                    </Grid>
+                    <TextBlock Text="{Binding DeepSeekStatus}" Foreground="{DynamicResource SuccessBrush}"
+                               FontSize="11" Margin="0,8,0,0"/>
+                </StackPanel>
+            </Border>
+
             <!-- 미니 모드 -->
             <Border Style="{StaticResource CardStyle}" Margin="0,16,0,0">
                 <StackPanel>
@@ -102,6 +186,69 @@
                             </TextBlock>
                         </Button.Content>
                     </Button>
+                </StackPanel>
+            </Border>
+
+            <!-- 미니 모드 전환 단축키 -->
+            <Border Style="{StaticResource CardStyle}" Margin="0,16,0,0">
+                <StackPanel>
+                    <!-- 타이틀 + 토글 -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Margin="0,0,16,0">
+                            <TextBlock Text="미니 모드 전환 단축키" Style="{StaticResource CardTitleStyle}"/>
+                            <TextBlock Text="앱이 백그라운드에 있어도 단축키로 미니 모드를 켜고 끌 수 있습니다."
+                                       Foreground="#64748B" FontSize="12" TextWrapping="Wrap" Margin="0,4,0,0"/>
+                        </StackPanel>
+                        <CheckBox Grid.Column="1" IsChecked="{Binding IsHotkeyEnabled}"
+                                  Style="{StaticResource ToggleSwitch}" VerticalAlignment="Center"/>
+                    </Grid>
+
+                    <!-- 단축키 조합 (활성화 시) -->
+                    <StackPanel Margin="0,14,0,0"
+                                Visibility="{Binding IsHotkeyEnabled, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock Text="단축키 조합" Foreground="{DynamicResource TextSecondaryBrush}"
+                                   FontSize="12" Margin="0,0,0,8"/>
+
+                        <!-- 단축키 버튼 (캡처 여부에 따라 텍스트/테두리만 변경) -->
+                        <Border x:Name="CaptureBorder"
+                                Background="{DynamicResource ControlBrush}" CornerRadius="6"
+                                Padding="20,9" Cursor="Hand"
+                                HorizontalAlignment="Left" MinWidth="160"
+                                Focusable="True"
+                                PreviewMouseDown="OnStartCaptureHotkey"
+                                PreviewKeyDown="OnCapturePreviewKeyDown">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="BorderThickness" Value="0"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsCapturingHotkey}" Value="True">
+                                            <Setter Property="BorderBrush" Value="#3B82F6"/>
+                                            <Setter Property="BorderThickness" Value="1.5"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <TextBlock FontSize="13" FontWeight="SemiBold" FontFamily="Consolas"
+                                       HorizontalAlignment="Center">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="{Binding HotkeyDisplayText}"/>
+                                        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsCapturingHotkey}" Value="True">
+                                                <Setter Property="Text" Value="키를 누르세요..."/>
+                                                <Setter Property="Foreground" Value="#3B82F6"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Border>
+                    </StackPanel>
                 </StackPanel>
             </Border>
         </StackPanel>

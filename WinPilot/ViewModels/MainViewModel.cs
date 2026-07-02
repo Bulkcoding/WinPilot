@@ -19,6 +19,9 @@ public partial class MainViewModel : ObservableObject
     public ParserViewModel       Parser          { get; } = new();
     public UtilitiesViewModel    Utilities       { get; } = new();
     public RegistryViewModel     Registry        { get; } = new();
+    public TextCounterViewModel  TextCounter     { get; } = new();
+    public OcrViewModel          Ocr             { get; } = new();
+    public UtilesViewModel       Utiles          { get; } = new();
     public SettingsViewModel     Settings        { get; } = SettingsViewModel.Current;
 
     [ObservableProperty] private object _currentPage = null!;
@@ -46,6 +49,8 @@ public partial class MainViewModel : ObservableObject
     // Run.Text에 Binding 불가 → 미리 조합된 문자열 사용
     public string SystemStatusText => $"시스템 정상({GetLocalIp()})";
 
+    private string _notifiedVersion = "";
+
     public MainViewModel()
     {
         Dashboard  = new DashboardViewModel(_sysInfo);
@@ -53,24 +58,39 @@ public partial class MainViewModel : ObservableObject
         MiniVm     = new MiniViewModel(_sysInfo);
         CurrentPage = Dashboard;
         Dashboard.StartAutoRefresh();
+        _ = SystemInfo.LoadAsync();
 
-        // 시작 시 백그라운드 업데이트 체크 (DEBUG 빌드에서는 스킵)
+        // 시작 시 즉시 확인 + 이후 30분마다 주기적으로 확인 (DEBUG 빌드에서는 스킵)
 #if !DEBUG
-        _ = CheckAndAutoDownloadUpdateAsync();
+        _ = StartUpdatePollingAsync();
 #endif
+    }
+
+    private async Task StartUpdatePollingAsync()
+    {
+        await CheckAndAutoDownloadUpdateAsync();
+
+        using var timer = new System.Threading.PeriodicTimer(TimeSpan.FromMinutes(30));
+        while (await timer.WaitForNextTickAsync())
+            await CheckAndAutoDownloadUpdateAsync();
     }
 
     private async Task CheckAndAutoDownloadUpdateAsync()
     {
         var info = await UpdateService.CheckAsync();
         if (info == null || string.IsNullOrEmpty(info.DownloadUrl)) return;
+        if (info.Version == _notifiedVersion) return; // 이미 팝업 표시한 버전 → 중복 방지
 
-        // 업데이트 감지 즉시 팝업 표시 (다운로드는 '지금 업데이트' 클릭 시 진행)
-        LatestVersion      = info.Version;
-        UpdateDownloadUrl  = info.DownloadUrl;
-        UpdateReleaseNotes = info.ReleaseNotes;
-        UpdateAvailable    = true;
-        ShowUpdatePopup    = true;
+        // PeriodicTimer는 백그라운드 스레드에서 실행 → UI 업데이트는 Dispatcher 경유
+        await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+        {
+            _notifiedVersion   = info.Version;
+            LatestVersion      = info.Version;
+            UpdateDownloadUrl  = info.DownloadUrl;
+            UpdateReleaseNotes = info.ReleaseNotes;
+            UpdateAvailable    = true;
+            ShowUpdatePopup    = true;
+        });
     }
 
     [RelayCommand]

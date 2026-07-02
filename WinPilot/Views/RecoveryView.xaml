@@ -91,14 +91,20 @@
             </StackPanel>
         </Border>
 
-        <!-- 출력 로그 -->
-        <Border Grid.Row="3" Style="{StaticResource CardStyle}" Margin="24,0,24,24">
+        <!-- 출력 로그:
+             CardStyle(Padding=20) 대신 헤더만 Margin으로 패딩 처리.
+             TextBox가 카드 하단/우측 끝까지 채워야 스크롤바가 카드 안에 정렬됨. -->
+        <Border Grid.Row="3"
+                Background="{DynamicResource SurfaceBrush}"
+                CornerRadius="10"
+                Margin="24,0,24,24"
+                ClipToBounds="True">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
-                <DockPanel Grid.Row="0" Margin="0,0,0,12">
+                <DockPanel Grid.Row="0" Margin="20,20,20,12">
                     <TextBlock Text="실행 결과" Style="{StaticResource CardTitleStyle}"/>
                     <ProgressBar DockPanel.Dock="Right" Width="80" Height="4"
                                  IsIndeterminate="{Binding IsRunning}"

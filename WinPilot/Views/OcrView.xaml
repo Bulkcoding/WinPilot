@@ -1,0 +1,300 @@
+<UserControl x:Class="WinPilot.Views.OcrView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             KeyDown="OnKeyDown">
+
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- 헤더 -->
+        <DockPanel Grid.Row="0" Margin="0,0,0,16">
+            <TextBlock Text="이미지 텍스트 추출" FontSize="20" FontWeight="Bold"
+                       Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+            <TextBlock Text="{Binding StatusText}" FontSize="11"
+                       Foreground="{DynamicResource TextSecondaryBrush}"
+                       HorizontalAlignment="Right" VerticalAlignment="Center"/>
+        </DockPanel>
+
+        <!-- 메인 영역 -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*"/>
+                <ColumnDefinition Width="12"/>
+                <ColumnDefinition Width="3*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- 왼쪽: 이미지 영역 -->
+            <Border Grid.Column="0" Style="{StaticResource CardStyle}" Padding="0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- 이미지 / 안내 + 오버레이 버튼 -->
+                    <Border x:Name="ImageArea" Grid.Row="0"
+                            Background="{DynamicResource SurfaceBrush}"
+                            CornerRadius="10" Cursor="Hand"
+                            MouseLeftButtonDown="OnImageAreaClick">
+                        <Grid>
+                            <!-- 붙여넣기 안내 -->
+                            <StackPanel x:Name="PasteHint"
+                                        VerticalAlignment="Center" HorizontalAlignment="Center">
+                                <TextBlock Text="&#xE7B3;" FontFamily="Segoe MDL2 Assets" FontSize="52"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           HorizontalAlignment="Center" Margin="0,0,0,16"/>
+                                <TextBlock Text="Ctrl+V 붙여넣기" FontSize="14" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           HorizontalAlignment="Center"/>
+                                <TextBlock Text="또는 여기 클릭" FontSize="11"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                            </StackPanel>
+
+                            <!-- 미리보기 -->
+                            <Image x:Name="PreviewImage" Stretch="Uniform" Margin="8"
+                                   Visibility="Collapsed"/>
+
+                            <!-- 우측 상단: 이전 버튼 -->
+                            <Button x:Name="PrevImagesBtn"
+                                    HorizontalAlignment="Right" VerticalAlignment="Top"
+                                    Margin="0,8,8,0"
+                                    Visibility="Collapsed"
+                                    Style="{StaticResource SecondaryButtonStyle}"
+                                    Padding="8,4"
+                                    Click="OnPreviousImagesClick">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE76B;" FontFamily="Segoe MDL2 Assets" FontSize="11"
+                                               VerticalAlignment="Center"/>
+                                    <TextBlock Text=" 이전" FontSize="11" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+
+                            <!-- 우측 하단: 확대 버튼 -->
+                            <Button x:Name="ZoomBtn"
+                                    HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                    Margin="0,0,8,8"
+                                    Visibility="Collapsed"
+                                    Style="{StaticResource SecondaryButtonStyle}"
+                                    Width="28" Height="28" Padding="0"
+                                    ToolTip="이미지 확대"
+                                    Click="OnZoomOpen">
+                                <TextBlock Text="&#xE740;" FontFamily="Segoe MDL2 Assets" FontSize="13"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <TextBlock Grid.Row="1" Text="Win+Shift+S 로 캡처 후 붙여넣기"
+                               FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}"
+                               HorizontalAlignment="Center" Margin="0,10,0,6"/>
+                </Grid>
+            </Border>
+
+            <!-- 오른쪽: 추출 텍스트 + 번역 -->
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <Border Grid.Row="0" Style="{StaticResource CardStyle}" Padding="0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <Grid Grid.Row="0" Margin="16,12,12,8">
+                            <TextBlock Text="추출된 텍스트" Style="{StaticResource CardTitleStyle}"
+                                       VerticalAlignment="Center"/>
+                            <StackPanel HorizontalAlignment="Right" Orientation="Horizontal"
+                                        VerticalAlignment="Center">
+                                <TextBlock x:Name="CopyFeedbackExtracted" Text="복사되었습니다"
+                                           FontSize="11" Foreground="{DynamicResource SuccessBrush}"
+                                           VerticalAlignment="Center" Margin="0,0,8,0"
+                                           Visibility="Collapsed"/>
+                                <Button x:Name="CopyBtnExtracted"
+                                        Width="28" Height="28" Padding="0"
+                                        Style="{StaticResource SecondaryButtonStyle}"
+                                        ToolTip="복사" Click="OnCopyExtracted">
+                                    <TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+                        <TextBox Grid.Row="1"
+                                 Text="{Binding ExtractedText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                 AcceptsReturn="True" TextWrapping="Wrap"
+                                 VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                                 Background="{DynamicResource SurfaceBrush}"
+                                 Foreground="{DynamicResource TextPrimaryBrush}"
+                                 CaretBrush="{DynamicResource TextPrimaryBrush}"
+                                 SelectionBrush="#3B82F6" BorderThickness="0" FontSize="13"
+                                 Padding="16,4,16,12" VerticalContentAlignment="Top"/>
+                    </Grid>
+                </Border>
+
+                <Grid Grid.Row="1" Margin="0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="8"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <ComboBox Grid.Column="0"
+                              ItemsSource="{Binding Languages}"
+                              SelectedItem="{Binding SelectedLanguage}"
+                              Style="{StaticResource FilterComboStyle}"
+                              ItemContainerStyle="{StaticResource FilterComboItemStyle}"/>
+                    <Button Grid.Column="2" Content="번역"
+                            Command="{Binding TranslateCommand}"
+                            Style="{StaticResource PrimaryButtonStyle}" Padding="20,8"/>
+                </Grid>
+
+                <Border Grid.Row="2" Style="{StaticResource CardStyle}" Padding="0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <Grid Grid.Row="0" Margin="16,12,12,8">
+                            <TextBlock Text="번역 결과" Style="{StaticResource CardTitleStyle}"
+                                       VerticalAlignment="Center"/>
+                            <StackPanel HorizontalAlignment="Right" Orientation="Horizontal"
+                                        VerticalAlignment="Center">
+                                <TextBlock x:Name="CopyFeedbackTranslated" Text="복사되었습니다"
+                                           FontSize="11" Foreground="{DynamicResource SuccessBrush}"
+                                           VerticalAlignment="Center" Margin="0,0,8,0"
+                                           Visibility="Collapsed"/>
+                                <Button x:Name="CopyBtnTranslated"
+                                        Width="28" Height="28" Padding="0"
+                                        Style="{StaticResource SecondaryButtonStyle}"
+                                        ToolTip="복사" Click="OnCopyTranslated">
+                                    <TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+                        <TextBox Grid.Row="1"
+                                 Text="{Binding TranslatedText, Mode=OneWay}"
+                                 IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap"
+                                 VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                                 Background="{DynamicResource SurfaceBrush}"
+                                 Foreground="{DynamicResource TextPrimaryBrush}"
+                                 SelectionBrush="#3B82F6" BorderThickness="0" FontSize="13"
+                                 Padding="16,4,16,12" VerticalContentAlignment="Top"/>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Grid>
+
+        <!-- ── 이전 이미지 선택 팝업 ── -->
+        <Border x:Name="ImagePickerOverlay" Grid.RowSpan="3"
+                Visibility="Collapsed" Background="#BB0D0D1A"
+                MouseLeftButtonDown="OnPickerOverlayClick">
+            <Border Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1" CornerRadius="12"
+                    MaxWidth="760" Padding="20"
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                    MouseLeftButtonDown="OnPickerPanelClick">
+                <StackPanel>
+                    <Grid Margin="0,0,0,16">
+                        <StackPanel>
+                            <TextBlock Text="이전 이미지 선택" FontSize="16" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}"/>
+                            <TextBlock x:Name="PickerSubtitle" FontSize="11"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,3,0,0"/>
+                        </StackPanel>
+                        <Button HorizontalAlignment="Right" VerticalAlignment="Top"
+                                Width="28" Height="28" Padding="0"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Click="OnCloseImagePicker">
+                            <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Button>
+                    </Grid>
+                    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                        <ListBox x:Name="ClipboardImageList"
+                                 Background="Transparent" BorderThickness="0"
+                                 SelectionChanged="OnImagePickerSelected">
+                            <ListBox.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal"/>
+                                </ItemsPanelTemplate>
+                            </ListBox.ItemsPanel>
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem">
+                                    <Setter Property="Padding" Value="0"/>
+                                    <Setter Property="Margin" Value="0,0,8,0"/>
+                                    <Setter Property="Cursor" Value="Hand"/>
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="ListBoxItem">
+                                                <Border x:Name="Bd" CornerRadius="8" Padding="4"
+                                                        BorderBrush="{DynamicResource BorderBrush}"
+                                                        BorderThickness="2">
+                                                    <ContentPresenter/>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="Bd" Property="BorderBrush" Value="#60A5FA"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel>
+                                        <!-- 썸네일 — hover 시 ToolTip으로 확대 미리보기 -->
+                                        <Image Source="{Binding Image}" Width="170" Height="110"
+                                               Stretch="Uniform">
+                                            <Image.ToolTip>
+                                                <ToolTip Background="#2A2A3E" BorderBrush="#374151"
+                                                         BorderThickness="1" Padding="4"
+                                                         HasDropShadow="True">
+                                                    <Image Source="{Binding Image}"
+                                                           MaxWidth="640" MaxHeight="480"
+                                                           Stretch="Uniform"/>
+                                                </ToolTip>
+                                            </Image.ToolTip>
+                                        </Image>
+                                        <TextBlock Text="{Binding Label}" FontSize="10"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                   HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </ScrollViewer>
+                    <TextBlock Text="이미지를 클릭하면 OCR이 다시 시작됩니다  ·  마우스를 올리면 크게 볼 수 있습니다"
+                               FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}"
+                               HorizontalAlignment="Center" Margin="0,12,0,0"/>
+                </StackPanel>
+            </Border>
+        </Border>
+
+        <!-- ── 이미지 확대 오버레이 ── -->
+        <Border x:Name="ZoomOverlay" Grid.RowSpan="3"
+                Visibility="Collapsed" Background="#DD0D0D1A"
+                MouseLeftButtonDown="OnZoomClose">
+            <Grid>
+                <Image x:Name="ZoomedImage" Stretch="Uniform" Margin="48"/>
+                <Button HorizontalAlignment="Right" VerticalAlignment="Top"
+                        Margin="0,12,12,0" Width="32" Height="32" Padding="0"
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        Click="OnZoomClose">
+                    <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Button>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>
