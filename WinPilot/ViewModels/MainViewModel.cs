@@ -29,19 +29,26 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private bool   _isMiniMode;
 
     // 업데이트
-    [ObservableProperty] private bool         _updateAvailable;
-    [ObservableProperty] private string       _latestVersion = "";
-    [ObservableProperty] private string       _updateDownloadUrl = "";
-    [ObservableProperty] private bool         _isDownloading;
-    [ObservableProperty] private int          _downloadProgress;
-    [ObservableProperty] private bool         _showUpdatePopup;
-    [ObservableProperty] private List<string> _updateReleaseNotes = [];
+    [ObservableProperty] private bool   _updateAvailable;
+    [ObservableProperty] private string _latestVersion = "";
+    [ObservableProperty] private string _updateDownloadUrl = "";
+    [ObservableProperty] private bool   _isDownloading;
+    [ObservableProperty] private int    _downloadProgress;
 
-    // 버튼 표시 조건: 다운로드 완료 후 적용 가능
-    public bool UpdateReady => UpdateAvailable && !IsDownloading;
+    public bool UpdateReady => UpdateAvailable && !IsDownloading && !string.IsNullOrEmpty(UpdateDownloadUrl);
+    public string UpdateActionText => IsDownloading ? "업데이트 다운로드 중..." : "지금 업데이트";
+    public string UpdateStatusText => IsDownloading ? $"다운로드 중... {DownloadProgress}%" : "클릭하여 업데이트";
 
-    partial void OnIsDownloadingChanged(bool value)  => OnPropertyChanged(nameof(UpdateReady));
+    partial void OnIsDownloadingChanged(bool value)
+    {
+        OnPropertyChanged(nameof(UpdateReady));
+        OnPropertyChanged(nameof(UpdateActionText));
+        OnPropertyChanged(nameof(UpdateStatusText));
+    }
+
     partial void OnUpdateAvailableChanged(bool value) => OnPropertyChanged(nameof(UpdateReady));
+    partial void OnUpdateDownloadUrlChanged(string value) => OnPropertyChanged(nameof(UpdateReady));
+    partial void OnDownloadProgressChanged(int value) => OnPropertyChanged(nameof(UpdateStatusText));
 
     public bool IsNormalMode => !IsMiniMode;
     public MiniViewModel MiniVm { get; }
@@ -60,7 +67,7 @@ public partial class MainViewModel : ObservableObject
         Dashboard.StartAutoRefresh();
         _ = SystemInfo.LoadAsync();
 
-        // 시작 시 즉시 확인 + 이후 30분마다 주기적으로 확인 (DEBUG 빌드에서는 스킵)
+        // 시작 시 즉시 확인 + 이후 2분마다 주기적으로 확인 (DEBUG 빌드에서는 스킵)
 #if !DEBUG
         _ = StartUpdatePollingAsync();
 #endif
@@ -70,7 +77,7 @@ public partial class MainViewModel : ObservableObject
     {
         await CheckAndAutoDownloadUpdateAsync();
 
-        using var timer = new System.Threading.PeriodicTimer(TimeSpan.FromMinutes(30));
+        using var timer = new System.Threading.PeriodicTimer(TimeSpan.FromMinutes(2));
         while (await timer.WaitForNextTickAsync())
             await CheckAndAutoDownloadUpdateAsync();
     }
@@ -79,17 +86,15 @@ public partial class MainViewModel : ObservableObject
     {
         var info = await UpdateService.CheckAsync();
         if (info == null || string.IsNullOrEmpty(info.DownloadUrl)) return;
-        if (info.Version == _notifiedVersion) return; // 이미 팝업 표시한 버전 → 중복 방지
+        if (info.Version == _notifiedVersion) return; // 이미 표시한 버전 → 중복 방지
 
         // PeriodicTimer는 백그라운드 스레드에서 실행 → UI 업데이트는 Dispatcher 경유
         await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
         {
-            _notifiedVersion   = info.Version;
-            LatestVersion      = info.Version;
-            UpdateDownloadUrl  = info.DownloadUrl;
-            UpdateReleaseNotes = info.ReleaseNotes;
-            UpdateAvailable    = true;
-            ShowUpdatePopup    = true;
+            _notifiedVersion  = info.Version;
+            LatestVersion     = info.Version;
+            UpdateDownloadUrl = info.DownloadUrl;
+            UpdateAvailable   = true;
         });
     }
 
@@ -127,11 +132,6 @@ public partial class MainViewModel : ObservableObject
         catch { return "N/A"; }
     }
 
-    [RelayCommand]
-    private void DismissUpdatePopup() => ShowUpdatePopup = false;
-
-    [RelayCommand]
-    private void ReopenUpdatePopup() => ShowUpdatePopup = true;
 
     [RelayCommand]
     private void NavigateTo(object? vm)
