@@ -2,6 +2,8 @@ using System.Text;
 using System.Threading;
 using System.Windows;
 
+using WinPilot.Services;
+
 namespace WinPilot;
 
 public partial class App : Application
@@ -29,6 +31,7 @@ public partial class App : Application
         }
 
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        OcrCapabilityService.StartBootstrap();
         DispatcherUnhandledException += (_, ex) =>
         {
             System.IO.File.WriteAllText(
@@ -43,6 +46,7 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        OcrCapabilityService.RestoreAsync().GetAwaiter().GetResult();
         _mutex?.ReleaseMutex();
         _mutex?.Dispose();
         base.OnExit(e);

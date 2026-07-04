@@ -10,6 +10,8 @@ using Windows.Graphics.Imaging;
 using Windows.Media.Ocr;
 using Windows.Storage.Streams;
 
+using WinPilot.Services;
+
 namespace WinPilot.ViewModels;
 
 public partial class OcrViewModel : ObservableObject
@@ -41,14 +43,21 @@ public partial class OcrViewModel : ObservableObject
     public async Task ExtractTextAsync(BitmapSource bitmap)
     {
         IsProcessing   = true;
-        StatusText     = "텍스트 인식 중...";
+        StatusText     = "OCR 언어 구성 중...";
         ExtractedText  = "";
         TranslatedText = "";
 
         try
         {
+            var bootstrapTask = OcrCapabilityService.EnsureReadyAsync();
+            var bootstrap = await bootstrapTask;
+            var bootstrapNotice = !bootstrap.Ready && !string.IsNullOrWhiteSpace(bootstrap.Message)
+                ? $"자동 OCR 구성 실패: {bootstrap.Message} "
+                : "";
+
+            StatusText = "텍스트 인식 중...";
             var pngVariants = BuildPreprocessedPngVariants(bitmap);
-            await ExtractWithWindowsAsync(pngVariants);
+            await ExtractWithWindowsAsync(pngVariants, bootstrapNotice);
 
             // OCR 후 자동 교정 (규칙 → DeepSeek)
             await AutoCorrectAsync();
@@ -57,20 +66,27 @@ public partial class OcrViewModel : ObservableObject
         finally { IsProcessing = false; }
     }
 
-    private async Task ExtractWithWindowsAsync(IReadOnlyList<byte[]> pngVariants)
+    private async Task ExtractWithWindowsAsync(IReadOnlyList<byte[]> pngVariants, string bootstrapNotice)
     {
+        var ocrDiag = GetOcrDiagnosticSummary();
+        var ocrHint = GetOcrMissingLanguageHint();
+        var detailPrefix = string.IsNullOrWhiteSpace(bootstrapNotice) ? "" : bootstrapNotice;
         var korEngine = OcrEngine.TryCreateFromLanguage(new Windows.Globalization.Language("ko-KR"));
         var engEngine = OcrEngine.TryCreateFromLanguage(new Windows.Globalization.Language("en-US"));
 
         if (korEngine == null && engEngine == null)
         {
             var fallback = OcrEngine.TryCreateFromUserProfileLanguages();
-            if (fallback == null) { StatusText = "OCR 엔진을 초기화할 수 없습니다. 언어 팩을 확인하세요."; return; }
+            if (fallback == null)
+            {
+                StatusText = $"{detailPrefix}OCR 엔진을 초기화할 수 없습니다. 언어 팩을 확인하세요. {ocrHint} ({ocrDiag})";
+                return;
+            }
 
             var result = await TryRecognizeBestAsync(fallback, pngVariants);
             ExtractedText = result != null ? ReconstructSpatialText(result.Lines) : "";
             StatusText = string.IsNullOrWhiteSpace(ExtractedText)
-                ? "텍스트를 인식하지 못했습니다. 더 큰 글씨나 밝은 배경으로 다시 시도해 보세요."
+                ? $"{detailPrefix}텍스트를 인식하지 못했습니다. {ocrHint} ({ocrDiag})"
                 : $"인식 완료  ·  {result!.Lines.Count}줄";
             return;
         }
@@ -109,7 +125,7 @@ public partial class OcrViewModel : ObservableObject
 
         ExtractedText = text;
         StatusText = string.IsNullOrWhiteSpace(text)
-            ? "텍스트를 인식하지 못했습니다. 더 큰 글씨나 밝은 배경으로 다시 시도해 보세요."
+            ? $"{detailPrefix}텍스트를 인식하지 못했습니다. {ocrHint} ({ocrDiag})"
             : $"인식 완료  ·  {lineCount}줄";
     }
 
@@ -250,6 +266,28 @@ public partial class OcrViewModel : ObservableObject
         return bestScore > 0 ? best : null;
     }
 
+    private static string GetOcrDiagnosticSummary()
+    {
+        bool koSupported = OcrEngine.IsLanguageSupported(new Windows.Globalization.Language("ko-KR"));
+        bool enSupported = OcrEngine.IsLanguageSupported(new Windows.Globalization.Language("en-US"));
+        var languages = OcrEngine.AvailableRecognizerLanguages
+            .Select(lang => lang.LanguageTag)
+            .Take(6)
+            .ToList();
+        var languageList = languages.Count > 0 ? string.Join(", ", languages) : "없음";
+        return $"ko-KR={(koSupported ? "O" : "X")}, en-US={(enSupported ? "O" : "X")}, installed={languageList}";
+    }
+
+    private static string GetOcrMissingLanguageHint()
+    {
+        bool koSupported = OcrEngine.IsLanguageSupported(new Windows.Globalization.Language("ko-KR"));
+        bool enSupported = OcrEngine.IsLanguageSupported(new Windows.Globalization.Language("en-US"));
+
+        if (!koSupported && !enSupported) return "한국어/영어 OCR 언어팩이 설치되지 않았을 수 있습니다.";
+        if (!koSupported) return "한국어 OCR 언어팩(ko-KR)이 설치되지 않았을 수 있습니다.";
+        if (!enSupported) return "영어 OCR 언어팩(en-US)이 설치되지 않았을 수 있습니다.";
+        return "";
+    }
     private static int ScoreOcrResult(OcrResult? result)
     {
         if (result == null) return 0;
