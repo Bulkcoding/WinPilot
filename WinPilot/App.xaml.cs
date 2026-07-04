@@ -10,7 +10,7 @@ public partial class App : Application
 {
     private static Mutex? _mutex;
 
-    protected override void OnStartup(StartupEventArgs e)
+    protected override async void OnStartup(StartupEventArgs e)
     {
         _mutex = new Mutex(true, "WinPilot_SingleInstance", out bool isNew);
 
@@ -31,7 +31,10 @@ public partial class App : Application
         }
 
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-        OcrCapabilityService.StartBootstrap();
+        var bootstrapTask = OcrCapabilityService.EnsureReadyAsync();
+        if (!OcrCapabilityService.HasUsableRecognizer())
+            await Task.WhenAny(bootstrapTask, Task.Delay(TimeSpan.FromSeconds(5)));
+
         DispatcherUnhandledException += (_, ex) =>
         {
             System.IO.File.WriteAllText(

@@ -43,17 +43,35 @@ public partial class OcrViewModel : ObservableObject
     public async Task ExtractTextAsync(BitmapSource bitmap)
     {
         IsProcessing   = true;
-        StatusText     = "OCR 언어 구성 중...";
         ExtractedText  = "";
         TranslatedText = "";
 
         try
         {
             var bootstrapTask = OcrCapabilityService.EnsureReadyAsync();
-            var bootstrap = await bootstrapTask;
-            var bootstrapNotice = !bootstrap.Ready && !string.IsNullOrWhiteSpace(bootstrap.Message)
-                ? $"자동 OCR 구성 실패: {bootstrap.Message} "
-                : "";
+            string bootstrapNotice = "";
+
+            if (!OcrCapabilityService.HasUsableRecognizer())
+            {
+                StatusText = "OCR 언어 구성 중...";
+                var completedTask = await Task.WhenAny(bootstrapTask, Task.Delay(TimeSpan.FromSeconds(15)));
+                if (completedTask == bootstrapTask)
+                {
+                    var bootstrap = await bootstrapTask;
+                    if (!bootstrap.Ready && !string.IsNullOrWhiteSpace(bootstrap.Message))
+                        bootstrapNotice = $"자동 OCR 구성 실패: {bootstrap.Message} ";
+                }
+                else
+                {
+                    bootstrapNotice = "OCR 언어팩 설치가 아직 진행 중입니다. ";
+                }
+            }
+            else if (bootstrapTask.IsCompletedSuccessfully)
+            {
+                var bootstrap = bootstrapTask.Result;
+                if (!bootstrap.Ready && !string.IsNullOrWhiteSpace(bootstrap.Message))
+                    bootstrapNotice = $"자동 OCR 구성 실패: {bootstrap.Message} ";
+            }
 
             StatusText = "텍스트 인식 중...";
             var pngVariants = BuildPreprocessedPngVariants(bitmap);
@@ -288,6 +306,7 @@ public partial class OcrViewModel : ObservableObject
         if (!enSupported) return "영어 OCR 언어팩(en-US)이 설치되지 않았을 수 있습니다.";
         return "";
     }
+
     private static int ScoreOcrResult(OcrResult? result)
     {
         if (result == null) return 0;

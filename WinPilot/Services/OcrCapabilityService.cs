@@ -35,7 +35,12 @@ public static class OcrCapabilityService
     {
         var bootstrapTask = _bootstrapTask;
         if (bootstrapTask != null)
+        {
+            if (!bootstrapTask.IsCompleted)
+                return;
+
             await bootstrapTask;
+        }
 
         await _gate.WaitAsync();
         try
@@ -113,6 +118,11 @@ public static class OcrCapabilityService
 
     private static bool IsLanguageSupported(string languageTag)
         => OcrEngine.IsLanguageSupported(new Windows.Globalization.Language(languageTag));
+
+    public static bool HasUsableRecognizer()
+        => IsLanguageSupported("ko-KR")
+        || IsLanguageSupported("en-US")
+        || OcrEngine.AvailableRecognizerLanguages.Any();
 
     private static async Task RunDismAsync(params string[] arguments)
     {
