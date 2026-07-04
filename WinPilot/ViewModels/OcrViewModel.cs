@@ -47,9 +47,8 @@ public partial class OcrViewModel : ObservableObject
 
         try
         {
-            // 전처리(업스케일 + 그레이스케일)로 작은 글씨 인식률 향상
-            var pngBytes = PreprocessToPngBytes(bitmap);
-            await ExtractWithWindowsAsync(pngBytes);
+            var pngVariants = BuildPreprocessedPngVariants(bitmap);
+            await ExtractWithWindowsAsync(pngVariants);
 
             // OCR 후 자동 교정 (규칙 → DeepSeek)
             await AutoCorrectAsync();
@@ -58,7 +57,7 @@ public partial class OcrViewModel : ObservableObject
         finally { IsProcessing = false; }
     }
 
-    private async Task ExtractWithWindowsAsync(byte[] pngBytes)
+    private async Task ExtractWithWindowsAsync(IReadOnlyList<byte[]> pngVariants)
     {
         var korEngine = OcrEngine.TryCreateFromLanguage(new Windows.Globalization.Language("ko-KR"));
         var engEngine = OcrEngine.TryCreateFromLanguage(new Windows.Globalization.Language("en-US"));
@@ -67,14 +66,21 @@ public partial class OcrViewModel : ObservableObject
         {
             var fallback = OcrEngine.TryCreateFromUserProfileLanguages();
             if (fallback == null) { StatusText = "OCR 엔진을 초기화할 수 없습니다. 언어 팩을 확인하세요."; return; }
-            var r = await RunOcrAsync(fallback, pngBytes);
-            ExtractedText = r != null ? ReconstructSpatialText(r.Lines) : "";
-            StatusText    = string.IsNullOrWhiteSpace(ExtractedText) ? "텍스트를 인식하지 못했습니다." : $"인식 완료  ·  {r!.Lines.Count}줄";
+
+            var result = await TryRecognizeBestAsync(fallback, pngVariants);
+            ExtractedText = result != null ? ReconstructSpatialText(result.Lines) : "";
+            StatusText = string.IsNullOrWhiteSpace(ExtractedText)
+                ? "텍스트를 인식하지 못했습니다. 더 큰 글씨나 밝은 배경으로 다시 시도해 보세요."
+                : $"인식 완료  ·  {result!.Lines.Count}줄";
             return;
         }
 
-        var korTask = korEngine != null ? RunOcrAsync(korEngine, pngBytes) : Task.FromResult<OcrResult?>(null);
-        var engTask = engEngine != null ? RunOcrAsync(engEngine, pngBytes) : Task.FromResult<OcrResult?>(null);
+        var korTask = korEngine != null
+            ? TryRecognizeBestAsync(korEngine, pngVariants)
+            : Task.FromResult<OcrResult?>(null);
+        var engTask = engEngine != null
+            ? TryRecognizeBestAsync(engEngine, pngVariants)
+            : Task.FromResult<OcrResult?>(null);
         await Task.WhenAll(korTask, engTask);
 
         var korResult = korTask.Result;
@@ -89,38 +95,106 @@ public partial class OcrViewModel : ObservableObject
             text = string.Join("\n", merged);
             lineCount = merged.Count(l => !string.IsNullOrWhiteSpace(l));
         }
-        else
+        else if (korResult != null || engResult != null)
         {
             var result = (korResult ?? engResult)!;
             text = ReconstructSpatialText(result.Lines);
             lineCount = result.Lines.Count;
         }
+        else
+        {
+            text = "";
+            lineCount = 0;
+        }
 
         ExtractedText = text;
-        StatusText    = string.IsNullOrWhiteSpace(text) ? "텍스트를 인식하지 못했습니다." : $"인식 완료  ·  {lineCount}줄";
+        StatusText = string.IsNullOrWhiteSpace(text)
+            ? "텍스트를 인식하지 못했습니다. 더 큰 글씨나 밝은 배경으로 다시 시도해 보세요."
+            : $"인식 완료  ·  {lineCount}줄";
     }
 
     // ─── 이미지 전처리 ────────────────────────────────────
+    private static List<byte[]> BuildPreprocessedPngVariants(BitmapSource source)
+    {
+        return
+        [
+            PreprocessToPngBytes(source),
+            PreprocessThresholdToPngBytes(source, threshold: 160, invert: false),
+            PreprocessThresholdToPngBytes(source, threshold: 160, invert: true),
+        ];
+    }
+
     private static byte[] PreprocessToPngBytes(BitmapSource source)
     {
-        BitmapSource img = source;
+        var gray = new FormatConvertedBitmap(PrepareBaseBitmap(source), PixelFormats.Gray8, null, 0);
+        return EncodeGrayBitmapToPng(gray);
+    }
 
-        // 1. 업스케일: 작은 이미지는 최대 3배(최대 변 1600px 목표)까지 확대
-        double maxDim = Math.Max(img.PixelWidth, img.PixelHeight);
-        if (maxDim > 0 && maxDim < 1600)
+    private static byte[] PreprocessThresholdToPngBytes(BitmapSource source, byte threshold, bool invert)
+    {
+        var gray = new FormatConvertedBitmap(PrepareBaseBitmap(source), PixelFormats.Gray8, null, 0);
+        int width = gray.PixelWidth;
+        int height = gray.PixelHeight;
+        int stride = width;
+        var pixels = new byte[stride * height];
+        gray.CopyPixels(pixels, stride, 0);
+
+        for (int i = 0; i < pixels.Length; i++)
         {
-            double scale = Math.Min(3.0, 1600.0 / maxDim);
-            img = new TransformedBitmap(img, new ScaleTransform(scale, scale));
+            byte value = pixels[i] >= threshold ? (byte)255 : (byte)0;
+            pixels[i] = invert ? (byte)(255 - value) : value;
         }
 
-        // 2. 그레이스케일 변환 (배경 노이즈 감소)
-        var gray = new FormatConvertedBitmap(img, PixelFormats.Gray8, null, 0);
+        var binary = BitmapSource.Create(width, height, 96, 96, PixelFormats.Gray8, null, pixels, stride);
+        return EncodeGrayBitmapToPng(binary);
+    }
 
+    private static BitmapSource PrepareBaseBitmap(BitmapSource source)
+    {
+        BitmapSource img = source;
+        double maxDim = Math.Max(img.PixelWidth, img.PixelHeight);
+        if (maxDim > 0 && maxDim < 2200)
+        {
+            double scale = Math.Min(4.0, 2200.0 / maxDim);
+            img = new TransformedBitmap(img, new ScaleTransform(scale, scale));
+        }
+        return img;
+    }
+
+    private static byte[] EncodeGrayBitmapToPng(BitmapSource source)
+    {
         using var ms = new MemoryStream();
         var enc = new PngBitmapEncoder();
-        enc.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(gray));
+        enc.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(source));
         enc.Save(ms);
         return ms.ToArray();
+    }
+
+    private static async Task<OcrResult?> TryRecognizeBestAsync(OcrEngine engine, IReadOnlyList<byte[]> pngVariants)
+    {
+        OcrResult? best = null;
+        int bestScore = -1;
+
+        foreach (var pngBytes in pngVariants)
+        {
+            var result = await RunOcrAsync(engine, pngBytes);
+            int score = ScoreOcrResult(result);
+            if (score > bestScore)
+            {
+                best = result;
+                bestScore = score;
+            }
+        }
+
+        return bestScore > 0 ? best : null;
+    }
+
+    private static int ScoreOcrResult(OcrResult? result)
+    {
+        if (result == null) return 0;
+        int wordCount = result.Lines.Sum(line => line.Words.Count);
+        int charCount = result.Text?.Count(c => !char.IsWhiteSpace(c)) ?? 0;
+        return (wordCount * 1000) + charCount;
     }
 
     // ─── 자동 교정 (규칙 → DeepSeek) ─────────────────────
