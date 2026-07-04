@@ -116,28 +116,47 @@ public partial class OcrViewModel : ObservableObject
     // ─── 이미지 전처리 ────────────────────────────────────
     private static List<byte[]> BuildPreprocessedPngVariants(BitmapSource source)
     {
+        var prepared = PrepareBaseBitmap(source);
         return
         [
-            PreprocessToPngBytes(source),
-            PreprocessThresholdToPngBytes(source, threshold: 160, invert: false),
-            PreprocessThresholdToPngBytes(source, threshold: 160, invert: true),
+            PreprocessColorToPngBytes(prepared),
+            PreprocessToPngBytes(prepared),
+            PreprocessContrastToPngBytes(prepared, invert: false),
+            PreprocessContrastToPngBytes(prepared, invert: true),
+            PreprocessThresholdToPngBytes(prepared, threshold: 128, invert: false),
+            PreprocessThresholdToPngBytes(prepared, threshold: 176, invert: false),
+            PreprocessThresholdToPngBytes(prepared, threshold: 128, invert: true),
+            PreprocessThresholdToPngBytes(prepared, threshold: 176, invert: true),
         ];
+    }
+
+    private static byte[] PreprocessColorToPngBytes(BitmapSource source)
+    {
+        return EncodeBitmapToPng(source);
     }
 
     private static byte[] PreprocessToPngBytes(BitmapSource source)
     {
-        var gray = new FormatConvertedBitmap(PrepareBaseBitmap(source), PixelFormats.Gray8, null, 0);
-        return EncodeGrayBitmapToPng(gray);
+        var gray = new FormatConvertedBitmap(source, PixelFormats.Gray8, null, 0);
+        return EncodeBitmapToPng(gray);
+    }
+
+    private static byte[] PreprocessContrastToPngBytes(BitmapSource source, bool invert)
+    {
+        var gray = new FormatConvertedBitmap(source, PixelFormats.Gray8, null, 0);
+        var normalized = NormalizeGrayBitmap(gray, invert);
+        return EncodeBitmapToPng(normalized);
     }
 
     private static byte[] PreprocessThresholdToPngBytes(BitmapSource source, byte threshold, bool invert)
     {
-        var gray = new FormatConvertedBitmap(PrepareBaseBitmap(source), PixelFormats.Gray8, null, 0);
-        int width = gray.PixelWidth;
-        int height = gray.PixelHeight;
+        var gray = new FormatConvertedBitmap(source, PixelFormats.Gray8, null, 0);
+        var normalized = NormalizeGrayBitmap(gray, invert: false);
+        int width = normalized.PixelWidth;
+        int height = normalized.PixelHeight;
         int stride = width;
         var pixels = new byte[stride * height];
-        gray.CopyPixels(pixels, stride, 0);
+        normalized.CopyPixels(pixels, stride, 0);
 
         for (int i = 0; i < pixels.Length; i++)
         {
@@ -146,22 +165,64 @@ public partial class OcrViewModel : ObservableObject
         }
 
         var binary = BitmapSource.Create(width, height, 96, 96, PixelFormats.Gray8, null, pixels, stride);
-        return EncodeGrayBitmapToPng(binary);
+        binary.Freeze();
+        return EncodeBitmapToPng(binary);
     }
 
     private static BitmapSource PrepareBaseBitmap(BitmapSource source)
     {
         BitmapSource img = source;
         double maxDim = Math.Max(img.PixelWidth, img.PixelHeight);
-        if (maxDim > 0 && maxDim < 2200)
+        if (maxDim > 0 && maxDim < 2600)
         {
-            double scale = Math.Min(4.0, 2200.0 / maxDim);
+            double scale = Math.Min(5.0, 2600.0 / maxDim);
             img = new TransformedBitmap(img, new ScaleTransform(scale, scale));
         }
-        return img;
+
+        int width = Math.Max(img.PixelWidth, 1);
+        int height = Math.Max(img.PixelHeight, 1);
+        var visual = new DrawingVisual();
+        using (var dc = visual.RenderOpen())
+        {
+            dc.DrawRectangle(Brushes.White, null, new System.Windows.Rect(0, 0, width, height));
+            dc.DrawImage(img, new System.Windows.Rect(0, 0, width, height));
+        }
+
+        var rendered = new RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32);
+        rendered.Render(visual);
+        rendered.Freeze();
+        return rendered;
     }
 
-    private static byte[] EncodeGrayBitmapToPng(BitmapSource source)
+    private static BitmapSource NormalizeGrayBitmap(BitmapSource source, bool invert)
+    {
+        int width = source.PixelWidth;
+        int height = source.PixelHeight;
+        int stride = width;
+        var pixels = new byte[stride * height];
+        source.CopyPixels(pixels, stride, 0);
+
+        byte min = 255;
+        byte max = 0;
+        for (int i = 0; i < pixels.Length; i++)
+        {
+            if (pixels[i] < min) min = pixels[i];
+            if (pixels[i] > max) max = pixels[i];
+        }
+
+        int range = Math.Max(max - min, 1);
+        for (int i = 0; i < pixels.Length; i++)
+        {
+            int value = (pixels[i] - min) * 255 / range;
+            pixels[i] = invert ? (byte)(255 - value) : (byte)value;
+        }
+
+        var normalized = BitmapSource.Create(width, height, 96, 96, PixelFormats.Gray8, null, pixels, stride);
+        normalized.Freeze();
+        return normalized;
+    }
+
+    private static byte[] EncodeBitmapToPng(BitmapSource source)
     {
         using var ms = new MemoryStream();
         var enc = new PngBitmapEncoder();
@@ -192,9 +253,10 @@ public partial class OcrViewModel : ObservableObject
     private static int ScoreOcrResult(OcrResult? result)
     {
         if (result == null) return 0;
+        int lineCount = result.Lines.Count;
         int wordCount = result.Lines.Sum(line => line.Words.Count);
         int charCount = result.Text?.Count(c => !char.IsWhiteSpace(c)) ?? 0;
-        return (wordCount * 1000) + charCount;
+        return (lineCount * 10000) + (wordCount * 100) + charCount;
     }
 
     // ─── 자동 교정 (규칙 → DeepSeek) ─────────────────────
