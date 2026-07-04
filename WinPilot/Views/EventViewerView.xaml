@@ -4,7 +4,8 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:conv="clr-namespace:WinPilot.Converters"
-             mc:Ignorable="d">
+             mc:Ignorable="d"
+             FontFamily="Pretendard">
     <UserControl.InputBindings>
         <KeyBinding Key="F5" Command="{Binding RefreshCommand}"/>
     </UserControl.InputBindings>
@@ -56,15 +57,20 @@
                       SelectedItem="{Binding SelectedEntry}"
                       MouseDoubleClick="EventGrid_MouseDoubleClick"
                       AutoGenerateColumns="False"
+                      CanUserReorderColumns="False"
                       IsReadOnly="True"
+                      RowHeight="46.6"
                       Background="{DynamicResource SurfaceBrush}"
                       RowBackground="{DynamicResource SurfaceBrush}"
-                      BorderThickness="0"
-                      GridLinesVisibility="Horizontal"
-                      HorizontalGridLinesBrush="{DynamicResource BorderBrush}"
+                      AlternatingRowBackground="{DynamicResource AltRowBrush}"
+                      BorderThickness="1"
+                      BorderBrush="{DynamicResource BorderBrush}"
+                      GridLinesVisibility="None"
                       HeadersVisibility="Column"
                       CanUserResizeRows="False"
                       SelectionMode="Single"
+                      EnableRowVirtualization="True"
+                      VirtualizingPanel.IsVirtualizing="True"
                       ColumnHeaderStyle="{StaticResource DataGridHeaderStyle}"
                       RowStyle="{StaticResource DataGridRowStyle}"
                       CellStyle="{StaticResource DataGridCellStyle}">

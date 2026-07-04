@@ -23,7 +23,7 @@ public partial class EventViewerViewModel : ObservableObject
     [ObservableProperty] private LogEntry? _selectedEntry;
     [ObservableProperty] private bool _isDetailVisible;
 
-    private const int PageSize = 12;
+    private const int PageSize = 10;
 
     public IList<string> LogFilters { get; } = ["모든 로그", "System", "Application"];
     public IList<string> LevelFilters { get; } = ["모든 수준", "경고, 오류", "오류만"];
