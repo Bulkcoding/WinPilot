@@ -28,7 +28,7 @@ public static class OcrCapabilityService
     public static Task<OcrBootstrapStatus> EnsureReadyAsync()
     {
         lock (_sync)
-            return _bootstrapTask ??= BootstrapAsync();
+            return _bootstrapTask ??= SafeBootstrapAsync();
     }
 
     public static async Task RestoreAsync()
@@ -113,16 +113,47 @@ public static class OcrCapabilityService
         }
     }
 
+    private static async Task<OcrBootstrapStatus> SafeBootstrapAsync()
+    {
+        try
+        {
+            return await BootstrapAsync();
+        }
+        catch (Exception ex)
+        {
+            return new OcrBootstrapStatus(Ready: false, Changed: false,
+                Message: $"OCR 언어 구성 초기화 실패: {TrimError(ex.Message)}");
+        }
+    }
+
     private static List<OcrCapabilitySpec> GetMissingCapabilities()
         => _requiredCapabilities.Where(spec => !IsLanguageSupported(spec.LanguageTag)).ToList();
 
     private static bool IsLanguageSupported(string languageTag)
-        => OcrEngine.IsLanguageSupported(new Windows.Globalization.Language(languageTag));
+    {
+        try
+        {
+            return OcrEngine.IsLanguageSupported(new Windows.Globalization.Language(languageTag));
+        }
+        catch
+        {
+            return false;
+        }
+    }
 
     public static bool HasUsableRecognizer()
-        => IsLanguageSupported("ko-KR")
-        || IsLanguageSupported("en-US")
-        || OcrEngine.AvailableRecognizerLanguages.Any();
+    {
+        try
+        {
+            return IsLanguageSupported("ko-KR")
+                || IsLanguageSupported("en-US")
+                || OcrEngine.AvailableRecognizerLanguages.Any();
+        }
+        catch
+        {
+            return IsLanguageSupported("ko-KR") || IsLanguageSupported("en-US");
+        }
+    }
 
     private static async Task RunDismAsync(params string[] arguments)
     {
