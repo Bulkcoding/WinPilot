@@ -6,17 +6,18 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Tesseract;
 using Windows.Graphics.Imaging;
 using Windows.Media.Ocr;
 using Windows.Storage.Streams;
-
-using WinPilot.Services;
 
 namespace WinPilot.ViewModels;
 
 public partial class OcrViewModel : ObservableObject
 {
     private static readonly HttpClient _http = new();
+    private static readonly string _tessDataPath = Path.Combine(AppContext.BaseDirectory, "tessdata");
+    private static TesseractEngine? _engine;
 
     private static readonly Dictionary<string, string> _langCodes = new()
     {
@@ -39,43 +40,25 @@ public partial class OcrViewModel : ObservableObject
     [ObservableProperty] private bool   _isCorrecting;
     [ObservableProperty] private string _selectedLanguage = "한국어";
 
-    // ─── OCR ─────────────────────────────────────────────
+    // ─── OCR: Windows OCR이 이미 설치돼 있으면 그걸 쓰고(더 빠름),
+    //          없으면 앱에 내장된 Tesseract(fast)로 대체 — 설치 시도/재부팅 없음 ──
     public async Task ExtractTextAsync(BitmapSource bitmap)
     {
         IsProcessing   = true;
+        StatusText     = "텍스트 인식 중...";
         ExtractedText  = "";
         TranslatedText = "";
 
         try
         {
-            var bootstrapTask = OcrCapabilityService.EnsureReadyAsync();
-            string bootstrapNotice = "";
-
-            if (!OcrCapabilityService.HasUsableRecognizer())
-            {
-                StatusText = "OCR 언어 구성 중...";
-                var completedTask = await Task.WhenAny(bootstrapTask, Task.Delay(TimeSpan.FromSeconds(15)));
-                if (completedTask == bootstrapTask)
-                {
-                    var bootstrap = await bootstrapTask;
-                    if (!bootstrap.Ready && !string.IsNullOrWhiteSpace(bootstrap.Message))
-                        bootstrapNotice = $"자동 OCR 구성 실패: {bootstrap.Message} ";
-                }
-                else
-                {
-                    bootstrapNotice = "OCR 언어팩 설치가 아직 진행 중입니다. ";
-                }
-            }
-            else if (bootstrapTask.IsCompletedSuccessfully)
-            {
-                var bootstrap = bootstrapTask.Result;
-                if (!bootstrap.Ready && !string.IsNullOrWhiteSpace(bootstrap.Message))
-                    bootstrapNotice = $"자동 OCR 구성 실패: {bootstrap.Message} ";
-            }
-
-            StatusText = "텍스트 인식 중...";
             var pngVariants = BuildPreprocessedPngVariants(bitmap);
-            await ExtractWithWindowsAsync(pngVariants, bootstrapNotice);
+            var korEngine = OcrEngine.TryCreateFromLanguage(new Windows.Globalization.Language("ko-KR"));
+            var engEngine = OcrEngine.TryCreateFromLanguage(new Windows.Globalization.Language("en-US"));
+
+            if (korEngine != null || engEngine != null)
+                await ExtractWithWindowsOcrAsync(korEngine, engEngine, pngVariants);
+            else
+                await ExtractWithTesseractAsync(pngVariants);
 
             // OCR 후 자동 교정 (규칙 → DeepSeek)
             await AutoCorrectAsync();
@@ -84,36 +67,14 @@ public partial class OcrViewModel : ObservableObject
         finally { IsProcessing = false; }
     }
 
-    private async Task ExtractWithWindowsAsync(IReadOnlyList<byte[]> pngVariants, string bootstrapNotice)
+    // ─── Windows OCR 경로 (언어팩이 이미 설치된 PC — 더 빠름) ──
+    private async Task ExtractWithWindowsOcrAsync(OcrEngine? korEngine, OcrEngine? engEngine, IReadOnlyList<byte[]> pngVariants)
     {
-        var ocrDiag = GetOcrDiagnosticSummary();
-        var ocrHint = GetOcrMissingLanguageHint();
-        var detailPrefix = string.IsNullOrWhiteSpace(bootstrapNotice) ? "" : bootstrapNotice;
-        var korEngine = OcrEngine.TryCreateFromLanguage(new Windows.Globalization.Language("ko-KR"));
-        var engEngine = OcrEngine.TryCreateFromLanguage(new Windows.Globalization.Language("en-US"));
-
-        if (korEngine == null && engEngine == null)
-        {
-            var fallback = OcrEngine.TryCreateFromUserProfileLanguages();
-            if (fallback == null)
-            {
-                StatusText = $"{detailPrefix}OCR 엔진을 초기화할 수 없습니다. 언어 팩을 확인하세요. {ocrHint} ({ocrDiag})";
-                return;
-            }
-
-            var result = await TryRecognizeBestAsync(fallback, pngVariants);
-            ExtractedText = result != null ? ReconstructSpatialText(result.Lines) : "";
-            StatusText = string.IsNullOrWhiteSpace(ExtractedText)
-                ? $"{detailPrefix}텍스트를 인식하지 못했습니다. {ocrHint} ({ocrDiag})"
-                : $"인식 완료  ·  {result!.Lines.Count}줄";
-            return;
-        }
-
         var korTask = korEngine != null
-            ? TryRecognizeBestAsync(korEngine, pngVariants)
+            ? TryRecognizeBestWindowsAsync(korEngine, pngVariants)
             : Task.FromResult<OcrResult?>(null);
         var engTask = engEngine != null
-            ? TryRecognizeBestAsync(engEngine, pngVariants)
+            ? TryRecognizeBestWindowsAsync(engEngine, pngVariants)
             : Task.FromResult<OcrResult?>(null);
         await Task.WhenAll(korTask, engTask);
 
@@ -143,8 +104,170 @@ public partial class OcrViewModel : ObservableObject
 
         ExtractedText = text;
         StatusText = string.IsNullOrWhiteSpace(text)
-            ? $"{detailPrefix}텍스트를 인식하지 못했습니다. {ocrHint} ({ocrDiag})"
+            ? "텍스트를 인식하지 못했습니다. 더 큰 글씨나 밝은 배경으로 다시 시도해 보세요."
             : $"인식 완료  ·  {lineCount}줄";
+    }
+
+    private static async Task<OcrResult?> TryRecognizeBestWindowsAsync(OcrEngine engine, IReadOnlyList<byte[]> pngVariants)
+    {
+        OcrResult? best = null;
+        int bestScore = -1;
+
+        foreach (var pngBytes in pngVariants)
+        {
+            var result = await RunWindowsOcrAsync(engine, pngBytes);
+            int score = ScoreWindowsOcrResult(result);
+            if (score > bestScore)
+            {
+                best = result;
+                bestScore = score;
+            }
+        }
+
+        return bestScore > 0 ? best : null;
+    }
+
+    private static async Task<OcrResult?> RunWindowsOcrAsync(OcrEngine engine, byte[] pngBytes)
+    {
+        using var ras    = new InMemoryRandomAccessStream();
+        using var writer = new DataWriter(ras.GetOutputStreamAt(0));
+        writer.WriteBytes(pngBytes);
+        await writer.StoreAsync();
+        var decoder = await Windows.Graphics.Imaging.BitmapDecoder.CreateAsync(ras);
+        using var softBitmap = await decoder.GetSoftwareBitmapAsync();
+        return await engine.RecognizeAsync(softBitmap);
+    }
+
+    private static int ScoreWindowsOcrResult(OcrResult? result)
+    {
+        if (result == null) return 0;
+        int lineCount = result.Lines.Count;
+        int wordCount = result.Lines.Sum(line => line.Words.Count);
+        int charCount = result.Text?.Count(c => !char.IsWhiteSpace(c)) ?? 0;
+        return (lineCount * 10000) + (wordCount * 100) + charCount;
+    }
+
+    private static string ReconstructSpatialText(IReadOnlyList<OcrLine> lines)
+    {
+        if (lines.Count == 0) return "";
+        var sortedLines = lines.Where(l => l.Words.Count > 0)
+            .OrderBy(l => l.Words.Min(w => w.BoundingRect.Y)).ToList();
+        if (sortedLines.Count == 0) return "";
+
+        var avgHeight = sortedLines.SelectMany(l => l.Words).Average(w => w.BoundingRect.Height);
+        var sb = new StringBuilder();
+        for (int li = 0; li < sortedLines.Count; li++)
+        {
+            if (li > 0)
+            {
+                var prevBottom = sortedLines[li - 1].Words.Max(w => w.BoundingRect.Y + w.BoundingRect.Height);
+                var currTop    = sortedLines[li].Words.Min(w => w.BoundingRect.Y);
+                if (currTop - prevBottom > avgHeight * 1.0) sb.AppendLine();
+            }
+            var words = sortedLines[li].Words.OrderBy(w => w.BoundingRect.X).ToList();
+            for (int wi = 0; wi < words.Count; wi++)
+            {
+                if (wi > 0)
+                {
+                    var prev   = words[wi - 1];
+                    var curr   = words[wi];
+                    var gap    = curr.BoundingRect.X - (prev.BoundingRect.X + prev.BoundingRect.Width);
+                    var cw     = prev.BoundingRect.Width / Math.Max(prev.Text.Length, 1.0);
+                    sb.Append(new string(' ', (int)Math.Max(1, Math.Min(Math.Round(gap / cw), 8))));
+                }
+                sb.Append(words[wi].Text);
+            }
+            sb.AppendLine();
+        }
+        return sb.ToString().TrimEnd();
+    }
+
+    private static List<string> MergeOcrLines(List<string> korLines, List<string> engLines)
+    {
+        var merged = new List<string>(Math.Max(korLines.Count, engLines.Count));
+        for (int i = 0; i < Math.Max(korLines.Count, engLines.Count); i++)
+        {
+            var kor = i < korLines.Count ? korLines[i] : "";
+            var eng = i < engLines.Count ? engLines[i] : "";
+            merged.Add(ChooseLine(kor, eng));
+        }
+        return merged;
+    }
+
+    private static string ChooseLine(string kor, string eng)
+    {
+        bool korHasCJK    = kor.Any(c => c is >= '一' and <= '鿿');
+        bool korHasHangul = kor.Any(c => c is >= '가' and <= '힣');
+        bool korHasAscii  = kor.Any(c => c is (>= 'A' and <= 'Z') or (>= 'a' and <= 'z') or (>= '0' and <= '9'));
+        bool engHasCJK    = eng.Any(c => c is >= '一' and <= '鿿');
+        bool engHasHangul = eng.Any(c => c is >= '가' and <= '힣');
+        bool engIsAscii   = !engHasCJK && !engHasHangul && eng.Length > 0;
+
+        if (korHasCJK && !korHasHangul && !engHasCJK) return eng;
+
+        if (korHasHangul && korHasAscii && engIsAscii)
+        {
+            double hangulRatio = kor.Count(c => c is >= '가' and <= '힣') / (double)Math.Max(kor.Length, 1);
+            if (hangulRatio < 0.3) return eng;
+        }
+        return kor;
+    }
+
+    // ─── Tesseract 경로 (Windows OCR 언어팩이 없는 PC — 앱에 내장, 설치/재부팅 불필요) ──
+    private async Task ExtractWithTesseractAsync(IReadOnlyList<byte[]> pngVariants)
+    {
+        TesseractEngine engine;
+        try
+        {
+            engine = GetEngine();
+        }
+        catch (Exception ex)
+        {
+            StatusText = $"OCR 엔진을 초기화할 수 없습니다: {ex.Message}";
+            return;
+        }
+
+        var (text, lineCount) = await Task.Run(() => RecognizeBest(engine, pngVariants));
+        ExtractedText = text;
+        StatusText = string.IsNullOrWhiteSpace(text)
+            ? "텍스트를 인식하지 못했습니다. 더 큰 글씨나 밝은 배경으로 다시 시도해 보세요."
+            : $"인식 완료  ·  {lineCount}줄";
+    }
+
+    private static TesseractEngine GetEngine()
+        => _engine ??= new TesseractEngine(_tessDataPath, "kor+eng", EngineMode.Default);
+
+    // 전처리된 후보 이미지들을 모두 인식해보고 가장 결과가 좋은 것을 채택
+    private static (string text, int lineCount) RecognizeBest(TesseractEngine engine, IReadOnlyList<byte[]> pngVariants)
+    {
+        string bestText = "";
+        int bestScore = -1;
+
+        foreach (var pngBytes in pngVariants)
+        {
+            using var pix = Pix.LoadFromMemory(pngBytes);
+            using var page = engine.Process(pix);
+            var text = page.GetText()?.TrimEnd() ?? "";
+            int score = ScoreText(text);
+            if (score > bestScore)
+            {
+                bestScore = score;
+                bestText  = text;
+            }
+        }
+
+        if (bestScore <= 0) return ("", 0);
+        int lineCount = bestText.Split('\n').Count(l => !string.IsNullOrWhiteSpace(l));
+        return (bestText, lineCount);
+    }
+
+    private static int ScoreText(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return 0;
+        var lines = text.Split('\n').Where(l => !string.IsNullOrWhiteSpace(l)).ToList();
+        int wordCount = lines.Sum(l => l.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length);
+        int charCount = text.Count(c => !char.IsWhiteSpace(c));
+        return (lines.Count * 10000) + (wordCount * 100) + charCount;
     }
 
     // ─── 이미지 전처리 ────────────────────────────────────
@@ -263,57 +386,6 @@ public partial class OcrViewModel : ObservableObject
         enc.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(source));
         enc.Save(ms);
         return ms.ToArray();
-    }
-
-    private static async Task<OcrResult?> TryRecognizeBestAsync(OcrEngine engine, IReadOnlyList<byte[]> pngVariants)
-    {
-        OcrResult? best = null;
-        int bestScore = -1;
-
-        foreach (var pngBytes in pngVariants)
-        {
-            var result = await RunOcrAsync(engine, pngBytes);
-            int score = ScoreOcrResult(result);
-            if (score > bestScore)
-            {
-                best = result;
-                bestScore = score;
-            }
-        }
-
-        return bestScore > 0 ? best : null;
-    }
-
-    private static string GetOcrDiagnosticSummary()
-    {
-        bool koSupported = OcrEngine.IsLanguageSupported(new Windows.Globalization.Language("ko-KR"));
-        bool enSupported = OcrEngine.IsLanguageSupported(new Windows.Globalization.Language("en-US"));
-        var languages = OcrEngine.AvailableRecognizerLanguages
-            .Select(lang => lang.LanguageTag)
-            .Take(6)
-            .ToList();
-        var languageList = languages.Count > 0 ? string.Join(", ", languages) : "없음";
-        return $"ko-KR={(koSupported ? "O" : "X")}, en-US={(enSupported ? "O" : "X")}, installed={languageList}";
-    }
-
-    private static string GetOcrMissingLanguageHint()
-    {
-        bool koSupported = OcrEngine.IsLanguageSupported(new Windows.Globalization.Language("ko-KR"));
-        bool enSupported = OcrEngine.IsLanguageSupported(new Windows.Globalization.Language("en-US"));
-
-        if (!koSupported && !enSupported) return "한국어/영어 OCR 언어팩이 설치되지 않았을 수 있습니다.";
-        if (!koSupported) return "한국어 OCR 언어팩(ko-KR)이 설치되지 않았을 수 있습니다.";
-        if (!enSupported) return "영어 OCR 언어팩(en-US)이 설치되지 않았을 수 있습니다.";
-        return "";
-    }
-
-    private static int ScoreOcrResult(OcrResult? result)
-    {
-        if (result == null) return 0;
-        int lineCount = result.Lines.Count;
-        int wordCount = result.Lines.Sum(line => line.Words.Count);
-        int charCount = result.Text?.Count(c => !char.IsWhiteSpace(c)) ?? 0;
-        return (lineCount * 10000) + (wordCount * 100) + charCount;
     }
 
     // ─── 자동 교정 (규칙 → DeepSeek) ─────────────────────
@@ -486,82 +558,5 @@ public partial class OcrViewModel : ObservableObject
                 sb.Append(seg[0].GetString());
         }
         return sb.ToString();
-    }
-
-    private static string ReconstructSpatialText(IReadOnlyList<OcrLine> lines)
-    {
-        if (lines.Count == 0) return "";
-        var sortedLines = lines.Where(l => l.Words.Count > 0)
-            .OrderBy(l => l.Words.Min(w => w.BoundingRect.Y)).ToList();
-        if (sortedLines.Count == 0) return "";
-
-        var avgHeight = sortedLines.SelectMany(l => l.Words).Average(w => w.BoundingRect.Height);
-        var sb = new StringBuilder();
-        for (int li = 0; li < sortedLines.Count; li++)
-        {
-            if (li > 0)
-            {
-                var prevBottom = sortedLines[li - 1].Words.Max(w => w.BoundingRect.Y + w.BoundingRect.Height);
-                var currTop    = sortedLines[li].Words.Min(w => w.BoundingRect.Y);
-                if (currTop - prevBottom > avgHeight * 1.0) sb.AppendLine();
-            }
-            var words = sortedLines[li].Words.OrderBy(w => w.BoundingRect.X).ToList();
-            for (int wi = 0; wi < words.Count; wi++)
-            {
-                if (wi > 0)
-                {
-                    var prev   = words[wi - 1];
-                    var curr   = words[wi];
-                    var gap    = curr.BoundingRect.X - (prev.BoundingRect.X + prev.BoundingRect.Width);
-                    var cw     = prev.BoundingRect.Width / Math.Max(prev.Text.Length, 1.0);
-                    sb.Append(new string(' ', (int)Math.Max(1, Math.Min(Math.Round(gap / cw), 8))));
-                }
-                sb.Append(words[wi].Text);
-            }
-            sb.AppendLine();
-        }
-        return sb.ToString().TrimEnd();
-    }
-
-    private static List<string> MergeOcrLines(List<string> korLines, List<string> engLines)
-    {
-        var merged = new List<string>(Math.Max(korLines.Count, engLines.Count));
-        for (int i = 0; i < Math.Max(korLines.Count, engLines.Count); i++)
-        {
-            var kor = i < korLines.Count ? korLines[i] : "";
-            var eng = i < engLines.Count ? engLines[i] : "";
-            merged.Add(ChooseLine(kor, eng));
-        }
-        return merged;
-    }
-
-    private static string ChooseLine(string kor, string eng)
-    {
-        bool korHasCJK    = kor.Any(c => c is >= '一' and <= '鿿');
-        bool korHasHangul = kor.Any(c => c is >= '가' and <= '힣');
-        bool korHasAscii  = kor.Any(c => c is (>= 'A' and <= 'Z') or (>= 'a' and <= 'z') or (>= '0' and <= '9'));
-        bool engHasCJK    = eng.Any(c => c is >= '一' and <= '鿿');
-        bool engHasHangul = eng.Any(c => c is >= '가' and <= '힣');
-        bool engIsAscii   = !engHasCJK && !engHasHangul && eng.Length > 0;
-
-        if (korHasCJK && !korHasHangul && !engHasCJK) return eng;
-
-        if (korHasHangul && korHasAscii && engIsAscii)
-        {
-            double hangulRatio = kor.Count(c => c is >= '가' and <= '힣') / (double)Math.Max(kor.Length, 1);
-            if (hangulRatio < 0.3) return eng;
-        }
-        return kor;
-    }
-
-    private static async Task<OcrResult?> RunOcrAsync(OcrEngine engine, byte[] pngBytes)
-    {
-        using var ras    = new InMemoryRandomAccessStream();
-        using var writer = new DataWriter(ras.GetOutputStreamAt(0));
-        writer.WriteBytes(pngBytes);
-        await writer.StoreAsync();
-        var decoder = await Windows.Graphics.Imaging.BitmapDecoder.CreateAsync(ras);
-        using var softBitmap = await decoder.GetSoftwareBitmapAsync();
-        return await engine.RecognizeAsync(softBitmap);
     }
 }

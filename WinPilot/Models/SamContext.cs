@@ -30,6 +30,8 @@ public sealed class PropertySamContext : SamContext
 public sealed class BooleanStringSamContext : SamContext
 {
     public BooleanStringSamContext(string name) : base(name, 1) { }
+    /// <summary>eGhis ITEM 코드와 함께 사용 (WinPilot에서는 name만 표시).</summary>
+    public BooleanStringSamContext(string name, string _) : base(name, 1) { }
 
     public override string Format(string raw)
     {
@@ -41,6 +43,14 @@ public sealed class BooleanStringSamContext : SamContext
             _ => v,
         };
     }
+}
+
+/// <summary>고정 공백 필드. 표시하지 않음.</summary>
+public sealed class SpaceConstSamContext : SamContext
+{
+    public SpaceConstSamContext(int length) : base("", length) { }
+    public SpaceConstSamContext(int length, string name) : base(name, length) { }
+    public override string Format(string raw) => "";
 }
 
 /// <summary>날짜 필드. 길이 = 포맷 길이. 파싱 성공 시 yyyy-MM-dd로 표시.</summary>
