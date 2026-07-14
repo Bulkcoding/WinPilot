@@ -85,6 +85,67 @@
                 </Grid>
             </Border>
 
+            <!-- 업데이트 내역 -->
+            <Border Style="{StaticResource CardStyle}" Margin="0,16,0,0">
+                <StackPanel>
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="업데이트 내역" Style="{StaticResource CardTitleStyle}"/>
+                        <TextBlock Grid.Column="1" Text="{Binding UpdateHistoryStatus}"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" FontSize="11" VerticalAlignment="Center"/>
+                    </Grid>
+
+                    <ItemsControl ItemsSource="{Binding UpdateHistory}" MaxHeight="400">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border BorderBrush="{DynamicResource BorderBrush}"
+                                        BorderThickness="0,0,0,0.5" Padding="0,10,0,10">
+                                    <StackPanel>
+                                        <!-- 헤더: 버전 + 날짜 -->
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0"
+                                                       Text="{Binding Version}"
+                                                       FontWeight="SemiBold" FontFamily="Consolas"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                                       FontSize="13" Margin="0,0,10,0"/>
+                                            <TextBlock Grid.Column="1"
+                                                       Text="{Binding PublishedAtDisplay}"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                       FontSize="12" VerticalAlignment="Center"/>
+                                        </Grid>
+                                        <!-- 릴리스 노트 -->
+                                        <ItemsControl ItemsSource="{Binding ReleaseNotes}"
+                                                      Margin="14,6,0,0">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding}"
+                                                               Foreground="{DynamicResource TextValueBrush}"
+                                                               FontSize="12" TextWrapping="Wrap"
+                                                               Margin="0,0,0,3"/>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <!-- 로딩 중 표시 -->
+                    <TextBlock Text="불러오는 중..."
+                               Visibility="{Binding IsLoadingUpdateHistory, Converter={StaticResource BoolToVisibility}}"
+                               Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12"
+                               HorizontalAlignment="Center" Margin="0,20,0,20"/>
+                </StackPanel>
+            </Border>
+
             <!-- 폰트 크기 -->
             <Border Style="{StaticResource CardStyle}" Margin="0,16,0,0">
                 <StackPanel>

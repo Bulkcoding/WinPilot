@@ -9,13 +9,17 @@ using System.Windows;
 namespace WinPilot.Services;
 
 /// <param name="IsInstaller">true = WinPilotSetup.exe, false = 단일 EXE</param>
-public record UpdateInfo(string Version, string DownloadUrl, bool IsInstaller, List<string> ReleaseNotes);
+public record UpdateInfo(string Version, string DownloadUrl, bool IsInstaller, List<string> ReleaseNotes, DateTime? PublishedAt = null)
+{
+    public string PublishedAtDisplay => PublishedAt?.ToString("yyyy-MM-dd") ?? "";
+}
 
 file class GitHubRelease
 {
-    [JsonPropertyName("tag_name")]  public string?            TagName { get; set; }
-    [JsonPropertyName("body")]      public string?            Body    { get; set; }
-    [JsonPropertyName("assets")]    public List<GitHubAsset>? Assets  { get; set; }
+    [JsonPropertyName("tag_name")]   public string?            TagName     { get; set; }
+    [JsonPropertyName("body")]       public string?            Body        { get; set; }
+    [JsonPropertyName("assets")]     public List<GitHubAsset>? Assets      { get; set; }
+    [JsonPropertyName("published_at")] public string?         PublishedAt { get; set; }
 }
 file class GitHubAsset
 {
@@ -32,6 +36,9 @@ public static class UpdateService
     };
 
     private const string ApiUrl = "https://api.github.com/repos/Bulkcoding/WinPilot/releases/latest";
+    private const string AllReleasesUrl = "https://api.github.com/repos/Bulkcoding/WinPilot/releases?per_page=30";
+
+    private static List<UpdateInfo>? _allReleasesCache;
 
     // AssemblyVersion은 빌드 시 고정될 수 있으므로 FileVersion으로 읽음
     public static Version CurrentVersion
@@ -84,6 +91,38 @@ public static class UpdateService
                 ParseReleaseNotes(release.Body));
         }
         catch { return null; }
+    }
+
+    /// <summary>
+    /// GitHub Releases API로 전체 릴리스 목록 조회 (업데이트 내역 표시용).
+    /// 최대 30개, 메모리 캐시 적용.
+    /// </summary>
+    public static async Task<List<UpdateInfo>> GetAllReleasesAsync()
+    {
+        if (_allReleasesCache != null) return _allReleasesCache;
+
+        try
+        {
+            var releases = await Http.GetFromJsonAsync<List<GitHubRelease>>(AllReleasesUrl);
+            if (releases == null) return [];
+
+            _allReleasesCache = releases
+                .Where(r => r.TagName != null && Version.TryParse(r.TagName.TrimStart('v'), out _))
+                .Select(r =>
+                {
+                    DateTime? published = null;
+                    if (DateTime.TryParse(r.PublishedAt, out var dt))
+                        published = dt;
+                    return new UpdateInfo(r.TagName!, "", false, ParseReleaseNotes(r.Body), published);
+                })
+                .ToList();
+
+            return _allReleasesCache;
+        }
+        catch
+        {
+            return [];  // 네트워크 오류 등 무시
+        }
     }
 
     private static List<string> ParseReleaseNotes(string? body)

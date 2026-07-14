@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
@@ -32,6 +33,12 @@ public partial class SettingsViewModel : ObservableObject
     // 이미지 텍스트 추출 탭의 AI 교정에 사용
     [ObservableProperty] private string _deepSeekApiKey = "";
     [ObservableProperty] private string _deepSeekStatus = "";
+
+    // ── 업데이트 내역 ──
+    public ObservableCollection<UpdateInfo> UpdateHistory { get; } = [];
+
+    [ObservableProperty] private bool   _isLoadingUpdateHistory;
+    [ObservableProperty] private string _updateHistoryStatus = "";
 
     public bool IsDeepSeekKeySet => !string.IsNullOrWhiteSpace(DeepSeekApiKey);
 
@@ -116,6 +123,29 @@ public partial class SettingsViewModel : ObservableObject
         LoadHotkeySetting();
         ApplyTheme(_isDarkTheme);
         ApplyFontSize(_isFontLarge);
+        _ = LoadUpdateHistoryAsync();
+    }
+
+    private async Task LoadUpdateHistoryAsync()
+    {
+        IsLoadingUpdateHistory = true;
+        UpdateHistoryStatus = "불러오는 중...";
+        try
+        {
+            var releases = await UpdateService.GetAllReleasesAsync();
+            UpdateHistory.Clear();
+            foreach (var r in releases)
+                UpdateHistory.Add(r);
+            UpdateHistoryStatus = UpdateHistory.Count > 0 ? $"최근 {UpdateHistory.Count}개 릴리스" : "릴리스 정보 없음";
+        }
+        catch
+        {
+            UpdateHistoryStatus = "불러오기 실패";
+        }
+        finally
+        {
+            IsLoadingUpdateHistory = false;
+        }
     }
 
     private void LoadHotkeySetting()
