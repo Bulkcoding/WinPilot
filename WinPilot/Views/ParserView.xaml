@@ -97,18 +97,11 @@
 
     <Grid Background="{DynamicResource BgBrush}">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- 헤더 -->
-        <DockPanel Grid.Row="0" Margin="24,20,24,0">
-            <TextBlock Text="파서" FontSize="22" FontWeight="SemiBold"
-                       Foreground="{DynamicResource TextPrimaryBrush}"/>
-        </DockPanel>
-
-        <!-- 탭 컨트롤 -->
-        <TabControl Grid.Row="1" Margin="24,12,24,24"
+        <!-- 탭 컨트롤 (Utiles 탭에 임베드되어 사용 — 별도 제목 헤더 없음) -->
+        <TabControl Grid.Row="0" Margin="24,12,24,24"
                     Background="Transparent" BorderThickness="0"
                     Padding="0">
             <TabControl.Resources>

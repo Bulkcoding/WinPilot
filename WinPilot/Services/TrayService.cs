@@ -47,6 +47,9 @@ public sealed class TrayService : IDisposable
         }
 
         _icon.Icon ??= System.Drawing.SystemIcons.Application;
+
+        // 트레이 아이콘은 프로그램이 켜져 있는 동안 항상 표시 (창 상태와 무관)
+        _icon.Visible = true;
     }
 
     private void OnWindowClosing(object? sender, CancelEventArgs e)
@@ -59,13 +62,11 @@ public sealed class TrayService : IDisposable
     {
         if (_target == null) return;
         _target.Hide();
-        _icon.Visible = true;
     }
 
     private void ShowWindow()
     {
         if (_target == null) return;
-        _icon.Visible = false;
         _target.Show();
         _target.WindowState = WindowState.Normal;
         _target.Activate();

@@ -1,6 +1,8 @@
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
@@ -33,9 +35,9 @@ public partial class OcrView : UserControl
 
         if (e.Key == Key.V && Keyboard.Modifiers == ModifierKeys.Control
             && Keyboard.FocusedElement is not TextBox
-            && Clipboard.ContainsImage())
+            && HasClipboardImage())
         {
-            var bmp = Clipboard.GetImage();
+            var bmp = GetClipboardImage();
             if (bmp != null) RecordAndOcr(bmp);
             e.Handled = true;
         }
@@ -44,9 +46,48 @@ public partial class OcrView : UserControl
     // ─── 이미지 영역 클릭 → 클립보드 이미지 바로 붙여넣기 ─
     private void OnImageAreaClick(object sender, MouseButtonEventArgs e)
     {
-        if (!Clipboard.ContainsImage()) return;
-        var bmp = Clipboard.GetImage();
+        if (!HasClipboardImage()) return;
+        var bmp = GetClipboardImage();
         if (bmp != null) RecordAndOcr(bmp);
+    }
+
+    // PNG 포맷만 있는 클립보드(일부 캡처 도구)도 이미지로 인정
+    private static bool HasClipboardImage()
+        => Clipboard.ContainsImage() || Clipboard.ContainsData("PNG");
+
+    // <summary>
+    // 클립보드 이미지를 안전하게 가져온다.
+    // Clipboard.GetImage()는 DIB의 미사용 바이트를 알파=0으로 잘못 읽어 붙여넣은 그림이
+    // 통째로 투명(빈/검은 화면)이 되는 버그가 있음 → OCR이 글자를 못 찾는 원인.
+    // 1) PNG 포맷(알파 정상) 우선, 2) 실패 시 GetImage()를 불투명(Bgr24)으로 강제.
+    // </summary>
+    private static BitmapSource? GetClipboardImage()
+    {
+        try
+        {
+            if (Clipboard.ContainsData("PNG") && Clipboard.GetData("PNG") is MemoryStream png && png.Length > 0)
+            {
+                png.Position = 0;
+                var dec = new PngBitmapDecoder(png, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
+                if (dec.Frames.Count > 0)
+                {
+                    var f = dec.Frames[0];
+                    f.Freeze();
+                    return f;
+                }
+            }
+        }
+        catch { /* PNG 실패 → 표준 경로로 폴백 */ }
+
+        try
+        {
+            var img = Clipboard.GetImage();
+            if (img == null) return null;
+            var opaque = new FormatConvertedBitmap(img, PixelFormats.Bgr24, null, 0);
+            opaque.Freeze();
+            return opaque;
+        }
+        catch { return null; }
     }
 
     private void RecordAndOcr(BitmapSource bitmap)

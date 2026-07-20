@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:views="clr-namespace:WinPilot.Views"
              mc:Ignorable="d">
     <UserControl.Resources>
         <ResourceDictionary>
@@ -106,7 +107,7 @@
 
         <!-- 헤더 -->
         <DockPanel Grid.Row="0" Margin="24,20,24,0">
-            <TextBlock Text="Uties" FontSize="22" FontWeight="SemiBold"
+            <TextBlock Text="Utiles" FontSize="22" FontWeight="SemiBold"
                        Foreground="{DynamicResource TextPrimaryBrush}"/>
         </DockPanel>
 
@@ -261,6 +262,11 @@
                         </DataGrid>
                     </HeaderedContentControl>
                 </Grid>
+            </TabItem>
+
+            <!-- ═══ 변환기 (구 Converter 탭 통합: JWT/Base64/JSON/XML/cm↔px) ═══ -->
+            <TabItem Header="변환기" Style="{StaticResource UtilTabStyle}">
+                <views:ParserView DataContext="{Binding Parser}"/>
             </TabItem>
 
         </TabControl>

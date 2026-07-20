@@ -16,6 +16,9 @@ public class EntityField
 
 public partial class UtilitiesViewModel : ObservableObject
 {
+    // Converter(구 파서) 탭을 Utiles에 통합 — ParserView가 이 VM을 DataContext로 사용
+    public ParserViewModel Parser { get; } = new();
+
     // ─── 검진 종류 / 검사 항목 (연동 콤보박스) ─────────────────
     private static readonly Dictionary<string, string[]> SubTypeMap = new()
     {

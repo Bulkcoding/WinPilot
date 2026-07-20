@@ -16,7 +16,6 @@ public partial class MainViewModel : ObservableObject
     public RecoveryViewModel     Recovery        { get; } = new();
     public PingViewModel         Ping            { get; } = new();
     public DefenderViewModel     Defender        { get; } = new();
-    public ParserViewModel       Parser          { get; } = new();
     public UtilitiesViewModel    Utilities       { get; } = new();
     public RegistryViewModel     Registry        { get; } = new();
     public TextCounterViewModel  TextCounter     { get; } = new();
@@ -34,6 +33,8 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private string _updateDownloadUrl = "";
     [ObservableProperty] private bool   _isDownloading;
     [ObservableProperty] private int    _downloadProgress;
+    [ObservableProperty] private bool   _showUpdatePopup;
+    [ObservableProperty] private List<string> _releaseNotes = [];
 
     public bool UpdateReady => UpdateAvailable && !IsDownloading && !string.IsNullOrEmpty(UpdateDownloadUrl);
     public string UpdateActionText => IsDownloading ? "업데이트 다운로드 중..." : "지금 업데이트";
@@ -94,9 +95,18 @@ public partial class MainViewModel : ObservableObject
             _notifiedVersion  = info.Version;
             LatestVersion     = info.Version;
             UpdateDownloadUrl = info.DownloadUrl;
+            ReleaseNotes      = info.ReleaseNotes;
             UpdateAvailable   = true;
         });
     }
+
+    // 업데이트 버튼 클릭 → 바로 설치하지 않고 릴리스 노트 팝업을 먼저 표시
+    [RelayCommand]
+    private void OpenUpdatePopup() => ShowUpdatePopup = true;
+
+    // 팝업의 '나중에' 버튼
+    [RelayCommand]
+    private void DismissUpdatePopup() => ShowUpdatePopup = false;
 
     [RelayCommand]
     private async Task ApplyUpdateAsync()

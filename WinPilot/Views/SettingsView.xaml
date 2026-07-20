@@ -77,7 +77,7 @@
                     <!-- 업데이트 버튼 -->
                     <Button Grid.Column="1"
                             Content="{Binding DataContext.UpdateActionText, RelativeSource={RelativeSource AncestorType=Window}}"
-                            Command="{Binding DataContext.ApplyUpdateCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                            Command="{Binding DataContext.OpenUpdatePopupCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                             IsEnabled="{Binding DataContext.UpdateReady, RelativeSource={RelativeSource AncestorType=Window}}"
                             Style="{StaticResource SecondaryButtonStyle}"
                             VerticalAlignment="Center"
