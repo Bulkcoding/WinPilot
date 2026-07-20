@@ -409,6 +409,124 @@
                 </Grid>
             </TabItem>
 
+            <!-- ═══ cm ↔ px ═════════════════════════════════════ -->
+            <TabItem Header="cm ↔ px" Style="{StaticResource ParserTabStyle}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- DPI 선택 -->
+                    <Border Grid.Row="0" Style="{StaticResource CardStyle}" Margin="0,0,0,8">
+                        <StackPanel>
+                            <TextBlock Text="DPI (인치당 픽셀)" Style="{StaticResource AreaLabel}" Margin="0,0,0,8"/>
+                            <StackPanel Orientation="Horizontal">
+                                <ComboBox ItemsSource="{Binding DpiPresets}"
+                                          SelectedItem="{Binding SelectedDpi}"
+                                          Style="{StaticResource FilterComboStyle}"
+                                          Width="80" Margin="0,0,8,0"/>
+                                <TextBlock Text="또는 직접 입력:" Foreground="{DynamicResource TextSecondaryBrush}"
+                                           FontSize="12" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                <TextBox Text="{Binding CustomDpi, UpdateSourceTrigger=PropertyChanged}"
+                                         Width="60" Height="24" FontSize="12"
+                                         Background="{DynamicResource ConsoleBgBrush}"
+                                         Foreground="{DynamicResource TextPrimaryBrush}"
+                                         BorderBrush="{DynamicResource BorderBrush}"
+                                         BorderThickness="1"
+                                         Padding="6,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="DPI" Foreground="{DynamicResource TextSecondaryBrush}"
+                                           FontSize="12" Margin="4,0,0,0" VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <TextBlock Text="{Binding DpiError}" Foreground="#EF4444"
+                                       FontSize="12" Margin="0,6,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- cm → px -->
+                    <Border Grid.Row="1" Style="{StaticResource CardStyle}" Margin="0,0,0,8">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                                <DockPanel Margin="0,0,0,6">
+                                    <Button DockPanel.Dock="Right" Content="지우기"
+                                            Command="{Binding ClearDpiCommand}"
+                                            Style="{StaticResource IconBtnStyle}"/>
+                                    <TextBlock Text="센티미터 (cm)" Style="{StaticResource AreaLabel}"
+                                               VerticalAlignment="Center" Margin="0"/>
+                                </DockPanel>
+                                <TextBox Text="{Binding CmInput, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource CodeBox}" Height="60"
+                                         VerticalContentAlignment="Center"/>
+                            </StackPanel>
+                            <Button Grid.Column="1" Content="→" 
+                                    Command="{Binding CmToPxCommand}"
+                                    Style="{StaticResource PrimaryButtonStyle}"
+                                    Width="40" Height="36" Padding="0"
+                                    VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <StackPanel Grid.Column="2">
+                                <DockPanel Margin="0,0,0,6">
+                                    <Button DockPanel.Dock="Right" Content="복사"
+                                            Command="{Binding CopyPxOutputCommand}"
+                                            Style="{StaticResource IconBtnStyle}"/>
+                                    <TextBlock Text="픽셀 (px)" Style="{StaticResource AreaLabel}"
+                                               VerticalAlignment="Center" Margin="0"/>
+                                </DockPanel>
+                                <TextBox Text="{Binding PxOutput, Mode=OneWay}"
+                                         Style="{StaticResource CodeBox}" Height="60"
+                                         IsReadOnly="True" VerticalContentAlignment="Center"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- px → cm -->
+                    <Border Grid.Row="2" Style="{StaticResource CardStyle}" Margin="0,0,0,8">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                                <DockPanel Margin="0,0,0,6">
+                                    <Button DockPanel.Dock="Right" Content="지우기"
+                                            Command="{Binding ClearDpiCommand}"
+                                            Style="{StaticResource IconBtnStyle}"/>
+                                    <TextBlock Text="픽셀 (px)" Style="{StaticResource AreaLabel}"
+                                               VerticalAlignment="Center" Margin="0"/>
+                                </DockPanel>
+                                <TextBox Text="{Binding PxInput, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource CodeBox}" Height="60"
+                                         VerticalContentAlignment="Center"/>
+                            </StackPanel>
+                            <Button Grid.Column="1" Content="→"
+                                    Command="{Binding PxToCmCommand}"
+                                    Style="{StaticResource PrimaryButtonStyle}"
+                                    Width="40" Height="36" Padding="0"
+                                    VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <StackPanel Grid.Column="2">
+                                <DockPanel Margin="0,0,0,6">
+                                    <Button DockPanel.Dock="Right" Content="복사"
+                                            Command="{Binding CopyCmOutputCommand}"
+                                            Style="{StaticResource IconBtnStyle}"/>
+                                    <TextBlock Text="센티미터 (cm)" Style="{StaticResource AreaLabel}"
+                                               VerticalAlignment="Center" Margin="0"/>
+                                </DockPanel>
+                                <TextBox Text="{Binding CmOutput, Mode=OneWay}"
+                                         Style="{StaticResource CodeBox}" Height="60"
+                                         IsReadOnly="True" VerticalContentAlignment="Center"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </TabItem>
+
         </TabControl>
     </Grid>
 </UserControl>

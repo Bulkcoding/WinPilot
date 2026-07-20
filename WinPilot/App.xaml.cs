@@ -1,12 +1,17 @@
+using System.ComponentModel;
 using System.Text;
 using System.Threading;
 using System.Windows;
+using System.Windows.Threading;
+using WinPilot.Services;
+using WinPilot.Views;
 
 namespace WinPilot;
 
 public partial class App : Application
 {
     private static Mutex? _mutex;
+    private TrayService? _tray;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -39,10 +44,30 @@ public partial class App : Application
             ex.Handled = true;
         };
         base.OnStartup(e);
+
+        // 시작 스플래시(로딩 진행 표시) — 먼저 띄우고 즉시 렌더해서 로딩 중임을 보여줌
+        var splash = new SplashWindow();
+        splash.Show();
+        splash.Dispatcher.Invoke(() => { }, DispatcherPriority.Render);
+
+        // 메인 윈도우 생성 (StartupUri 제거 → 스플래시가 MainWindow로 잡히지 않도록 명시적으로 지정)
+        var main = new MainWindow();
+        MainWindow = main;
+        main.ContentRendered += (_, _) =>
+        {
+            splash.Close();
+            main.Activate();
+        };
+        main.Show();
+
+        // MainWindow가 생성된 후 트레이 아이콘 연결
+        _tray = new TrayService();
+        _tray.Attach(main);
     }
 
     protected override void OnExit(ExitEventArgs e)
     {
+        _tray?.Dispose();
         _mutex?.ReleaseMutex();
         _mutex?.Dispose();
         base.OnExit(e);

@@ -120,6 +120,53 @@ public partial class ParserViewModel : ObservableObject
     [RelayCommand] private void ClearXml()      => XmlInput = XmlOutput = XmlError = "";
     [RelayCommand] private void CopyXmlOutput() => TrySetClipboard(XmlOutput);
 
+    // ─── cm ↔ px ──────────────────────────────────────────
+    public List<int> DpiPresets { get; } = [72, 96, 120, 144, 192, 300];
+
+    [ObservableProperty] private int    _selectedDpi = 96;
+    [ObservableProperty] private int    _customDpi   = 0;
+    [ObservableProperty] private string _cmInput   = "";
+    [ObservableProperty] private string _pxInput   = "";
+    [ObservableProperty] private string _cmOutput  = "";
+    [ObservableProperty] private string _pxOutput  = "";
+    [ObservableProperty] private string _dpiError  = "";
+
+    partial void OnSelectedDpiChanged(int value) => DpiError = "";
+
+    partial void OnCustomDpiChanged(int value)
+    {
+        if (value < 0) CustomDpi = 0;
+        DpiError = "";
+    }
+
+    private int CurrentDpi => CustomDpi > 0 ? CustomDpi : SelectedDpi;
+
+    [RelayCommand]
+    private void CmToPx()
+    {
+        DpiError = "";
+        var dpi = CurrentDpi;
+        if (!double.TryParse(CmInput, out var cm) || cm < 0)
+        { DpiError = "올바른 cm 값을 입력하세요"; return; }
+        PxOutput = $"{cm * dpi / 2.54:F2}";
+    }
+
+    [RelayCommand]
+    private void PxToCm()
+    {
+        DpiError = "";
+        var dpi = CurrentDpi;
+        if (!double.TryParse(PxInput, out var px) || px < 0)
+        { DpiError = "올바른 px 값을 입력하세요"; return; }
+        CmOutput = $"{px * 2.54 / dpi:F2}";
+    }
+
+    [RelayCommand] private void ClearDpi() =>
+        CmInput = PxInput = CmOutput = PxOutput = DpiError = "";
+
+    [RelayCommand] private void CopyCmOutput() => TrySetClipboard(CmOutput);
+    [RelayCommand] private void CopyPxOutput() => TrySetClipboard(PxOutput);
+
     // ─── 공통 유틸 ─────────────────────────────────────────
     private static string DecodeBase64Url(string input)
     {

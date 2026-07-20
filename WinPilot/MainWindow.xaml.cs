@@ -22,9 +22,26 @@ public partial class MainWindow : Window
     private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter,
         int X, int Y, int cx, int cy, uint uFlags);
 
+    [DllImport("user32.dll")]
+    private static extern IntPtr MonitorFromWindow(IntPtr hwnd, uint dwFlags);
+
+    [DllImport("user32.dll")]
+    private static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFO lpmi);
+
+    [DllImport("user32.dll")]
+    private static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
+
     private const uint SWP_NOZORDER    = 0x0004;
+    private const uint SWP_NOSIZE      = 0x0001;
     private const uint SWP_NOACTIVATE  = 0x0010;
     private const uint SWP_NOCOPYBITS  = 0x0100;   // 리사이즈 시 기존 비트맵 복사 안 함 → 잔상 제거
+    private const uint MONITOR_DEFAULTTONEAREST = 0x00000002;
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct RECT { public int Left, Top, Right, Bottom; }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct MONITORINFO { public int cbSize; public RECT rcMonitor; public RECT rcWork; public uint dwFlags; }
 
     private readonly GlobalHotkeyService _hotkeyService = new();
 
@@ -152,14 +169,45 @@ public partial class MainWindow : Window
         AnimateWindow(NormalWidth, NormalHeight, onDone: () =>
         {
             MinWidth = 900; MinHeight = 600;
-
-            // 화면 밖으로 나가지 않도록 작업 영역 기준 보정
-            var wa = System.Windows.SystemParameters.WorkArea;
-            if (Left + Width  > wa.Right)  Left = Math.Max(wa.Left, wa.Right  - Width);
-            if (Top  + Height > wa.Bottom) Top  = Math.Max(wa.Top,  wa.Bottom - Height);
-            if (Left < wa.Left) Left = wa.Left;
-            if (Top  < wa.Top)  Top  = wa.Top;
+            ClampToCurrentMonitor();
         });
+    }
+
+    /// <summary>
+    /// 창이 걸쳐 있는 "현재 모니터"의 작업 영역 안으로만 위치를 보정한다.
+    /// 계산을 전부 Win32 물리 픽셀 좌표로 통일 — 애니메이션도 SetWindowPos(물리)로 하므로
+    /// 좌표계가 일치한다. (기존엔 WPF DIP ÷ DPI 변환을 섞어 써서 다른 DPI의 보조 모니터에서
+    /// 좌표가 어긋나 주모니터로 튕기던 문제가 있었음.)
+    /// </summary>
+    private void ClampToCurrentMonitor()
+    {
+        var hwnd = new WindowInteropHelper(this).Handle;
+        if (hwnd == IntPtr.Zero) return;
+        if (!GetWindowRect(hwnd, out var wr)) return;
+
+        var mon = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+        var mi = new MONITORINFO { cbSize = Marshal.SizeOf<MONITORINFO>() };
+        if (!GetMonitorInfo(mon, ref mi)) return;
+        var work = mi.rcWork;
+
+        int w = wr.Right - wr.Left;
+        int h = wr.Bottom - wr.Top;
+        int left = wr.Left, top = wr.Top;
+
+        if (left + w > work.Right)  left = Math.Max(work.Left, work.Right  - w);
+        if (top  + h > work.Bottom) top  = Math.Max(work.Top,  work.Bottom - h);
+        if (left < work.Left) left = work.Left;
+        if (top  < work.Top)  top  = work.Top;
+
+        if (left != wr.Left || top != wr.Top)
+            SetWindowPos(hwnd, IntPtr.Zero, left, top, 0, 0,
+                SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSIZE);
+
+        // WPF Left/Top을 실제 물리 위치와 동기화 (다음 미니 전환이 stale 좌표를 쓰지 않도록).
+        // 애니메이션이 Left*DpiScale로 물리 좌표를 만들므로, 역변환도 동일 배율로 나눠 일관성 유지.
+        var dpi = VisualTreeHelper.GetDpi(this);
+        Left = left / dpi.DpiScaleX;
+        Top  = top  / dpi.DpiScaleY;
     }
 
     private const double ResizeDurationMs = 360;

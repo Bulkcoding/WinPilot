@@ -4,8 +4,7 @@
              xmlns:sys="clr-namespace:System;assembly=mscorlib"
              xmlns:vm="clr-namespace:WinPilot.ViewModels"
              xmlns:views="clr-namespace:WinPilot.Views"
-             xmlns:conv="clr-namespace:WinPilot.Converters"
-             StartupUri="MainWindow.xaml">
+             xmlns:conv="clr-namespace:WinPilot.Converters">
     <Application.Resources>
         <ResourceDictionary>
 
