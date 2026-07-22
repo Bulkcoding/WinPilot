@@ -53,6 +53,19 @@ public partial class App : Application
         // 메인 윈도우 생성 (StartupUri 제거 → 스플래시가 MainWindow로 잡히지 않도록 명시적으로 지정)
         var main = new MainWindow();
         MainWindow = main;
+
+        // 스플래시가 뜬 모니터의 중앙에 메인 창을 배치.
+        // 스플래시는 CenterScreen이라 그 중심 = 해당 모니터 중심 → 메인을 같은 중심점에 맞추면
+        // 동일 모니터 중앙에 뜬다. (같은 WPF 좌표계라 DPI/멀티모니터에도 일관)
+        main.WindowStartupLocation = WindowStartupLocation.Manual;
+        if (!double.IsNaN(splash.Left) && !double.IsNaN(splash.Top))
+        {
+            double centerX = splash.Left + splash.Width / 2;
+            double centerY = splash.Top  + splash.Height / 2;
+            main.Left = centerX - main.Width / 2;
+            main.Top  = centerY - main.Height / 2;
+        }
+
         main.ContentRendered += (_, _) =>
         {
             splash.Close();
