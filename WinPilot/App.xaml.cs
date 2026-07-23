@@ -45,10 +45,25 @@ public partial class App : Application
         };
         base.OnStartup(e);
 
-        // 시작 스플래시(로딩 진행 표시) — 먼저 띄우고 즉시 렌더해서 로딩 중임을 보여줌
-        var splash = new SplashWindow();
-        splash.Show();
-        splash.Dispatcher.Invoke(() => { }, DispatcherPriority.Render);
+        // 시작 스플래시를 별도 UI 스레드에서 실행한다.
+        // 메인 스레드가 MainWindow 초기화로 바쁜 동안에도 이 스레드는 자유로워
+        // 진행바(IsIndeterminate 마퀴)가 끊기지 않고 계속 움직인다.
+        SplashWindow? splash = null;
+        using var splashReady = new ManualResetEventSlim(false);
+        var splashThread = new Thread(() =>
+        {
+            splash = new SplashWindow();
+            splash.Show();
+            splashReady.Set();
+            Dispatcher.Run();   // 이 스레드 전용 디스패처 (닫을 때 InvokeShutdown로 종료)
+        })
+        {
+            IsBackground = true,
+            Name = "SplashThread",
+        };
+        splashThread.SetApartmentState(ApartmentState.STA);
+        splashThread.Start();
+        splashReady.Wait();
 
         // 메인 윈도우 생성 (StartupUri 제거 → 스플래시가 MainWindow로 잡히지 않도록 명시적으로 지정)
         var main = new MainWindow();
@@ -56,19 +71,30 @@ public partial class App : Application
 
         // 스플래시가 뜬 모니터의 중앙에 메인 창을 배치.
         // 스플래시는 CenterScreen이라 그 중심 = 해당 모니터 중심 → 메인을 같은 중심점에 맞추면
-        // 동일 모니터 중앙에 뜬다. (같은 WPF 좌표계라 DPI/멀티모니터에도 일관)
-        main.WindowStartupLocation = WindowStartupLocation.Manual;
-        if (!double.IsNaN(splash.Left) && !double.IsNaN(splash.Top))
+        // 동일 모니터 중앙에 뜬다. (스플래시는 다른 스레드 → 그 디스패처에서 위치를 읽음)
+        double sLeft = double.NaN, sTop = double.NaN, sW = 0, sH = 0;
+        splash!.Dispatcher.Invoke(() =>
         {
-            double centerX = splash.Left + splash.Width / 2;
-            double centerY = splash.Top  + splash.Height / 2;
+            sLeft = splash.Left; sTop = splash.Top; sW = splash.Width; sH = splash.Height;
+        });
+        main.WindowStartupLocation = WindowStartupLocation.Manual;
+        if (!double.IsNaN(sLeft) && !double.IsNaN(sTop))
+        {
+            double centerX = sLeft + sW / 2;
+            double centerY = sTop  + sH / 2;
             main.Left = centerX - main.Width / 2;
             main.Top  = centerY - main.Height / 2;
         }
 
         main.ContentRendered += (_, _) =>
         {
-            splash.Close();
+            // 스플래시를 그 스레드의 디스패처에서 닫고 디스패처를 종료 → 스레드 정리
+            var sp = splash;
+            sp?.Dispatcher.InvokeAsync(() =>
+            {
+                sp.Close();
+                sp.Dispatcher.InvokeShutdown();
+            });
             main.Activate();
         };
         main.Show();
